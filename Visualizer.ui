@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>689</width>
-    <height>583</height>
+    <width>822</width>
+    <height>599</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -35,6 +35,42 @@
     </property>
     <property name="text">
      <string>loadFileButton</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="clearButton">
+    <property name="geometry">
+     <rect>
+      <x>530</x>
+      <y>60</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>clearButton</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="unwrapButton">
+    <property name="geometry">
+     <rect>
+      <x>530</x>
+      <y>100</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>unwrapButton</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="colorComboBox">
+    <property name="geometry">
+     <rect>
+      <x>530</x>
+      <y>150</y>
+      <width>74</width>
+      <height>22</height>
+     </rect>
     </property>
    </widget>
   </widget>
