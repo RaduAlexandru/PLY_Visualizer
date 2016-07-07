@@ -10,48 +10,67 @@
 #include <vtkSphereSource.h>
 
 
-
 #define PI 3.1415
 
 
 
 
+//
+// // Define interaction style
+// class MouseInteractorStylePP : public vtkInteractorStyleTrackballCamera
+// {
+//   public:
+//     //vtkSmartPointer<vtkPolyData> wall;
+//
+//
+//     static MouseInteractorStylePP* New();
+//     vtkTypeMacro(MouseInteractorStylePP, vtkInteractorStyleTrackballCamera);
+//
+//     virtual void OnLeftButtonDown()
+//     {
+//       std::cout << "Picking pixel: " << this->Interactor->GetEventPosition()[0] << " " << this->Interactor->GetEventPosition()[1] << std::endl;
+//       this->Interactor->GetPicker()->Pick(this->Interactor->GetEventPosition()[0],
+//                          this->Interactor->GetEventPosition()[1],
+//                          0,  // always zero.
+//                          this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
+//       double picked[3];
+//       this->Interactor->GetPicker()->GetPickPosition(picked);
+//       std::cout << "Picked value: " << picked[0] << " " << picked[1] << " " << picked[2] << std::endl;
+//
+//
+//
+//       //Clip a sphere out of it
+//       vtkSmartPointer<vtkSphere> sphere_cut = vtkSmartPointer<vtkSphere>::New();
+//       // box_cut->SetBounds (0.0, 1000, -0.005, 0.005, -1000.0, 1000.0);
+//       //
+//       // vtkSmartPointer<vtkClipPolyData> clipper= vtkSmartPointer<vtkClipPolyData>::New();
+//       // clipper->SetInputConnection(reader->GetOutputPort());
+//       // clipper->SetClipFunction(box_cut);
+//       // clipper->InsideOutOff();
+//       // clipper->Update();
+//       // clipper->GenerateClippedOutputOn();
+//
+//
+//
+//
+//
+//
+//       // Forward events
+//       vtkInteractorStyleTrackballCamera::OnLeftButtonDown();
+//     }
+//
+//     // void OnMouseMove(){
+//     //   std::cout << "mouse moving" << std::endl;
+//     //   OnLeftButtonDown();
+//     // }
+//
+// };
+//
+// vtkStandardNewMacro(MouseInteractorStylePP);
 
-// Define interaction style
-class MouseInteractorStylePP : public vtkInteractorStyleTrackballCamera
-{
-  public:
-    vtkSmartPointer<vtkPolyData> wall;
-
-    static MouseInteractorStylePP* New();
-    vtkTypeMacro(MouseInteractorStylePP, vtkInteractorStyleTrackballCamera);
-
-    virtual void OnLeftButtonDown()
-    {
-      std::cout << "Picking pixel: " << this->Interactor->GetEventPosition()[0] << " " << this->Interactor->GetEventPosition()[1] << std::endl;
-      this->Interactor->GetPicker()->Pick(this->Interactor->GetEventPosition()[0],
-                         this->Interactor->GetEventPosition()[1],
-                         0,  // always zero.
-                         this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
-      double picked[3];
-      this->Interactor->GetPicker()->GetPickPosition(picked);
-      std::cout << "Picked value: " << picked[0] << " " << picked[1] << " " << picked[2] << std::endl;
-      // Forward events
-      vtkInteractorStyleTrackballCamera::OnLeftButtonDown();
-    }
-
-    // void OnMouseMove(){
-    //   std::cout << "mouse moving" << std::endl;
-    //   OnLeftButtonDown();
-    // }
-
-};
-
-vtkStandardNewMacro(MouseInteractorStylePP);
 
 
-
-
+//vtkStandardNewMacro(InteractorPointPicker);
 
 
 
@@ -66,7 +85,8 @@ Visualizer::Visualizer():
   points(vtkSmartPointer<vtkPoints>::New()),
   cells(vtkSmartPointer<vtkCellArray>::New()),
   colors(vtkSmartPointer<vtkUnsignedCharArray>::New()),
-  colors_original(vtkSmartPointer<vtkUnsignedCharArray>::New())
+  colors_original(vtkSmartPointer<vtkUnsignedCharArray>::New()),
+  interactor(vtkSmartPointer<InteractorPointPicker>::New())
 {
   this->ui = new Ui_Visualizer;
   this->ui->setupUi(this);
@@ -79,6 +99,9 @@ Visualizer::Visualizer():
   this->ui->colorComboBox->addItem("Curvature");
 
 
+
+  Model* model= new Model();
+
   // VTK Renderer
   renderer->GradientBackgroundOn();
   renderer->SetBackground(1.0,1.0,1.0);
@@ -88,9 +111,10 @@ Visualizer::Visualizer():
 
   // Changing interactor to a custom one to handle different mouse events
   vtkSmartPointer<vtkPointPicker> pointPicker = vtkSmartPointer<vtkPointPicker>::New();
-  vtkSmartPointer<MouseInteractorStylePP> interactor = vtkSmartPointer<MouseInteractorStylePP>::New();
-  this->ui->qvtkWidget->GetRenderWindow()->GetInteractor()->SetPicker(pointPicker);
+  //interactor = vtkSmartPointer<InteractorPointPicker>::New();
   this->ui->qvtkWidget->GetRenderWindow()->GetInteractor()->SetInteractorStyle( interactor );
+  this->ui->qvtkWidget->GetRenderWindow()->GetInteractor()->SetPicker(pointPicker);
+
 
 
   renderer->GetActiveCamera()->SetParallelProjection(0);
@@ -248,6 +272,8 @@ void  Visualizer::updateView(int reset_camera){
     renderer->ResetCamera();
   }
 
+  interactor->wall=wall;
+  //interactor->test=this->num_points;
   this->ui->qvtkWidget->GetRenderWindow()->Render();
 
 }

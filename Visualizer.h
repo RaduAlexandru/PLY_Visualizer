@@ -13,6 +13,7 @@
 #include <vtkFloatArray.h>
 #include <vtkProperty.h>
 #include <vtkBox.h>
+#include <vtkSphere.h>
 #include <vtkClipPolyData.h>
 #include <vtkInteractorStyleTrackballCamera.h>
 #include <vtkObjectFactory.h>
@@ -28,6 +29,7 @@
 
 #include <QFileDialog>
 #include "Model.h"
+#include "InteractorPointPicker.h"
 
 #include <QMainWindow>
 
@@ -36,6 +38,7 @@ typedef std::vector<row_type> matrix_type;
 
 // Forward Qt class declarations
 class Ui_Visualizer;
+//class Model;
 
 class Visualizer : public QMainWindow
 {
@@ -69,6 +72,7 @@ public:
 
 
   vtkSmartPointer<vtkRenderer> renderer;
+  vtkSmartPointer<InteractorPointPicker> interactor;
 
 public slots:
 
