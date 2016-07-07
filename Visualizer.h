@@ -14,6 +14,14 @@
 #include <vtkProperty.h>
 #include <vtkBox.h>
 #include <vtkClipPolyData.h>
+#include <vtkInteractorStyleTrackballCamera.h>
+#include <vtkObjectFactory.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkRenderWindow.h>
+#include <vtkRendererCollection.h>
+#include <vtkPointPicker.h>
+#include <vtkCamera.h>
+
 
 #include <math.h>
 #include <iterator>
@@ -38,11 +46,13 @@ public:
   Visualizer();
   ~Visualizer() {};
 
+
   vtkSmartPointer<vtkPolyData> wall;
   vtkSmartPointer<vtkPoints> points;
   vtkSmartPointer<vtkCellArray> cells;
   vtkSmartPointer<vtkUnsignedCharArray> colors_original;
   vtkSmartPointer<vtkUnsignedCharArray> colors;
+
 
   matrix_type points_wrapped;
   matrix_type points_unwrapped;
@@ -67,6 +77,7 @@ public slots:
   void on_clearButton_clicked();
   void on_unwrapButton_clicked();
   void on_colorComboBox_currentIndexChanged(const QString & text);
+  void on_perspectiveCheckBox_clicked();
 
 
 private:
@@ -77,7 +88,7 @@ private:
   bool is_unwrapped=FALSE;
 
   void clearAll();
-  void updateView();
+  void updateView(int reset_camera=1);
   void getInfo(vtkSmartPointer<vtkPolyData> wall);
   void compute_unwrap();
   double estimateRadius (matrix_type points );

@@ -8,10 +8,56 @@
 #include <vtkRenderer.h>
 #include <vtkRenderWindow.h>
 #include <vtkSphereSource.h>
-#include <vtkSmartPointer.h>
-#include "Model.h"
+
+
 
 #define PI 3.1415
+
+
+
+
+
+// Define interaction style
+class MouseInteractorStylePP : public vtkInteractorStyleTrackballCamera
+{
+  public:
+    vtkSmartPointer<vtkPolyData> wall;
+
+    static MouseInteractorStylePP* New();
+    vtkTypeMacro(MouseInteractorStylePP, vtkInteractorStyleTrackballCamera);
+
+    virtual void OnLeftButtonDown()
+    {
+      std::cout << "Picking pixel: " << this->Interactor->GetEventPosition()[0] << " " << this->Interactor->GetEventPosition()[1] << std::endl;
+      this->Interactor->GetPicker()->Pick(this->Interactor->GetEventPosition()[0],
+                         this->Interactor->GetEventPosition()[1],
+                         0,  // always zero.
+                         this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
+      double picked[3];
+      this->Interactor->GetPicker()->GetPickPosition(picked);
+      std::cout << "Picked value: " << picked[0] << " " << picked[1] << " " << picked[2] << std::endl;
+      // Forward events
+      vtkInteractorStyleTrackballCamera::OnLeftButtonDown();
+    }
+
+    // void OnMouseMove(){
+    //   std::cout << "mouse moving" << std::endl;
+    //   OnLeftButtonDown();
+    // }
+
+};
+
+vtkStandardNewMacro(MouseInteractorStylePP);
+
+
+
+
+
+
+
+
+
+
 
 // Constructor
 Visualizer::Visualizer():
@@ -38,6 +84,16 @@ Visualizer::Visualizer():
   renderer->SetBackground(1.0,1.0,1.0);
   renderer->SetBackground2(0.1,0.1,0.1);
   // renderer->AddActor(sphereActor);
+
+
+  // Changing interactor to a custom one to handle different mouse events
+  vtkSmartPointer<vtkPointPicker> pointPicker = vtkSmartPointer<vtkPointPicker>::New();
+  vtkSmartPointer<MouseInteractorStylePP> interactor = vtkSmartPointer<MouseInteractorStylePP>::New();
+  this->ui->qvtkWidget->GetRenderWindow()->GetInteractor()->SetPicker(pointPicker);
+  this->ui->qvtkWidget->GetRenderWindow()->GetInteractor()->SetInteractorStyle( interactor );
+
+
+  renderer->GetActiveCamera()->SetParallelProjection(0);
 
   // VTK/Qt wedded
   this->ui->qvtkWidget->GetRenderWindow()->AddRenderer(renderer);
@@ -158,7 +214,7 @@ vtkSmartPointer<vtkUnsignedCharArray> Visualizer::get_colors(vtkSmartPointer<vtk
 
 }
 
-void  Visualizer::updateView(){
+void  Visualizer::updateView(int reset_camera){
   std::cout << "update view" << std::endl;
   renderer->RemoveAllViewProps();
 
@@ -188,7 +244,9 @@ void  Visualizer::updateView(){
 
 
   renderer->AddActor(actor);
-  renderer->ResetCamera();
+  if (reset_camera==1){
+    renderer->ResetCamera();
+  }
 
   this->ui->qvtkWidget->GetRenderWindow()->Render();
 
@@ -285,7 +343,20 @@ void Visualizer::on_colorComboBox_currentIndexChanged(const QString & text){
     std::cout << "calculating Curvature colors" << std::endl;
   }
 
-  updateView();
+  updateView(0);
+
+}
+
+void Visualizer::on_perspectiveCheckBox_clicked(){
+  std::cout << "change perspective" << std::endl;
+
+  int current_val=renderer->GetActiveCamera()->GetParallelProjection();
+  if (current_val==0)
+    renderer->GetActiveCamera()->SetParallelProjection(1);
+  else
+    renderer->GetActiveCamera()->SetParallelProjection(0);
+
+  updateView(0);
 
 }
 
