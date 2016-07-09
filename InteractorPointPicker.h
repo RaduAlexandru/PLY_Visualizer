@@ -26,6 +26,7 @@
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
 #include <vtkLineSource.h>
+#include <vtkCellArray.h>
 
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -59,7 +60,7 @@ public:
     double last_point[3];
 
 public slots:
-    void on_selectButton_clicked();
+
 
 };
 

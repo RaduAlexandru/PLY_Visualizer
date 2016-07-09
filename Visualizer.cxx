@@ -80,6 +80,7 @@
 
 // Constructor
 Visualizer::Visualizer():
+  model(new Model()),
   renderer(vtkSmartPointer<vtkRenderer>::New()),
   wall(vtkSmartPointer<vtkPolyData>::New()),
   points(vtkSmartPointer<vtkPoints>::New()),
@@ -100,8 +101,9 @@ Visualizer::Visualizer():
   this->ui->colorComboBox->addItem("Curvature");
 
 
+  std::cout << "model has a value of test: " << model->test << std::endl;
 
-  Model* model= new Model();
+
 
   selecting_defects=false;
 

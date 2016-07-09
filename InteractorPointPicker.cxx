@@ -15,10 +15,14 @@ ids(vtkSmartPointer<vtkIdTypeArray>::New())
   last_point[2]=0;
 
 
-
-
   vtkSmartPointer<vtkRenderer> ren = vtkSmartPointer<vtkRenderer>::New();
   boost::thread t(boost::bind(&InteractorPointPicker::allow_add_point, this));
+
+}
+
+InteractorPointPicker* InteractorPointPicker::New(){
+  InteractorPointPicker* returnValue = new InteractorPointPicker();
+  return returnValue;
 
 }
 
@@ -243,25 +247,70 @@ void InteractorPointPicker::add_point(){
     }
 
 
-    vtkSmartPointer<vtkSphereSource> sphereSource =
-    vtkSmartPointer<vtkSphereSource>::New();
-    sphereSource->SetCenter(pos[0], pos[1], pos[2]);
-    sphereSource->SetRadius(0.05);
-    sphereSource->SetPhiResolution(30);
-    sphereSource->SetThetaResolution(30);
+    // vtkSmartPointer<vtkSphereSource> sphereSource =
+    // vtkSmartPointer<vtkSphereSource>::New();
+    // sphereSource->SetCenter(pos[0], pos[1], pos[2]);
+    // sphereSource->SetRadius(0.05);
+    // sphereSource->SetPhiResolution(30);
+    // sphereSource->SetThetaResolution(30);
+    //
+    // vtkSmartPointer<vtkPolyDataMapper> mapper =
+    //   vtkSmartPointer<vtkPolyDataMapper>::New();
+    // mapper->SetInputConnection(sphereSource->GetOutputPort());
+    //
+    // vtkSmartPointer<vtkActor> actor =
+    //   vtkSmartPointer<vtkActor>::New();
+    // actor->SetMapper(mapper);
+    // //actor->GetProperty()->SetColor(1.0, 1.0, 0.0); //(R,G,B)
+    // actor->GetProperty()->SetColor(0.9, 0.5, 0.0); //(R,G,B)
+    //
+    // //this->GetInteractor()->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(actor);
+    // // this->GetInteractor()->GetRenderWindow()->Render();
+    // // this->HighlightProp(NULL);
 
+
+
+
+
+
+
+    //makea point insted of a sphere
+    vtkSmartPointer<vtkPoints> points =
+    vtkSmartPointer<vtkPoints>::New();
+    const float p[3] = {1.0, 2.0, 3.0};
+
+    // Create the topology of the point (a vertex)
+    vtkSmartPointer<vtkCellArray> vertices =
+      vtkSmartPointer<vtkCellArray>::New();
+    vtkIdType pid[1];
+    pid[0] = points->InsertNextPoint(pos);
+    vertices->InsertNextCell(1,pid);
+
+    // Create a polydata object
+    vtkSmartPointer<vtkPolyData> point =
+      vtkSmartPointer<vtkPolyData>::New();
+
+    // Set the points and vertices we created as the geometry and topology of the polydata
+    point->SetPoints(points);
+    point->SetVerts(vertices);
+
+    // Visualize
     vtkSmartPointer<vtkPolyDataMapper> mapper =
       vtkSmartPointer<vtkPolyDataMapper>::New();
-    mapper->SetInputConnection(sphereSource->GetOutputPort());
+    mapper->SetInput(point);
+
 
     vtkSmartPointer<vtkActor> actor =
       vtkSmartPointer<vtkActor>::New();
     actor->SetMapper(mapper);
-    actor->GetProperty()->SetColor(1.0, 1.0, 0.0); //(R,G,B)
-
+    actor->GetProperty()->SetPointSize(5);
+    //actor->GetProperty()->SetColor(0.9, 0.5, 0.0); //(R,G,B)
+    actor->GetProperty()->SetColor(0.137, 0.39, 0.40); //(R,G,B)
     this->GetInteractor()->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(actor);
-    // this->GetInteractor()->GetRenderWindow()->Render();
-    // this->HighlightProp(NULL);
+
+
+
+
 
 
     //make a line to connect the last sphere and the newly created one
@@ -278,7 +327,9 @@ void InteractorPointPicker::add_point(){
       vtkSmartPointer<vtkActor>::New();
     line_actor->SetMapper(line_mapper);
     line_actor->GetProperty()->SetLineWidth(6);
-    line_actor->GetProperty()->SetColor(0.0, 0.0, 1.0); //(R,G,B)
+    //line_actor->GetProperty()->SetColor(0.0, 0.0, 1.0); //(R,G,B)
+    //line_actor->GetProperty()->SetColor(0.6, 0.1, 0.1); //(R,G,B)
+    line_actor->GetProperty()->SetColor(0.66, 0.23, 0.22); //(R,G,B)
 
     this->GetInteractor()->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(line_actor);
 
@@ -289,19 +340,8 @@ void InteractorPointPicker::add_point(){
 
 
     this->GetInteractor()->GetRenderWindow()->Render();
-    this->HighlightProp(NULL);
+    //this->HighlightProp(NULL);
     add_point_allowed=false;
   }
-
-}
-
-void InteractorPointPicker::on_selectButton_clicked(){
-  std::cout << "interactor SEEELCECT" << std::endl;
-}
-
-
-InteractorPointPicker* InteractorPointPicker::New(){
-  InteractorPointPicker* returnValue = new InteractorPointPicker();
-  return returnValue;
 
 }

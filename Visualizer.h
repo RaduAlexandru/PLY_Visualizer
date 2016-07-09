@@ -49,6 +49,8 @@ public:
   Visualizer();
   ~Visualizer() {};
 
+  std::shared_ptr<Model> model;
+
 
   vtkSmartPointer<vtkPolyData> wall;
   vtkSmartPointer<vtkPoints> points;
@@ -63,7 +65,7 @@ public:
   std::vector<double> distances_to_radius;
   std::vector<double> distances_to_center;
 
-  int num_points;
+  int num_points=0;
   int point_components;
   double radius;
   double circumference;
