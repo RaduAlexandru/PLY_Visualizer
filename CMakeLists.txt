@@ -9,6 +9,12 @@ PROJECT(Visualizer)
 
 set(CMAKE_BUILD_TYPE Debug)
 
+
+
+
+
+
+
 find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})
 
@@ -27,6 +33,9 @@ file(GLOB CXX_FILES *.cxx)
 file(GLOB UI_FILES *.ui)
 file(GLOB QT_WRAP *.h)
 
+find_package(Boost COMPONENTS thread date_time program_options filesystem system REQUIRED)
+include_directories(${Boost_INCLUDE_DIR})
+link_directories(${Boost_LIBRARY_DIR})
 
 
 
@@ -37,22 +46,22 @@ if(${VTK_VERSION} VERSION_GREATER "6" AND VTK_QT_VERSION VERSION_GREATER "4")
   add_executable(Visualizer MACOSX_BUNDLE
     ${CXX_FILES} ${UISrcs} ${QT_WRAP})
   qt5_use_modules(Visualizer Core Gui)
-  target_link_libraries(Visualizer ${VTK_LIBRARIES})
+  target_link_libraries(Visualizer ${Boost_LIBRARIES} ${VTK_LIBRARIES})
 else()
   QT4_WRAP_UI(UISrcs ${UI_FILES})
   QT4_WRAP_CPP(MOCSrcs ${QT_WRAP})
   add_executable(Visualizer MACOSX_BUNDLE ${CXX_FILES} ${UISrcs} ${MOCSrcs})
 
   #for C++11
-  target_compile_features(Visualizer PRIVATE cxx_range_for)
+  target_compile_features(Visualizer PRIVATE cxx_range_for )
 
   if(VTK_LIBRARIES)
     if(${VTK_VERSION} VERSION_LESS "6")
-      target_link_libraries(Visualizer ${VTK_LIBRARIES} QVTK)
+      target_link_libraries(Visualizer ${Boost_LIBRARIES} ${VTK_LIBRARIES} QVTK)
     else()
-      target_link_libraries(Visualizer ${VTK_LIBRARIES})
+      target_link_libraries(Visualizer ${Boost_LIBRARIES} ${VTK_LIBRARIES})
     endif()
   else()
-    target_link_libraries(Visualizer vtkHybrid QVTK vtkViews ${QT_LIBRARIES})
+    target_link_libraries(Visualizer ${Boost_LIBRARIES} vtkHybrid QVTK vtkViews ${QT_LIBRARIES})
   endif()
 endif()

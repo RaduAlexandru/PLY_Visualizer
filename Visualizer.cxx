@@ -91,6 +91,7 @@ Visualizer::Visualizer():
   this->ui = new Ui_Visualizer;
   this->ui->setupUi(this);
 
+
   std::cout << "Visualizer constructor" << std::endl;
 
   this->ui->colorComboBox->addItem("Plain");
@@ -101,6 +102,8 @@ Visualizer::Visualizer():
 
 
   Model* model= new Model();
+
+  selecting_defects=false;
 
   // VTK Renderer
   renderer->GradientBackgroundOn();
@@ -114,6 +117,7 @@ Visualizer::Visualizer():
   //interactor = vtkSmartPointer<InteractorPointPicker>::New();
   this->ui->qvtkWidget->GetRenderWindow()->GetInteractor()->SetInteractorStyle( interactor );
   this->ui->qvtkWidget->GetRenderWindow()->GetInteractor()->SetPicker(pointPicker);
+  interactor->selecting_defects=&(this->selecting_defects);
 
 
 
@@ -210,6 +214,8 @@ vtkSmartPointer<vtkUnsignedCharArray> Visualizer::get_colors(vtkSmartPointer<vtk
   int num       =wall->GetNumberOfPoints();
   auto scalars  =wall->GetPointData()->GetScalars();
 
+
+
   if (scalars==nullptr){
     std::cout << "no color" << std::endl;
 
@@ -222,7 +228,10 @@ vtkSmartPointer<vtkUnsignedCharArray> Visualizer::get_colors(vtkSmartPointer<vtk
     int num_colors=scalars->GetSize();
     std::cout << "number of values it has: " << num_colors << std::endl;
 
-    for (vtkIdType i = 0; i < num_points; i++) {
+    //To avoid it inserting more colors than points
+    int min= std::min (num_colors, num);
+
+    for (vtkIdType i = 0; i < min; i++) {
       rgb->InsertNextTuple(scalars->GetTuple(i));
       //std::cout << "touple::" << scalars->GetTuple(i)[0] << " " << scalars->GetTuple(i)[1]<< " "<<  scalars->GetTuple(i)[2] << std::endl;
     }
@@ -384,6 +393,12 @@ void Visualizer::on_perspectiveCheckBox_clicked(){
 
   updateView(0);
 
+}
+
+void Visualizer::on_selectButton_clicked(){
+  std::cout << "selecting defects" << std::endl;
+  selecting_defects=!selecting_defects;
+  std::cout << "now selecting defects is " << selecting_defects<< std::endl;
 }
 
 void Visualizer::compute_plain_colors(){

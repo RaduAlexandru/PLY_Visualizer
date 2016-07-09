@@ -82,6 +82,7 @@ public slots:
   void on_unwrapButton_clicked();
   void on_colorComboBox_currentIndexChanged(const QString & text);
   void on_perspectiveCheckBox_clicked();
+  void on_selectButton_clicked();
 
 
 private:
@@ -90,6 +91,8 @@ private:
   Ui_Visualizer *ui;
 
   bool is_unwrapped=FALSE;
+  //std::shared_ptr<bool> p =false;
+  bool selecting_defects=false;
 
   void clearAll();
   void updateView(int reset_camera=1);
