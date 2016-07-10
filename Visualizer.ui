@@ -153,6 +153,19 @@ p, li { white-space: pre-wrap; }
       <string>Select defects</string>
      </property>
     </widget>
+    <widget class="QPushButton" name="gridButton">
+     <property name="geometry">
+      <rect>
+       <x>40</x>
+       <y>480</y>
+       <width>91</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Grid</string>
+     </property>
+    </widget>
    </widget>
   </widget>
   <action name="actionOpenFile">

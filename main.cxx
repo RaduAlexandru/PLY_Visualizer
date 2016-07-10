@@ -3,11 +3,12 @@
 
 int main( int argc, char** argv )
 {
-  // QT Stuff
+  //QT Stuff
   QApplication app( argc, argv );
 
   Visualizer w;
   w.show();
 
   return app.exec();
+
 }

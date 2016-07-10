@@ -10,90 +10,13 @@
 #include <vtkSphereSource.h>
 
 
-#define PI 3.1415
-
-
-
-
-//
-// // Define interaction style
-// class MouseInteractorStylePP : public vtkInteractorStyleTrackballCamera
-// {
-//   public:
-//     //vtkSmartPointer<vtkPolyData> wall;
-//
-//
-//     static MouseInteractorStylePP* New();
-//     vtkTypeMacro(MouseInteractorStylePP, vtkInteractorStyleTrackballCamera);
-//
-//     virtual void OnLeftButtonDown()
-//     {
-//       std::cout << "Picking pixel: " << this->Interactor->GetEventPosition()[0] << " " << this->Interactor->GetEventPosition()[1] << std::endl;
-//       this->Interactor->GetPicker()->Pick(this->Interactor->GetEventPosition()[0],
-//                          this->Interactor->GetEventPosition()[1],
-//                          0,  // always zero.
-//                          this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
-//       double picked[3];
-//       this->Interactor->GetPicker()->GetPickPosition(picked);
-//       std::cout << "Picked value: " << picked[0] << " " << picked[1] << " " << picked[2] << std::endl;
-//
-//
-//
-//       //Clip a sphere out of it
-//       vtkSmartPointer<vtkSphere> sphere_cut = vtkSmartPointer<vtkSphere>::New();
-//       // box_cut->SetBounds (0.0, 1000, -0.005, 0.005, -1000.0, 1000.0);
-//       //
-//       // vtkSmartPointer<vtkClipPolyData> clipper= vtkSmartPointer<vtkClipPolyData>::New();
-//       // clipper->SetInputConnection(reader->GetOutputPort());
-//       // clipper->SetClipFunction(box_cut);
-//       // clipper->InsideOutOff();
-//       // clipper->Update();
-//       // clipper->GenerateClippedOutputOn();
-//
-//
-//
-//
-//
-//
-//       // Forward events
-//       vtkInteractorStyleTrackballCamera::OnLeftButtonDown();
-//     }
-//
-//     // void OnMouseMove(){
-//     //   std::cout << "mouse moving" << std::endl;
-//     //   OnLeftButtonDown();
-//     // }
-//
-// };
-//
-// vtkStandardNewMacro(MouseInteractorStylePP);
-
-
-
-//vtkStandardNewMacro(InteractorPointPicker);
-
-
-
-
-
-
-
-// Constructor
 Visualizer::Visualizer():
   model(new Model()),
   renderer(vtkSmartPointer<vtkRenderer>::New()),
-  wall(vtkSmartPointer<vtkPolyData>::New()),
-  points(vtkSmartPointer<vtkPoints>::New()),
-  cells(vtkSmartPointer<vtkCellArray>::New()),
-  colors(vtkSmartPointer<vtkUnsignedCharArray>::New()),
-  colors_original(vtkSmartPointer<vtkUnsignedCharArray>::New()),
   interactor(vtkSmartPointer<InteractorPointPicker>::New())
 {
   this->ui = new Ui_Visualizer;
   this->ui->setupUi(this);
-
-
-  std::cout << "Visualizer constructor" << std::endl;
 
   this->ui->colorComboBox->addItem("Plain");
   this->ui->colorComboBox->addItem("RGB");
@@ -101,25 +24,61 @@ Visualizer::Visualizer():
   this->ui->colorComboBox->addItem("Curvature");
 
 
-  std::cout << "model has a value of test: " << model->test << std::endl;
+  // // //ui
+  // // self.centralWidget = QtGui.QWidget(MainWindow)
+  // // self.gridlayout = QtGui.QGridLayout(self.centralWidget)
+  // // self.vtkWidget = QVTKRenderWindowInteractor(self.centralWidget)
+  // // self.gridlayout.addWidget(self.vtkWidget, 0, 0, 100, 100)
+  // // self.buttonLeft = QtGui.QPushButton("Left")
+  // // self.gridlayout.addWidget(self.buttonLeft, 96,48,1,1)
+  // // self.buttonRight = QtGui.QPushButton("Right")
+  // // self.gridlayout.addWidget(self.buttonRight, 96,52,1,1)
+  // // self.buttonUp= QtGui.QPushButton("Up")
+  // // self.gridlayout.addWidget(self.buttonUp, 94,50,1,1)
+  // // self.buttonDown = QtGui.QPushButton("Down")
+  // // self.gridlayout.addWidget(self.buttonDown, 98,50,1,1)
+  // // self.buttonFire = QtGui.QPushButton("Fire Torpedo")
+  // // self.gridlayout.addWidget(self.buttonFire, 95,50,3,1)
+  // // MainWindow.setCentralWidget(self.centralWidget)
+  //
+  //
+  // QGridLayout *layout = new QGridLayout;
+  //
+  // // CAM111 = new QLabel("CAM 01");
+  //
+  // // for (int i = 1; i < 10; ++ i) {
+  // //       QLabel * const label = new QLabel(QString("CAM %1").arg(i, 2, 10, QLatin1Char('0')));
+  // //       label->setFixedSize(200, 50);
+  // //       layout->addWidget(label, (i-1) / 3, (i-1) % 3);
+  // //       cams << label;
+  // //   }
+  //
+  // layout->addWidget(new QPushButton("Button Text"), 0, 0);
+  // layout->addWidget(new QVTKRenderWindowInteractor(), 1, 1);
+  //
+  // QWidget * central = new QWidget();
+  // setCentralWidget(central);
+  // centralWidget()->setLayout(layout);
+  //
+  // setWindowTitle("Camera Window");
+  // setFixedSize(1000, 800);
 
 
 
-  selecting_defects=false;
 
   // VTK Renderer
   renderer->GradientBackgroundOn();
   renderer->SetBackground(1.0,1.0,1.0);
   renderer->SetBackground2(0.1,0.1,0.1);
-  // renderer->AddActor(sphereActor);
+
 
 
   // Changing interactor to a custom one to handle different mouse events
-  vtkSmartPointer<vtkPointPicker> pointPicker = vtkSmartPointer<vtkPointPicker>::New();
-  //interactor = vtkSmartPointer<InteractorPointPicker>::New();
+  //vtkSmartPointer<vtkPointPicker> pointPicker = vtkSmartPointer<vtkPointPicker>::New();
+  vtkSmartPointer<vtkCellPicker> pointPicker = vtkSmartPointer<vtkCellPicker>::New();
   this->ui->qvtkWidget->GetRenderWindow()->GetInteractor()->SetInteractorStyle( interactor );
   this->ui->qvtkWidget->GetRenderWindow()->GetInteractor()->SetPicker(pointPicker);
-  interactor->selecting_defects=&(this->selecting_defects);
+  interactor->selecting_defects=&(model->selecting_defects);
 
 
 
@@ -135,26 +94,37 @@ Visualizer::Visualizer():
 
 
 void Visualizer::on_loadFileButton_clicked(){
-  std::cout << "loading file" << std::endl;
-  //renderer->RemoveAllViewProps();
-
   QString fileName;
 	fileName = QFileDialog::getOpenFileName(this,
-		tr("Open OBJ File"), "./", tr("OBJ File (*.ply)"));
+		tr("Open File"), "./", tr("File (*.*)"));
 
-	if (fileName.isEmpty())
-		return;
+	if (fileName.isEmpty()){
+    return;
+  }
 
   std::cout << "filename: " << fileName.toStdString() << std::endl;
 
+
+
+  if (boost::ends_with(fileName.toStdString(), ".ply")) {
+    std::cout << "reading .ply file" << std::endl;
+  }else if (boost::ends_with(fileName.toStdString(), ".obj")){
+    std::cout << "reading .obj file" << std::endl;
+  }else{
+    std::cout << "NOT VALID FORMAT" << std::endl;
+    return;
+  }
+
+
   vtkSmartPointer<vtkPLYReader> reader = vtkSmartPointer<vtkPLYReader>::New();
+  //vtkSmartPointer<vtkOBJReader> reader = vtkSmartPointer<vtkOBJReader>::New();
   reader->SetFileName ( fileName.toStdString().c_str() );
   reader->Update();
+  //reader->GetOutput()->GetPointData()->SetNormals(NULL);
 
   //cut the cylinder
   vtkSmartPointer<vtkBox> box_cut = vtkSmartPointer<vtkBox>::New();
   box_cut->SetBounds (0.0, 1000, -0.005, 0.005, -1000.0, 1000.0);
-
   vtkSmartPointer<vtkClipPolyData> clipper= vtkSmartPointer<vtkClipPolyData>::New();
   clipper->SetInputConnection(reader->GetOutputPort());
   clipper->SetClipFunction(box_cut);
@@ -162,118 +132,47 @@ void Visualizer::on_loadFileButton_clicked(){
   clipper->Update();
   clipper->GenerateClippedOutputOn();
 
+  model->set_mesh(clipper->GetOutput());
 
-  wall  = clipper->GetOutput();
+  ui->colorComboBox->setCurrentIndex(ui->colorComboBox->findText("RGB"));
 
-  clearAll();
-  getInfo(wall);
+
+  // //trying to detect the bug in the reader
+  // std::string inputFilename= "/media/alex/Nuevo_vol/Master/SHK/Data/Chimney/result/result.ply";
+  // vtkSmartPointer<vtkPLYReader> reader =
+  //   vtkSmartPointer<vtkPLYReader>::New();
+  // reader->SetFileName ( inputFilename.c_str() );
+  // reader->Update();
+  // vtkSmartPointer<vtkPolyDataMapper> mapper =
+  //   vtkSmartPointer<vtkPolyDataMapper>::New();
+  // mapper->SetInputConnection(reader->GetOutputPort());
+  // vtkSmartPointer<vtkActor> actor =
+  //   vtkSmartPointer<vtkActor>::New();
+  // actor->SetMapper(mapper);
+  // renderer->AddActor(actor);
+  // this->ui->qvtkWidget->GetRenderWindow()->Render();
+
+
   updateView();
 }
 
 void Visualizer::clearAll(){
-
-  this->is_unwrapped=FALSE;
-  this->points_wrapped.clear();
-  this->points_unwrapped.clear();
-  this->distances_to_radius.clear();
-  this->distances_to_center.clear();
+  model->clear();
   renderer->RemoveAllViewProps();
 }
 
-void Visualizer::getInfo(vtkSmartPointer<vtkPolyData> wall){
-  this->points=wall->GetPoints();
-  this->points_wrapped= vtk_to_vector(this->points);
-  this->point_components = this->points->GetData()->GetNumberOfComponents();
-  this->cells            =wall->GetPolys();
-  //this->colors           =wall->GetPointData()->GetScalars();
-  this->colors_original  = get_colors(wall);
-  this->colors  = get_colors(wall);
-
-  // auto test  =wall->GetPointData()->GetScalars();
-
-  this->num_points       =wall->GetNumberOfPoints();
-  this->radius           = estimateRadius(points_wrapped);
-  this->circumference    =2*PI*radius;
-
-  // std::cout << "getting colors" << std::endl;
-  // if (test==NULL){
-  //   std::cout << "no color" << std::endl;
-  // }else{
-  //   std::cout << "yes it has color " << std::endl;
-  // }
-  // std::cout << "number of values it has: " << test->GetSize() << std::endl;
-  // for (vtkIdType i = 0; i < num_points; i++) {
-  //   //std::cout << "touple::" << test->GetTuple(i)[0] << " " << test->GetTuple(i)[1]<< " "<<  test->GetTuple(i)[2] << std::endl;
-  // }
-  //   std::cout << "finishedgetting colors" << std::endl;
-}
-
-vtkSmartPointer<vtkUnsignedCharArray> Visualizer::get_colors(vtkSmartPointer<vtkPolyData> wall){
-
-  vtkSmartPointer<vtkUnsignedCharArray> rgb= vtkSmartPointer<vtkUnsignedCharArray>::New();
-  rgb->SetNumberOfComponents(3);
-
-  int num       =wall->GetNumberOfPoints();
-  auto scalars  =wall->GetPointData()->GetScalars();
-
-
-
-  if (scalars==nullptr){
-    std::cout << "no color" << std::endl;
-
-    for (size_t i = 0; i < num; i++) {
-      rgb->InsertNextTuple3(255.0, 255.0, 255.0);
-    }
-  }else{
-    std::cout << "yes it has color " << std::endl;
-
-    int num_colors=scalars->GetSize();
-    std::cout << "number of values it has: " << num_colors << std::endl;
-
-    //To avoid it inserting more colors than points
-    int min= std::min (num_colors, num);
-
-    for (vtkIdType i = 0; i < min; i++) {
-      rgb->InsertNextTuple(scalars->GetTuple(i));
-      //std::cout << "touple::" << scalars->GetTuple(i)[0] << " " << scalars->GetTuple(i)[1]<< " "<<  scalars->GetTuple(i)[2] << std::endl;
-    }
-
-  }
-
-  rgb->SetName("rgb");
-
-  wall->GetPointData()->AddArray(rgb);
-
-  return rgb;
-
-
-}
 
 void  Visualizer::updateView(int reset_camera){
   std::cout << "update view" << std::endl;
   renderer->RemoveAllViewProps();
 
-  //Set points
-  vtkSmartPointer<vtkPoints> points_active = vtkSmartPointer<vtkPoints>::New() ;
-  if (is_unwrapped){
-    std::cout << "will create an unwrapped wall" << std::endl;
-    std::cout << "points_unwrapped is: "<<points_unwrapped.size() << std::endl;
-    points_active=vector_to_vtk(points_unwrapped);
-  }else{
-    std::cout << "will create an wrapped wall" << std::endl;
-    std::cout << "points_wrapped is: "<<points_wrapped.size() << std::endl;
-    points_active=vector_to_vtk(points_wrapped);
-  }
-  wall->SetPoints(points_active);
-  wall->SetPolys(this->cells);
-  wall->GetPointData()->SetScalars(colors);
-
+  //update the wall with the new points (wrapped on unwrapped)
+  vtkSmartPointer<vtkPolyData> wall=model->get_mesh();
 
   // Visualize
   vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   mapper->SetInputConnection(wall->GetProducerPort());
   mapper->Update();
-
   vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
   actor->SetMapper(mapper);
 
@@ -283,66 +182,14 @@ void  Visualizer::updateView(int reset_camera){
     renderer->ResetCamera();
   }
 
-  interactor->wall=wall;
-  //interactor->test=this->num_points;
   this->ui->qvtkWidget->GetRenderWindow()->Render();
 
 }
 
-void Visualizer::compute_unwrap(){
-  std::cout << "compute_unwrap" << std::endl;
-  //Check if we have a wall
-  //If we already have an unwrap for it, show it, otherwise, calculate it
-
-  this->angles              =computeAngles(this->points_wrapped);
-  this->distances_to_radius = computeDistancesToRadius(this->points_wrapped, radius);
-
-
-  //assign the new points
-  points_unwrapped.resize(num_points);
-  for (size_t i = 0; i < num_points; i++) {
-    points_unwrapped[i].resize(point_components);
-    points_unwrapped[i][0]=angles[i] *circumference;
-    points_unwrapped[i][1]=distances_to_radius[i];
-    points_unwrapped[i][2]=points_wrapped[i][2];
-  }
-  std::cout << "finish asign points" << std::endl;
-
-
-
-  // double max_dist=*(std::max_element(std::begin(distances_to_radius), std::end(distances_to_radius)));
-  // double min_dist=*(std::min_element(std::begin(distances_to_radius), std::end(distances_to_radius)));
-  //
-  // std::vector<double> depth;
-  // depth.resize(num_points);
-  //
-  // for (size_t i = 0; i < num_points; i++) {
-  //   depth[i]=interpolate(distances_to_radius[i], min_dist, max_dist, 255.0, 0.0);
-  // }
-  //
-  // vtkSmartPointer<vtkUnsignedCharArray> colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
-  // colors->SetNumberOfComponents(3);
-  // colors->SetName("Colors");
-  //
-  //
-  //
-  //
-  // std::cout << "starting to create colors" << std::endl;
-  // for (size_t i = 0; i < num_points; i++) {
-  //   //colors->InsertNextTuple3(angles[i]*255.0,0,0);
-  //   colors->InsertNextTuple3(depth[i],depth[i],depth[i]);
-  //   //points_unwrapped.InsertNextPoint( angles[i] *circumference,distances_from_radius[i],point[2])
-  // }
-  // std::cout << "finishing to create colors" << std::endl;
-  //
-  // //new_wall.GetPointData().SetScalars(new_colors)
-  // wall->GetPointData()->SetScalars(colors);
-}
 
 void Visualizer::on_clearButton_clicked(){
   std::cout << "clearing the view" << std::endl;
   renderer->RemoveAllViewProps();
-  std::cout << "clear: wall is poiting to" << wall << std::endl;
   this->ui->qvtkWidget->GetRenderWindow()->Render();
 }
 
@@ -350,12 +197,12 @@ void Visualizer::on_unwrapButton_clicked(){
   std::cout << "unwrapping" << std::endl;
 
 
-  if (!points_wrapped.empty()){
-    this->is_unwrapped=!this->is_unwrapped;
+  if (!model->points_wrapped.empty()){
+    model->is_unwrapped=!model->is_unwrapped;
   }
 
-  if (points_unwrapped.empty() && !points_wrapped.empty()){
-    compute_unwrap();
+  if (model->points_unwrapped.empty() && !model->points_wrapped.empty()){
+    model->compute_unwrap();
   }
 
   updateView();
@@ -366,21 +213,21 @@ void Visualizer::on_colorComboBox_currentIndexChanged(const QString & text){
 
   if (text.toStdString() == "Plain"){
     std::cout << "calculating plain colors" << std::endl;
-    compute_plain_colors();
+    model->compute_plain_colors();
   }
   if (text.toStdString() == "RGB"){
     std::cout << "calculating RGB colors" << std::endl;
-    compute_rgb_colors();
+    model->compute_rgb_colors();
   }
   if (text.toStdString() == "Depth"){
     std::cout << "calculating Depth colors" << std::endl;
-    compute_depth_colors();
+    model->compute_depth_colors();
   }
   if (text.toStdString() == "Curvature"){
     std::cout << "calculating Curvature colors" << std::endl;
   }
 
-  updateView(0);
+  updateView(0);  //by passing 0 it forces the camera to not be reset when updating the renderer view
 
 }
 
@@ -393,183 +240,59 @@ void Visualizer::on_perspectiveCheckBox_clicked(){
   else
     renderer->GetActiveCamera()->SetParallelProjection(0);
 
-  updateView(0);
+  updateView(0);  //by passing 0 it forces the camera to not be reset when updating the renderer view
 
 }
 
 void Visualizer::on_selectButton_clicked(){
   std::cout << "selecting defects" << std::endl;
-  selecting_defects=!selecting_defects;
-  std::cout << "now selecting defects is " << selecting_defects<< std::endl;
+  model->selecting_defects=!model->selecting_defects;
 }
 
-void Visualizer::compute_plain_colors(){
+void Visualizer::on_gridButton_clicked(){
+  std::cout << "grid mode" << std::endl;
+  model->selecting_grid=!model->selecting_grid;
 
 
-  colors->Reset();
-  colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
-  colors->SetNumberOfComponents(3);
-  colors->SetName("plain");
+  renderer->RemoveAllViewProps();
+  renderer->ResetCamera();
 
-  for (size_t i = 0; i < num_points; i++) {
-    colors->InsertNextTuple3(255.0 ,255.0 ,255.0);
+
+
+
+  //unwrapping
+  if (!model->points_wrapped.empty()){
+    model->is_unwrapped=true;
   }
-  std::cout << "finishing to create colors" << std::endl;
-
-  //new_wall.GetPointData().SetScalars(new_colors)
-  wall->GetPointData()->SetScalars(colors);
-
-}
-
-void Visualizer::compute_rgb_colors(){
-
-  colors->Reset();
-  colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
-  colors->SetNumberOfComponents(3);
-  colors->SetName("plain");
-
-  for (vtkIdType i = 0; i < num_points; i++) {
-    colors->InsertNextTuple(colors_original->GetTuple(i));
-    //colors->InsertNextTuple3(0.0 ,0.0 ,0.0);
-  }
-
-}
-
-void Visualizer::compute_depth_colors(){
-
-  this->distances_to_radius = computeDistancesToRadius(this->points_wrapped, radius);
-
-  double max_dist=*(std::max_element(std::begin(distances_to_radius), std::end(distances_to_radius)));
-  double min_dist=*(std::min_element(std::begin(distances_to_radius), std::end(distances_to_radius)));
-
-  std::vector<double> depth;
-  depth.resize(num_points);
-
-  for (size_t i = 0; i < num_points; i++) {
-    depth[i]=interpolate(distances_to_radius[i], min_dist, max_dist, 255.0, 0.0);
-  }
-
-  colors->Reset();
-  colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
-  colors->SetNumberOfComponents(3);
-  colors->SetName("depth");
-
-
-
-
-  std::cout << "starting to create colors" << std::endl;
-  for (size_t i = 0; i < num_points; i++) {
-    //colors->InsertNextTuple3(angles[i]*255.0,0,0);
-    colors->InsertNextTuple3(depth[i],depth[i],depth[i]);
-    //points_unwrapped.InsertNextPoint( angles[i] *circumference,distances_from_radius[i],point[2])
-  }
-  std::cout << "finishing to create colors" << std::endl;
-
-  //new_wall.GetPointData().SetScalars(new_colors)
-  wall->GetPointData()->SetScalars(colors);
-
-
-}
-
-
-double Visualizer::estimateRadius(matrix_type points ){
-  std::cout << "esimating radius" << std::endl;
-
-  int num_points=points.size();
-  distances_to_center.resize(num_points);
-
-  //no need to substract the center because we assume it's already centered
-  //we do not use the z component since we suppose that the cylinder is oriented
-  for (size_t i = 0; i < num_points; i++) {
-    distances_to_center[i]= sqrt( points[i][0]*points[i][0]  + points[i][1]*points[i][1] );
+  if (model->points_unwrapped.empty() && !model->points_wrapped.empty()){
+    model->compute_unwrap();
   }
 
 
-  //median of it will be the radius of the cylinder
-  std::vector<double> calc(distances_to_center);
-  size_t n = calc.size() / 2;
-  std::nth_element(calc.begin(), calc.begin()+n, calc.end());
-  double median= calc[n];
-  std::cout << "radius estimated is:" << median << std::endl;
-  return median;
-}
+  //at this point we have the unwrapped points, but they are not yet set to the actuall wall
+  //we call the get mesh, to write the point_unwrapped into the actual wall (don't now if necesary)
+  model->get_mesh();
 
+  //forming a grid
+  model->create_grid();
+  std::cout << "visualizer finished creating grid" << std::endl;
 
-std::vector<double> Visualizer::computeAngles(matrix_type points){
-
-
-  //we again suppose that the center is already at 0,0,0
-  int num_points=points.size();
-  std::vector<double> angles;
-  angles.resize(num_points);
-
-  for (size_t i = 0; i < num_points; i++) {
-    double ax=points[i][0];
-    double ay=points[i][1];
-    angles[i]=atan2(-ay,-ax);
-
-    //interpolate it from -pi->pi to 0->1
-    //angles[i] = 0.0 + ((1.0 - 0.0) / (3.1415 +3.1415)) * (angles[i] +3.1415);
-    angles[i] = interpolate (  angles[i] , -PI, PI, 0.0, 1.0);
-  }
-  return angles;
-
-}
-
-std::vector<double> Visualizer::computeDistancesToRadius(matrix_type points, double radius){
-  int num_points=points.size();
-  std::vector<double> dist;
-  dist.resize(num_points);
-
-  //Calculate first the distance to center.
-  for (size_t i = 0; i < num_points; i++) {
-    dist[i]= sqrt( points[i][0]*points[i][0]  + points[i][1]*points[i][1] );
-    dist[i]= dist[i]-radius;
+  //iterating through all the grid cells polydata and make actors for them
+  for (size_t i = 0; i < model->grid_cells.size(); i++) {
+    vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    mapper->SetInputConnection(model->grid_cells[i]->GetProducerPort());
+    //mapper->ImmediateModeRenderingOn();
+    mapper->StaticOn();
+    //mapper->Update();
+    vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+    actor->SetMapper(mapper);
+    renderer->AddActor(actor);
+    std::cout << "added actor nr " << i << std::endl;
   }
 
-  return dist;
-}
 
-
-matrix_type Visualizer::vtk_to_vector(vtkSmartPointer<vtkPoints> points){
-  int num_components = points->GetData()->GetNumberOfComponents();
-  int num_rows = points->GetData()->GetNumberOfTuples();
-
-  std::cout << "n_components is: " << num_components << std::endl;
-  std::cout << "n_rows is: " << num_rows << std::endl;
-
-  row_type curTuple(num_components);
-  matrix_type cpp_matrix(num_rows, row_type(num_components));
-
-  for (int i=0; i<num_rows; i++) {
-    points->GetData()->GetTuple(i, curTuple.data());
-    cpp_matrix[i] = curTuple;
-  }
-
-  return cpp_matrix;
-}
-
-vtkSmartPointer<vtkPoints> Visualizer::vector_to_vtk(matrix_type points){
-  std::cout << "vector_to_vtk" << std::endl;
-  std:: cout << "v_to_vtk: size of points is: " << points.size() << std::endl;
-  vtkSmartPointer<vtkPoints> points_vtk=  vtkSmartPointer<vtkPoints>::New();
-
-  for (size_t i = 0; i < points.size(); i++) {
-    //std::cout << "v_to_vtk: iter numer: "<< i  << std::endl;
-    points_vtk->InsertNextPoint( points[i][0],points[i][1],points[i][2]);
-    //points_vtk->InsertNextPoint( 0.0, 0.0, 0.0);
-  }
-
-  std::cout << "finish vector_to_vtk" << std::endl;
-  return points_vtk;
-}
-
-double Visualizer::interpolate ( double input , double input_start, double input_end, double output_start, double output_end){
-
-  double output;
-  output = output_start + ((output_end - output_start) / (input_end - input_start)) * (input - input_start);
-
-  return output;
+  this->ui->qvtkWidget->GetRenderWindow()->Render();
+  //updateView();
 
 }
 

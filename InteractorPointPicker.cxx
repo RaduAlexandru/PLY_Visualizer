@@ -1,19 +1,14 @@
 #include "InteractorPointPicker.h"
 
 InteractorPointPicker::InteractorPointPicker():
-wall(vtkSmartPointer<vtkPolyData>::New()),
-ids(vtkSmartPointer<vtkIdTypeArray>::New())
+ids(vtkSmartPointer<vtkIdTypeArray>::New()),
+add_point_allowed(false),
+dragging(false),
+last_point(3)
 {
-  std::cout << "InteractorPointPicker CONSTRUCT" << std::endl;
-  //this->PointPicker = vtkSmartPointer<vtkPointPicker>::New();
   ids->SetNumberOfComponents(1);
 
-  add_point_allowed=true;
-  dragging=false;
-  last_point[0]=0;
-  last_point[1]=0;
-  last_point[2]=0;
-
+  std::fill(last_point.begin(), last_point.end(), 0);
 
   vtkSmartPointer<vtkRenderer> ren = vtkSmartPointer<vtkRenderer>::New();
   boost::thread t(boost::bind(&InteractorPointPicker::allow_add_point, this));
@@ -155,9 +150,7 @@ void InteractorPointPicker::OnLeftButtonDown()
 void InteractorPointPicker::OnLeftButtonUp()
 {
   if (*selecting_defects){
-    last_point[0]=0;
-    last_point[1]=0;
-    last_point[2]=0;
+    std::fill(last_point.begin(), last_point.end(), 0);
     dragging=false;
   }
   vtkInteractorStyleTrackballCamera::OnLeftButtonUp();
@@ -165,14 +158,10 @@ void InteractorPointPicker::OnLeftButtonUp()
 
 
 void InteractorPointPicker::OnMouseMove(){
-    //std::cout << "mouse moving" << std::endl;
 
-    //std::cout << "moving with selection mode: " << *selecting_defects << std::endl;
 
     if (*selecting_defects && dragging){
-      //std::cout << "paining" << std::endl;
       add_point();
-      //paint();
     }else{
       vtkInteractorStyleTrackballCamera::OnMouseMove();
     }
@@ -188,17 +177,8 @@ void InteractorPointPicker::allow_add_point()
 {
   while(true){
       //wall->Modified();
-
-      // int num =ids->GetSize();
-      // if (num!=0){
-      //   this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->Render();
-      // }
-      // std::cout << "TICK:::number of points" << num << std::endl;
-
-      //std::cout << "Tick: we allow adding a points!\n";
-
       add_point_allowed=true;
-      boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
+      boost::this_thread::sleep_for(boost::chrono::milliseconds(5));
   }
 }
 
@@ -211,11 +191,15 @@ void InteractorPointPicker::add_point(){
 
     vtkIdType point_id=0;
     int* clickPos = this->GetInteractor()->GetEventPosition();
-    vtkSmartPointer<vtkPointPicker>  picker = vtkSmartPointer<vtkPointPicker>::New();
+    vtkSmartPointer<vtkPointPicker>  picker = vtkSmartPointer<vtkPointPicker>::New();    //faster, gives only closest point to the ray
+    //vtkSmartPointer<vtkCellPicker>  picker = vtkSmartPointer<vtkCellPicker>::New();   //slower but more precise. gives exact point wthin a mesh
+
+    picker->SetTolerance (picker->GetTolerance ()/3);
 
     // Pick from this location.
     picker->Pick(clickPos[0], clickPos[1],0,this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
-    double* pos = picker->GetPickPosition();
+    //std::vector<double> pos;
+    double *pos = picker->GetPickPosition();
     point_id    = picker->GetPointId();
     std::cout << "Pick_vertex is: " << pos[0] << " " << pos[1] << " " << pos[2] << std::endl;
     //std::cout << "id is: "<< point_id << std::endl;
@@ -241,9 +225,7 @@ void InteractorPointPicker::add_point(){
 
     //Make a shpere at that point
     if (last_point[0]==0 && last_point[1]==0 && last_point[2]==0){
-      last_point[0]=pos[0];
-      last_point[1]=pos[1];
-      last_point[2]=pos[2];
+      last_point.assign(pos, pos + 3);
     }
 
 
@@ -298,6 +280,7 @@ void InteractorPointPicker::add_point(){
     vtkSmartPointer<vtkPolyDataMapper> mapper =
       vtkSmartPointer<vtkPolyDataMapper>::New();
     mapper->SetInput(point);
+    mapper->StaticOn();
 
 
     vtkSmartPointer<vtkActor> actor =
@@ -305,7 +288,8 @@ void InteractorPointPicker::add_point(){
     actor->SetMapper(mapper);
     actor->GetProperty()->SetPointSize(5);
     //actor->GetProperty()->SetColor(0.9, 0.5, 0.0); //(R,G,B)
-    actor->GetProperty()->SetColor(0.137, 0.39, 0.40); //(R,G,B)
+    //actor->GetProperty()->SetColor(0.137, 0.39, 0.40); //(R,G,B)
+    actor->GetProperty()->SetColor(0.33, 0.0, 0.16); //(R,G,B)
     this->GetInteractor()->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(actor);
 
 
@@ -316,30 +300,34 @@ void InteractorPointPicker::add_point(){
     //make a line to connect the last sphere and the newly created one
     vtkSmartPointer<vtkLineSource> lineSource =
     vtkSmartPointer<vtkLineSource>::New();
-    lineSource->SetPoint1(last_point);
+    lineSource->SetPoint1(last_point.data());
     lineSource->SetPoint2(pos);
     lineSource->Update();
 
     vtkSmartPointer<vtkPolyDataMapper> line_mapper =
       vtkSmartPointer<vtkPolyDataMapper>::New();
     line_mapper->SetInputConnection(lineSource->GetOutputPort());
+    line_mapper->StaticOn();
     vtkSmartPointer<vtkActor> line_actor =
       vtkSmartPointer<vtkActor>::New();
     line_actor->SetMapper(line_mapper);
-    line_actor->GetProperty()->SetLineWidth(6);
+    line_actor->GetProperty()->SetLineWidth(8);
     //line_actor->GetProperty()->SetColor(0.0, 0.0, 1.0); //(R,G,B)
     //line_actor->GetProperty()->SetColor(0.6, 0.1, 0.1); //(R,G,B)
     line_actor->GetProperty()->SetColor(0.66, 0.23, 0.22); //(R,G,B)
 
     this->GetInteractor()->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(line_actor);
 
-    last_point[0]=pos[0];
-    last_point[1]=pos[1];
-    last_point[2]=pos[2];
+
+
+    last_point.assign(pos, pos + 3);
+    // last_point[0]=pos[0];
+    // last_point[1]=pos[1];
+    // last_point[2]=pos[2];
 
 
 
-    this->GetInteractor()->GetRenderWindow()->Render();
+    this->GetInteractor()->GetRenderWindow()->Render();  //Refreshe the renderer so that each line shows
     //this->HighlightProp(NULL);
     add_point_allowed=false;
   }

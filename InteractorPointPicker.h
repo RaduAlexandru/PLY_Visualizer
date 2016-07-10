@@ -8,6 +8,7 @@
 #include <vtkPointPicker.h>
 #include <vtkPoints.h>
 #include <vtkPointPicker.h>
+#include <vtkCellPicker.h>
 #include <vtkUnsignedCharArray.h>
 #include <vtkPoints.h>
 #include <vtkPointData.h>
@@ -43,21 +44,26 @@ public:
     InteractorPointPicker();
     static InteractorPointPicker* New();
     vtkTypeMacro(InteractorPointPicker, vtkInteractorStyleTrackballCamera);
-    virtual void OnLeftButtonDown();
+
+    bool add_point_allowed;
+    bool* selecting_defects;
+    bool dragging;
+    vtkSmartPointer<vtkIdTypeArray> ids;
+    //double last_point[3];
+    std::vector<double> last_point;
+
+
+
+
+
+    void OnLeftButtonDown();
     void OnMouseMove();
     void OnLeftButtonUp();
     void print();
     void allow_add_point();
     void add_point();
 
-    bool add_point_allowed;
-    bool* selecting_defects;
-    bool dragging;
 
-    vtkSmartPointer<vtkPolyData> wall;
-
-    vtkSmartPointer<vtkIdTypeArray> ids;
-    double last_point[3];
 
 public slots:
 
