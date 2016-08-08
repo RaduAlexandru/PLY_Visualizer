@@ -116,15 +116,18 @@ void Visualizer::on_loadFileButton_clicked(){
   }
 
 
+
   vtkSmartPointer<vtkPLYReader> reader = vtkSmartPointer<vtkPLYReader>::New();
   //vtkSmartPointer<vtkOBJReader> reader = vtkSmartPointer<vtkOBJReader>::New();
   reader->SetFileName ( fileName.toStdString().c_str() );
   reader->Update();
   //reader->GetOutput()->GetPointData()->SetNormals(NULL);
 
+
   //cut the cylinder
   vtkSmartPointer<vtkBox> box_cut = vtkSmartPointer<vtkBox>::New();
-  box_cut->SetBounds (0.0, 1000, -0.005, 0.005, -1000.0, 1000.0);
+//  box_cut->SetBounds (0.0, 1000, -0.005, 0.005, -1000.0, 1000.0);
+   box_cut->SetBounds (0.0, 1000, -0.007, 0.007, -1000.0, 1000.0);
   vtkSmartPointer<vtkClipPolyData> clipper= vtkSmartPointer<vtkClipPolyData>::New();
   clipper->SetInputConnection(reader->GetOutputPort());
   clipper->SetClipFunction(box_cut);
