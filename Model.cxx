@@ -151,7 +151,7 @@ vtkSmartPointer<vtkPolyData> Model::get_mesh(){
 
 
   vtkSmartPointer<vtkPolyDataNormals> normals_alg = vtkSmartPointer<vtkPolyDataNormals>::New();
-  normals_alg->SetInput(wall);
+  normals_alg->SetInputData(wall);
   normals_alg->Update();
 
 
@@ -324,7 +324,7 @@ void Model::create_grid(){
       vtkSmartPointer<vtkBox> box_cut = vtkSmartPointer<vtkBox>::New();
       box_cut->SetBounds (box_bounds);
       vtkSmartPointer<vtkClipPolyData> clipper= vtkSmartPointer<vtkClipPolyData>::New();
-      clipper->SetInputConnection(wall->GetProducerPort());
+      clipper->SetInputData(wall);
       clipper->SetClipFunction(box_cut);
       clipper->InsideOutOn();
       clipper->Update();

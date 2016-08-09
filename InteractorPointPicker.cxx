@@ -279,7 +279,7 @@ void InteractorPointPicker::add_point(){
     // Visualize
     vtkSmartPointer<vtkPolyDataMapper> mapper =
       vtkSmartPointer<vtkPolyDataMapper>::New();
-    mapper->SetInput(point);
+    mapper->SetInputData(point);
     mapper->StaticOn();
 
 

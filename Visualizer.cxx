@@ -8,6 +8,7 @@
 #include <vtkRenderer.h>
 #include <vtkRenderWindow.h>
 #include <vtkSphereSource.h>
+#include <vtkPNGReader.h>
 
 
 Visualizer::Visualizer():
@@ -94,69 +95,157 @@ Visualizer::Visualizer():
 
 
 void Visualizer::on_loadFileButton_clicked(){
-  QString fileName;
-	fileName = QFileDialog::getOpenFileName(this,
-		tr("Open File"), "./", tr("File (*.*)"));
-
-	if (fileName.isEmpty()){
-    return;
-  }
-
-  std::cout << "filename: " << fileName.toStdString() << std::endl;
-
-
-
-  if (boost::ends_with(fileName.toStdString(), ".ply")) {
-    std::cout << "reading .ply file" << std::endl;
-  }else if (boost::ends_with(fileName.toStdString(), ".obj")){
-    std::cout << "reading .obj file" << std::endl;
-  }else{
-    std::cout << "NOT VALID FORMAT" << std::endl;
-    return;
-  }
-
-
-
-  vtkSmartPointer<vtkPLYReader> reader = vtkSmartPointer<vtkPLYReader>::New();
-  //vtkSmartPointer<vtkOBJReader> reader = vtkSmartPointer<vtkOBJReader>::New();
-  reader->SetFileName ( fileName.toStdString().c_str() );
-  reader->Update();
-  //reader->GetOutput()->GetPointData()->SetNormals(NULL);
+  // QString fileName;
+	// fileName = QFileDialog::getOpenFileName(this,
+	// 	tr("Open File"), "./", tr("File (*.*)"));
+  //
+	// if (fileName.isEmpty()){
+  //   return;
+  // }
+  //
+  // std::cout << "filename: " << fileName.toStdString() << std::endl;
+  //
+  //
+  //
+  // if (boost::ends_with(fileName.toStdString(), ".ply")) {
+  //   std::cout << "reading .ply file" << std::endl;
+  // }else if (boost::ends_with(fileName.toStdString(), ".obj")){
+  //   std::cout << "reading .obj file" << std::endl;
+  // }else{
+  //   std::cout << "NOT VALID FORMAT" << std::endl;
+  //   return;
+  // }
 
 
-  //cut the cylinder
-  vtkSmartPointer<vtkBox> box_cut = vtkSmartPointer<vtkBox>::New();
-//  box_cut->SetBounds (0.0, 1000, -0.005, 0.005, -1000.0, 1000.0);
-   box_cut->SetBounds (0.0, 1000, -0.007, 0.007, -1000.0, 1000.0);
-  vtkSmartPointer<vtkClipPolyData> clipper= vtkSmartPointer<vtkClipPolyData>::New();
-  clipper->SetInputConnection(reader->GetOutputPort());
-  clipper->SetClipFunction(box_cut);
-  clipper->InsideOutOff();
-  clipper->Update();
-  clipper->GenerateClippedOutputOn();
-
-  model->set_mesh(clipper->GetOutput());
-
-  ui->colorComboBox->setCurrentIndex(ui->colorComboBox->findText("RGB"));
 
 
-  // //trying to detect the bug in the reader
-  // std::string inputFilename= "/media/alex/Nuevo_vol/Master/SHK/Data/Chimney/result/result.ply";
-  // vtkSmartPointer<vtkPLYReader> reader =
-  //   vtkSmartPointer<vtkPLYReader>::New();
-  // reader->SetFileName ( inputFilename.c_str() );
-  // reader->Update();
-  // vtkSmartPointer<vtkPolyDataMapper> mapper =
-  //   vtkSmartPointer<vtkPolyDataMapper>::New();
-  // mapper->SetInputConnection(reader->GetOutputPort());
-  // vtkSmartPointer<vtkActor> actor =
-  //   vtkSmartPointer<vtkActor>::New();
-  // actor->SetMapper(mapper);
-  // renderer->AddActor(actor);
-  // this->ui->qvtkWidget->GetRenderWindow()->Render();
 
 
-  updateView();
+  //BRUTE FORCE reading
+//  std::string inputFilename= "/media/alex/Nuevo_vol/Master/SHK/Data/Chimney/dense_ir_result/texturedMesh.obj";
+//  std::string texFilename= "/media/alex/Nuevo_vol/Master/SHK/Data/Chimney/dense_ir_result/texturedMesh_material0000_map_Kd.png";
+
+//  // std::string inputFilename= "/media/alex/Nuevo_vol/Master/SHK/Data/Custom/custom_cyl_5_high_res.ply";
+
+//  // vtkSmartPointer<vtkPLYReader> reader = vtkSmartPointer<vtkPLYReader>::New();
+//  vtkSmartPointer<vtkOBJReader> reader= vtkSmartPointer<vtkOBJReader>::New();
+
+//  std::cout << "reading file---------------" << std::endl;
+//  reader->SetFileName ( inputFilename.data() );
+//  reader->Update();
+//  std::cout << "finished reading file---------------" << std::endl;
+
+
+
+//  // Visualize
+//  vtkSmartPointer<vtkPolyDataMapper> mapper =
+//    vtkSmartPointer<vtkPolyDataMapper>::New();
+//  mapper->SetInputConnection(reader->GetOutputPort());
+
+//  vtkSmartPointer<vtkActor> actor =
+//    vtkSmartPointer<vtkActor>::New();
+//  actor->SetMapper(mapper);
+
+
+//  //texture
+//  vtkSmartPointer<vtkPNGReader> texReader =
+//  vtkSmartPointer<vtkPNGReader>::New();
+//  texReader->SetFileName(texFilename.c_str());
+//  texReader->Update();
+
+//  vtkSmartPointer<vtkTexture> colorTexture =
+//  vtkSmartPointer<vtkTexture>::New();
+//  colorTexture->SetInputConnection(texReader->GetOutputPort());
+//  colorTexture->InterpolateOn();
+
+//  actor->SetTexture(colorTexture);
+
+//  renderer->AddActor(actor);
+//    this->ui->qvtkWidget->GetRenderWindow()->Render();
+//    renderer->ResetCamera();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  //OBJ IMPORTER
+   std::string inputFilename= "/media/alex/Nuevo_vol/Master/SHK/Data/Chimney/dense_ir_result/texturedMesh.obj";
+   std::string texFilename= "/media/alex/Nuevo_vol/Master/SHK/Data/Chimney/dense_ir_result/texturedMesh_material0000_map_Kd.png";
+
+   std::string filenameOBJ="/media/alex/Nuevo_vol/Master/SHK/Data/Chimney/dense_ir_result/texturedMesh.obj";
+   std::string filenameMTL="/media/alex/Nuevo_vol/Master/SHK/Data/Chimney/dense_ir_result/texturedMesh.mtl";
+   std::string texture_path1="/media/alex/Nuevo_vol/Master/SHK/Data/Chimney/dense_ir_result/";
+
+
+
+   vtkSmartPointer<vtkOBJImporter> reader = vtkSmartPointer<vtkOBJImporter>::New();
+   reader->SetFileName(filenameOBJ.data());
+   reader->SetFileNameMTL(filenameMTL.data());
+   reader->SetTexturePath(texture_path1.data());
+
+   reader->SetRenderWindow(this->ui->qvtkWidget->GetRenderWindow());
+   reader->Update();
+
+
+   renderer->ResetCamera();
+   this->ui->qvtkWidget->GetRenderWindow()->Render();
+
+
+
+
+
+
+//
+//
+//   // vtkSmartPointer<vtkPLYReader> reader = vtkSmartPointer<vtkPLYReader>::New();
+//   vtkSmartPointer<vtkOBJReader> reader = vtkSmartPointer<vtkOBJReader>::New();
+//   reader->SetFileName ( fileName.toStdString().c_str() );
+//   reader->Update();
+//   //reader->GetOutput()->GetPointData()->SetNormals(NULL);
+//
+//
+//   //cut the cylinder
+//   vtkSmartPointer<vtkBox> box_cut = vtkSmartPointer<vtkBox>::New();
+// //  box_cut->SetBounds (0.0, 1000, -0.005, 0.005, -1000.0, 1000.0);
+//    box_cut->SetBounds (0.0, 1000, -0.007, 0.007, -1000.0, 1000.0);
+//   vtkSmartPointer<vtkClipPolyData> clipper= vtkSmartPointer<vtkClipPolyData>::New();
+//   clipper->SetInputConnection(reader->GetOutputPort());
+//   clipper->SetClipFunction(box_cut);
+//   clipper->InsideOutOff();
+//   clipper->Update();
+//   clipper->GenerateClippedOutputOn();
+//
+//   model->set_mesh(clipper->GetOutput());
+//
+//   ui->colorComboBox->setCurrentIndex(ui->colorComboBox->findText("RGB"));
+//
+//
+//   // //trying to detect the bug in the reader
+//   // std::string inputFilename= "/media/alex/Nuevo_vol/Master/SHK/Data/Chimney/result/result.ply";
+//   // vtkSmartPointer<vtkPLYReader> reader =
+//   //   vtkSmartPointer<vtkPLYReader>::New();
+//   // reader->SetFileName ( inputFilename.c_str() );
+//   // reader->Update();
+//   // vtkSmartPointer<vtkPolyDataMapper> mapper =
+//   //   vtkSmartPointer<vtkPolyDataMapper>::New();
+//   // mapper->SetInputConnection(reader->GetOutputPort());
+//   // vtkSmartPointer<vtkActor> actor =
+//   //   vtkSmartPointer<vtkActor>::New();
+//   // actor->SetMapper(mapper);
+//   // renderer->AddActor(actor);
+//   // this->ui->qvtkWidget->GetRenderWindow()->Render();
+//
+//
+//   updateView();
 }
 
 void Visualizer::clearAll(){
@@ -174,7 +263,7 @@ void  Visualizer::updateView(int reset_camera){
 
   // Visualize
   vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-  mapper->SetInputConnection(wall->GetProducerPort());
+  mapper->SetInputData(wall);
   mapper->Update();
   vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
   actor->SetMapper(mapper);
@@ -283,7 +372,7 @@ void Visualizer::on_gridButton_clicked(){
   //iterating through all the grid cells polydata and make actors for them
   for (size_t i = 0; i < model->grid_cells.size(); i++) {
     vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-    mapper->SetInputConnection(model->grid_cells[i]->GetProducerPort());
+    mapper->SetInputData(model->grid_cells[i]);
     //mapper->ImmediateModeRenderingOn();
     mapper->StaticOn();
     //mapper->Update();

@@ -26,6 +26,7 @@
 #include <vtkCamera.h>
 #include <vtkDelaunay2D.h>
 #include <vtkPolyDataNormals.h>
+#include <vtkOBJImporter.h>
 
 
 #include <math.h>
@@ -59,6 +60,8 @@ public:
   std::shared_ptr<Model> model;
   vtkSmartPointer<vtkRenderer> renderer;
   vtkSmartPointer<InteractorPointPicker> interactor;
+
+  
 
 public slots:
 
