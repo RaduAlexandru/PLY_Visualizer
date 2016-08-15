@@ -27,11 +27,32 @@
 #include <vtkDelaunay2D.h>
 #include <vtkPolyDataNormals.h>
 #include <vtkOBJImporter.h>
+#include <vtkMapper.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkSphereSource.h>
+#include <vtkPNGReader.h>
+#include <vtkImageData.h>
+#include <vtkAssembly.h>
+#include <vtkOpenGLRenderWindow.h>
+#include <vtkGenericOpenGLRenderWindow.h>
+#include <vtkTextureUnitManager.h>
+
+#include "vtkTexturingHelper.h"
+
+
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
 
 
 #include <math.h>
 #include <iterator>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string.hpp>
+
+#include <pcl/visualization/cloud_viewer.h>
+#include <pcl/visualization/pcl_visualizer.h>
 
 
 #include <QFileDialog>
@@ -61,7 +82,7 @@ public:
   vtkSmartPointer<vtkRenderer> renderer;
   vtkSmartPointer<InteractorPointPicker> interactor;
 
-  
+
 
 public slots:
 
