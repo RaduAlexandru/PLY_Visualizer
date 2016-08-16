@@ -2,7 +2,8 @@
 #include <iostream>
 
 OBJReader2::OBJReader2():
-m_polyData(vtkSmartPointer<vtkPolyData>::New())
+m_polyData(vtkSmartPointer<vtkPolyData>::New()),
+m_full_texture_name("full_texture.png")
 {
 
 }
@@ -175,7 +176,7 @@ void OBJReader2::create_full_texture(){
       m_textures[i].copyTo(m_full_texture(cv::Rect(x_idx, y_idx, t_cols, t_rows)));
     }
     // std::cout << "writing to file-----------" << m_path <<  "full_texture.png" << std::endl;
-    cv::imwrite( m_path+ "full_texture.png", m_full_texture );
+    cv::imwrite( m_path+ m_full_texture_name, m_full_texture );
 
 }
 
@@ -418,4 +419,10 @@ void OBJReader2::write_to_poly(){
 
 vtkSmartPointer<vtkPolyData> OBJReader2::GetOutput(){
   return m_polyData;
+}
+
+std::string OBJReader2::GetTexturePath(){
+  std::string ret;
+  ret=m_path + m_full_texture_name;
+  return ret;
 }

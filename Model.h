@@ -12,6 +12,8 @@
 #include <vtkClipPolyData.h>
 #include <vtkBox.h>
 #include <vtkPolyDataNormals.h>
+#include <vtkImageData.h>
+#include <vtkTexture.h>
 #include "Utils.h"
 
 typedef std::vector<double> row_type;
@@ -23,6 +25,7 @@ public:
      Model();
 
      vtkSmartPointer<vtkPolyData> wall;
+     vtkSmartPointer<vtkTexture> m_full_texture;
      vtkSmartPointer<vtkCellArray> cells;
      vtkSmartPointer<vtkUnsignedCharArray> colors_original; //original colors, rgb if present and all white if not
      vtkSmartPointer<vtkUnsignedCharArray> colors_active;
@@ -48,6 +51,7 @@ public:
 
      void clear();
      void set_mesh(vtkPolyData*);
+     void set_texture(vtkTexture*);
      void read_info();
      vtkSmartPointer<vtkUnsignedCharArray> get_colors();
      double estimate_radius (matrix_type points );

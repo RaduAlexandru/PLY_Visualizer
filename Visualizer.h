@@ -97,6 +97,8 @@ public slots:
   void on_selectButton_clicked();
   void on_gridButton_clicked();
 
+  void on_updateViewButton_clicked();
+
 
 private:
 

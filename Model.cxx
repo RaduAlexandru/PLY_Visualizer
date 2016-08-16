@@ -25,6 +25,10 @@ void Model::set_mesh(vtkPolyData* mesh){
   read_info();
 }
 
+void Model::set_texture(vtkTexture* texture){
+  m_full_texture=texture;
+}
+
 void Model::clear(){
   this->is_unwrapped=false;
   this->selecting_defects=false;

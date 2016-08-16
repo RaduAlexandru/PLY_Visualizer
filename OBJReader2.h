@@ -36,7 +36,14 @@ public:
      OBJReader2();
      void SetFileName(std::string);
      void Update();
+     std::string GetTexturePath();
      vtkSmartPointer<vtkPolyData> GetOutput();
+
+
+
+private:
+
+     std::string m_full_texture_name;
 
      void read_mtl_file();
      void read_textures();
@@ -46,7 +53,7 @@ public:
      void write_to_poly();
 
 
-private:
+
      std::string m_obj_file_name;
      std::string m_path;
      std::vector<std::string> m_texture_file_names;

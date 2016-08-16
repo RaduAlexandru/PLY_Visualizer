@@ -652,71 +652,45 @@ void Visualizer::on_loadFileButton_clicked(){
   obj_reader->SetFileName(file_name);
   obj_reader->Update();
 
-   vtkSmartPointer<vtkPNGReader> pngReader = vtkSmartPointer<vtkPNGReader>::New();
-   std::string full_texture_file="/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/full_texture.png";
-  //  std::string full_texture_file="/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/tex_0.png";
-   pngReader->SetFileName (full_texture_file.data() );
-   pngReader->Update();
 
-   vtkSmartPointer<vtkTexture> texture = vtkSmartPointer<vtkTexture>::New();
-   texture->SetInputConnection(pngReader->GetOutputPort());
+  vtkSmartPointer<vtkPNGReader> pngReader = vtkSmartPointer<vtkPNGReader>::New();
+  pngReader->SetFileName (obj_reader->GetTexturePath().data() );
+  pngReader->Update();
+  vtkSmartPointer<vtkTexture> texture = vtkSmartPointer<vtkTexture>::New();
+  texture->SetInputConnection(pngReader->GetOutputPort());
 
-
-   vtkSmartPointer<vtkVertexGlyphFilter> glyphFilter = vtkSmartPointer<vtkVertexGlyphFilter>::New();
-   glyphFilter->SetInputData(obj_reader->GetOutput());
-
-
-   vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-
-   mapper->SetInputData(obj_reader->GetOutput());
-   //  mapper->SetInputConnection(glyphFilter->GetOutputPort());
+  model->set_mesh(obj_reader->GetOutput());
+  model->set_texture(texture);
+  ui->colorComboBox->setCurrentIndex(ui->colorComboBox->findText("RGB"));
+  updateView();
 
 
-   std::cout << "starting to make actor" << std::endl;
-   vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
-   actor->SetMapper(mapper);
-    actor->SetTexture(texture);
-
-
-   std::cout << "removing all props" << std::endl;
-   renderer->RemoveAllViewProps();
-   std::cout << "adding actor" << std::endl;
-   renderer->AddActor(actor);
-
-
-   std::cout << "reseting camera" << std::endl;
-   renderer->ResetCamera();
-   std::cout << "rendering" << std::endl;
-   this->ui->qvtkWidget->GetRenderWindow()->Render();
+  //  vtkSmartPointer<vtkPNGReader> pngReader = vtkSmartPointer<vtkPNGReader>::New();
+  // //  std::string full_texture_file="/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/full_texture.png";
+  // //  std::string full_texture_file="/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/tex_0.png";
+  //  pngReader->SetFileName (obj_reader->GetTexturePath().data() );
+  //  pngReader->Update();
+  //
+  //  vtkSmartPointer<vtkTexture> texture = vtkSmartPointer<vtkTexture>::New();
+  //  texture->SetInputConnection(pngReader->GetOutputPort());
+  //
+  //
+  //  vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+  //  mapper->SetInputData(obj_reader->GetOutput());
+  //
+  //  vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+  //  actor->SetMapper(mapper);
+  //  actor->SetTexture(texture);
+  // //  actor->GetProperty()->BackfaceCullingOn();
+  //
+  //
+  //  renderer->RemoveAllViewProps();
+  //  renderer->AddActor(actor);
+  //
+  //  renderer->ResetCamera();
+  //  this->ui->qvtkWidget->GetRenderWindow()->Render();
 
   //finished own obj importer-------------------------------------------------------------------------
-
-
-
-
-
-
-  //DEbugging see what is happening inside
-  // reader->GetOutput()
-  // obj_reader-GetOutput()
-
-  // std::cout << "starting debug" << std::endl;
-  //
-  // vtkSmartPointer<vtkPoints> deb_points;
-  // deb_points=reader->GetOutput()->GetPoints();
-  // std::cout << "deb_points size is" << deb_points->GetNumberOfPoints() << std::endl;
-  // for (size_t i = 0; i < 10; i++) {
-  //   double tuple[3];
-  //   std::cout << "getting the tuple" << std::endl;
-  //   deb_points->GetPoint(i,tuple);
-  //   std::cout << "prnting point" << std::endl;
-  //   std::cout << "deb points is: " <<tuple[0] << " " <<tuple[1]<< " " << tuple[2] << std::endl;
-  // }
-
-
-
-
-
 
 
 
@@ -744,6 +718,7 @@ void  Visualizer::updateView(int reset_camera){
   mapper->Update();
   vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
   actor->SetMapper(mapper);
+  actor->SetTexture(model->m_full_texture);
 
 
   renderer->AddActor(actor);
@@ -864,6 +839,11 @@ void Visualizer::on_gridButton_clicked(){
   this->ui->qvtkWidget->GetRenderWindow()->Render();
   //updateView();
 
+}
+
+void Visualizer::on_updateViewButton_clicked(){
+  std::cout << "updating iew" << std::endl;
+  updateView();
 }
 
 
