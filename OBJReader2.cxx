@@ -174,6 +174,7 @@ void OBJReader2::create_full_texture(){
 
       m_textures[i].copyTo(m_full_texture(cv::Rect(x_idx, y_idx, t_cols, t_rows)));
     }
+    // std::cout << "writing to file-----------" << m_path <<  "full_texture.png" << std::endl;
     cv::imwrite( m_path+ "full_texture.png", m_full_texture );
 
 }
@@ -361,10 +362,10 @@ void OBJReader2::write_to_poly(){
 
   //get through the faces and grab the indeces for the v, vt and vn
 
-
+  int gl_idx=0;  //global index that just indicates point in the mesh
   for (size_t mat_idx = 0; mat_idx < m_textures.size(); mat_idx++) {
     for (size_t poly_idx = 0; poly_idx < m_polys[mat_idx].size(); poly_idx++) {
-      vtk_polys->InsertNextCell(0);
+      vtk_polys->InsertNextCell(3);
       for (size_t point_idx = 0; point_idx < 3; point_idx++) {
 
         int v_idx= m_polys[mat_idx][poly_idx][point_idx][0];
@@ -392,18 +393,19 @@ void OBJReader2::write_to_poly(){
         vtk_tcoords->InsertNextTuple(tuple_t);
 
 
-        vtk_polys->InsertCellPoint(v_idx);
-
+        vtk_polys->InsertCellPoint(gl_idx);   //gl_idx will point to the previous point in the vtk_points
+        gl_idx++;
       }
 
 
 
     }
+
   }
 
   std::cout << "finished filling the vtk_vectors" << std::endl;
 
-  vtk_polys->UpdateCellCount(3);
+  // vtk_polys->UpdateCellCount(3);
 
   m_polyData->SetPoints(vtk_points);
   m_polyData->GetPointData()->SetNormals(vtk_normals);

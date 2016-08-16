@@ -370,234 +370,234 @@ void Visualizer::on_loadFileButton_clicked(){
 
 
    //-------NEW VTK HELPER------------------------------------------------------
-   //Read obj filename
-   //With the filename, get mtl filename and read it
-   //
-
-   //Get the textures
-   cv::Mat tex_0 = cv::imread("/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/tex_0.png", CV_LOAD_IMAGE_GRAYSCALE);
-   cv::Mat tex_1 = cv::imread("/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/tex_1.png", CV_LOAD_IMAGE_GRAYSCALE);
-   cv::Mat tex_2 = cv::imread("/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/tex_2.png", CV_LOAD_IMAGE_GRAYSCALE);
-
-   std::vector <cv::Mat> textures;
-   textures.push_back(tex_0);
-   textures.push_back(tex_1);
-   textures.push_back(tex_2);
-
-
-   //Calculate how big should the full_texture need to be
-   int multiplier;
-   multiplier=ceil(sqrt(textures.size()));
-   std::cout << "nr of images is" << textures.size() << std::endl;
-   std::cout << "multiplier is" << multiplier << std::endl;
-
-
-   //make a texture big to get all of the small ones
-   int t_rows=textures[0].rows;
-   int t_cols=textures[0].cols;
-   cv::Mat full_texture = cv::Mat::zeros(t_rows*multiplier, t_cols*multiplier, textures[0].type()) ;
-   std::cout << "full texture has rows and cols: " << full_texture.rows << " " << full_texture.cols << std::endl;
-
-   //Copy them in a row by row manner.
-   int x_idx=0, y_idx=-t_rows;
-   matrix_type texture_offsets;
-   for (size_t i = 0; i < textures.size(); i++) {
-     if ((i)%multiplier==0){
-      //  std::cout << "texture " << i << " goes into next row " << std::endl;
-       x_idx=0;
-       y_idx+=t_rows;
-     }else{
-       x_idx+=t_cols;
-     }
-    //  std::cout << "texture " << i << "start at " << x_idx << " " << y_idx << std::endl;
-
-     //According to the start of the img we need to get the offset taking into acount that opencv has origin at upper corner and opengl at lower corner
-     double offset_x=(double)x_idx/full_texture.cols;
-     double offset_y= (double)(full_texture.rows - (y_idx+t_rows))/full_texture.rows;
-     //  std::cout << "texture " << i  << " "<< offset_x << " " << offset_y << std::endl;
-     std::vector<double> offset_vec={offset_x,offset_y};
-     texture_offsets.push_back(offset_vec);
-
-    //  cv::flip(textures[i],textures[i],1);
-
-     textures[i].copyTo(full_texture(cv::Rect(x_idx, y_idx, t_cols, t_rows)));
-   }
-  //  cv::flip(full_texture,full_texture,0);
-   cv::imwrite( "./full_texture.png", full_texture );
-
-
-
-
-   //Read the obj file and the t coords
-
-
-   //read all the vt in one big array
-   //create an array of checked to see if I changed all of them
-
-   //read the obj again and now look for face and which material they have.
-   //modify each vt accoringly
-
-
-   std::string file= "/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/researchDenslyTexturedMesh_new.obj";
-   std::ifstream objFile;
-     objFile.open(file.data());
-     if (!objFile.is_open()) {
-         std::cout << "could open the obj file" << std::endl;
-    }
-
-
-
-   //Read all coords
-   matrix_type coords;
-   std::vector <double> coords_line(2);
-   while (objFile.good()) {
-     std::stringstream ss;
-     std::string line;
-     std::string word;
-     float x, y;
-
-     getline(objFile, line);
-     ss << line;
-     ss >> word >> x >> y;
-
-
-     if (word == "vt") {
-       coords_line[0]=x;
-       coords_line[1]=y;
-       coords.push_back(coords_line);
-     }
-
-   }
-   std::cout << "read a total of vts: " << coords.size() << std::endl;
-
-
-   //Read the faces
-   objFile.clear();
-   objFile.seekg(0);
-   int mat_idx=-1;
-   std::vector <int> coords_checked(coords.size(),0);
-   std::vector <int> vertex_indices;
-   while (objFile.good()) {
-     std::stringstream ss;
-     std::string line;
-     std::string word;
-
-     std::vector<std::string> face_points(3);
-
-     getline(objFile, line);
-     ss << line;
-     ss >> word >> face_points[0] >> face_points[1] >> face_points[2];
-
-
-     if (word=="usemtl"){
-       std::cout << "changing material" << std::endl;
-       mat_idx++;
-     }
-
-     if (word == "f") {
-      //  std::cout << "face has " << face_points[0] << " " <<  face_points[1] << " " << face_points[2] << std::endl;
-
-       //Iterate through those points get the vt stores in them
-       for (size_t p_idx = 0; p_idx < face_points.size(); p_idx++) {
-         std::vector<std::string> strs;
-         boost::split(strs, face_points[p_idx], boost::is_any_of("/"));
-        //  std::cout << "splitted " << face_points[p_idx] << " into " << strs[1] << std::endl;
-         int coord_to_change=atoi(strs[1].data());
-         coord_to_change=coord_to_change-1; // To account for the fact that obj faces start counting from 1
-
-         int vert_index=atoi(strs[0].data());
-         vert_index=vert_index-1;
-        //  vertex_indices[vert_index]=coord_to_change;
-        vertex_indices.push_back(vert_index);
-
-
-        //  std::cout << "changing coorindate " << vert_index  << " " << coord_to_change << std::endl;
-
-         //not hcange that coorindate only if it hasn't been already changed
-         if (coords_checked[coord_to_change]==0){
-           coords_checked[coord_to_change]=1;
-
-
-
-           //also need to divide all the coordinats by the multiplier so as the resize them.
-           coords[coord_to_change][0]=coords[coord_to_change][0]/multiplier;
-           coords[coord_to_change][1]=coords[coord_to_change][1]/multiplier;
-
-           coords[coord_to_change][0]+=texture_offsets[mat_idx][0];
-           coords[coord_to_change][1]+=texture_offsets[mat_idx][1];
-
-         }
-
-       }
-
-     }
-
-   }
-   objFile.close();
-   std::cout << "finished with tex coordins" << std::endl;
-
-
-
-  //  for (size_t i = coords.size()-15; i < coords.size(); i++) {
-  //    std::cout << "coords " << i <<  " : " << coords[i][0] << " " << coords[i][1]  << std::endl;
-   //
+  //  //Read obj filename
+  //  //With the filename, get mtl filename and read it
+  //  //
+  //
+  //  //Get the textures
+  //  cv::Mat tex_0 = cv::imread("/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/tex_0.png", CV_LOAD_IMAGE_GRAYSCALE);
+  //  cv::Mat tex_1 = cv::imread("/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/tex_1.png", CV_LOAD_IMAGE_GRAYSCALE);
+  //  cv::Mat tex_2 = cv::imread("/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/tex_2.png", CV_LOAD_IMAGE_GRAYSCALE);
+  //
+  //  std::vector <cv::Mat> textures;
+  //  textures.push_back(tex_0);
+  //  textures.push_back(tex_1);
+  //  textures.push_back(tex_2);
+  //
+  //
+  //  //Calculate how big should the full_texture need to be
+  //  int multiplier;
+  //  multiplier=ceil(sqrt(textures.size()));
+  //  std::cout << "nr of images is" << textures.size() << std::endl;
+  //  std::cout << "multiplier is" << multiplier << std::endl;
+  //
+  //
+  //  //make a texture big to get all of the small ones
+  //  int t_rows=textures[0].rows;
+  //  int t_cols=textures[0].cols;
+  //  cv::Mat full_texture = cv::Mat::zeros(t_rows*multiplier, t_cols*multiplier, textures[0].type()) ;
+  //  std::cout << "full texture has rows and cols: " << full_texture.rows << " " << full_texture.cols << std::endl;
+  //
+  //  //Copy them in a row by row manner.
+  //  int x_idx=0, y_idx=-t_rows;
+  //  matrix_type texture_offsets;
+  //  for (size_t i = 0; i < textures.size(); i++) {
+  //    if ((i)%multiplier==0){
+  //     //  std::cout << "texture " << i << " goes into next row " << std::endl;
+  //      x_idx=0;
+  //      y_idx+=t_rows;
+  //    }else{
+  //      x_idx+=t_cols;
+  //    }
+  //   //  std::cout << "texture " << i << "start at " << x_idx << " " << y_idx << std::endl;
+  //
+  //    //According to the start of the img we need to get the offset taking into acount that opencv has origin at upper corner and opengl at lower corner
+  //    double offset_x=(double)x_idx/full_texture.cols;
+  //    double offset_y= (double)(full_texture.rows - (y_idx+t_rows))/full_texture.rows;
+  //    //  std::cout << "texture " << i  << " "<< offset_x << " " << offset_y << std::endl;
+  //    std::vector<double> offset_vec={offset_x,offset_y};
+  //    texture_offsets.push_back(offset_vec);
+  //
+  //   //  cv::flip(textures[i],textures[i],1);
+  //
+  //    textures[i].copyTo(full_texture(cv::Rect(x_idx, y_idx, t_cols, t_rows)));
   //  }
-
-
-   //Reoder them correctly taking into account that they should be in the order of the vertices
-   matrix_type coords_ordered;
-   for (size_t i = 0; i < vertex_indices.size(); i++) {
-     int vert=vertex_indices[i];
-      // coords_ordered[i]=coords[vert];
-    //  coords_ordered[i].push_back(coords[vert][0]);
-    //  coords_ordered[i].push_back(coords[vert][1]);
-    coords_ordered.push_back(coords[vert]);
-   }
-
-
-
-
-   //Add the texture coordinates back to the original obj
-   vtkSmartPointer<vtkOBJReader> reader= vtkSmartPointer<vtkOBJReader>::New();
-   reader->SetFileName ( file.data() );
-   reader->Update();
-
-   vtkSmartPointer<vtkFloatArray> textureCoordinates = vtkSmartPointer<vtkFloatArray>::New();
-   textureCoordinates->SetNumberOfComponents(2);
-   textureCoordinates->SetName("TextureCoordinates");
-
-   for (size_t c_idx = 0; c_idx < coords_ordered.size(); c_idx++) {
-     float tuple[2] = {(float)coords_ordered[c_idx][0], (float)coords_ordered[c_idx][1]};
-     textureCoordinates->InsertNextTuple(tuple);
-   }
-
-  //  reader->GetOutput()->GetPointData()->SetTCoords(textureCoordinates);
-
-
-
-   vtkSmartPointer<vtkPNGReader> pngReader = vtkSmartPointer<vtkPNGReader>::New();
-   std::string full_texture_file="/media/alex/Data/Master/SHK/vtk_scripts/RenderWindowUISingleInheritance/build/full_texture.png";
-  //  std::string full_texture_file="/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/tex_0.png";
-   pngReader->SetFileName (full_texture_file.data() );
-   pngReader->Update();
-
-   vtkSmartPointer<vtkTexture> texture = vtkSmartPointer<vtkTexture>::New();
-   texture->SetInputConnection(pngReader->GetOutputPort());
-
-
-   vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-   mapper->SetInputData(reader->GetOutput());
-
-   vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
-   actor->SetMapper(mapper);
-   actor->SetTexture(texture);
-
-   renderer->RemoveAllViewProps();
-   renderer->AddActor(actor);
-
-   renderer->ResetCamera();
-   this->ui->qvtkWidget->GetRenderWindow()->Render();
-
+  // //  cv::flip(full_texture,full_texture,0);
+  //  cv::imwrite( "./full_texture.png", full_texture );
+  //
+  //
+  //
+  //
+  //  //Read the obj file and the t coords
+  //
+  //
+  //  //read all the vt in one big array
+  //  //create an array of checked to see if I changed all of them
+  //
+  //  //read the obj again and now look for face and which material they have.
+  //  //modify each vt accoringly
+  //
+  //
+  //  std::string file= "/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/researchDenslyTexturedMesh_new.obj";
+  //  std::ifstream objFile;
+  //    objFile.open(file.data());
+  //    if (!objFile.is_open()) {
+  //        std::cout << "could open the obj file" << std::endl;
+  //   }
+  //
+  //
+  //
+  //  //Read all coords
+  //  matrix_type coords;
+  //  std::vector <double> coords_line(2);
+  //  while (objFile.good()) {
+  //    std::stringstream ss;
+  //    std::string line;
+  //    std::string word;
+  //    float x, y;
+  //
+  //    getline(objFile, line);
+  //    ss << line;
+  //    ss >> word >> x >> y;
+  //
+  //
+  //    if (word == "vt") {
+  //      coords_line[0]=x;
+  //      coords_line[1]=y;
+  //      coords.push_back(coords_line);
+  //    }
+  //
+  //  }
+  //  std::cout << "read a total of vts: " << coords.size() << std::endl;
+  //
+  //
+  //  //Read the faces
+  //  objFile.clear();
+  //  objFile.seekg(0);
+  //  int mat_idx=-1;
+  //  std::vector <int> coords_checked(coords.size(),0);
+  //  std::vector <int> vertex_indices;
+  //  while (objFile.good()) {
+  //    std::stringstream ss;
+  //    std::string line;
+  //    std::string word;
+  //
+  //    std::vector<std::string> face_points(3);
+  //
+  //    getline(objFile, line);
+  //    ss << line;
+  //    ss >> word >> face_points[0] >> face_points[1] >> face_points[2];
+  //
+  //
+  //    if (word=="usemtl"){
+  //      std::cout << "changing material" << std::endl;
+  //      mat_idx++;
+  //    }
+  //
+  //    if (word == "f") {
+  //     //  std::cout << "face has " << face_points[0] << " " <<  face_points[1] << " " << face_points[2] << std::endl;
+  //
+  //      //Iterate through those points get the vt stores in them
+  //      for (size_t p_idx = 0; p_idx < face_points.size(); p_idx++) {
+  //        std::vector<std::string> strs;
+  //        boost::split(strs, face_points[p_idx], boost::is_any_of("/"));
+  //       //  std::cout << "splitted " << face_points[p_idx] << " into " << strs[1] << std::endl;
+  //        int coord_to_change=atoi(strs[1].data());
+  //        coord_to_change=coord_to_change-1; // To account for the fact that obj faces start counting from 1
+  //
+  //        int vert_index=atoi(strs[0].data());
+  //        vert_index=vert_index-1;
+  //       //  vertex_indices[vert_index]=coord_to_change;
+  //       vertex_indices.push_back(vert_index);
+  //
+  //
+  //       //  std::cout << "changing coorindate " << vert_index  << " " << coord_to_change << std::endl;
+  //
+  //        //not hcange that coorindate only if it hasn't been already changed
+  //        if (coords_checked[coord_to_change]==0){
+  //          coords_checked[coord_to_change]=1;
+  //
+  //
+  //
+  //          //also need to divide all the coordinats by the multiplier so as the resize them.
+  //          coords[coord_to_change][0]=coords[coord_to_change][0]/multiplier;
+  //          coords[coord_to_change][1]=coords[coord_to_change][1]/multiplier;
+  //
+  //          coords[coord_to_change][0]+=texture_offsets[mat_idx][0];
+  //          coords[coord_to_change][1]+=texture_offsets[mat_idx][1];
+  //
+  //        }
+  //
+  //      }
+  //
+  //    }
+  //
+  //  }
+  //  objFile.close();
+  //  std::cout << "finished with tex coordins" << std::endl;
+  //
+  //
+  //
+  // //  for (size_t i = coords.size()-15; i < coords.size(); i++) {
+  // //    std::cout << "coords " << i <<  " : " << coords[i][0] << " " << coords[i][1]  << std::endl;
+  //  //
+  // //  }
+  //
+  //
+  //  //Reoder them correctly taking into account that they should be in the order of the vertices
+  //  matrix_type coords_ordered;
+  //  for (size_t i = 0; i < vertex_indices.size(); i++) {
+  //    int vert=vertex_indices[i];
+  //     // coords_ordered[i]=coords[vert];
+  //   //  coords_ordered[i].push_back(coords[vert][0]);
+  //   //  coords_ordered[i].push_back(coords[vert][1]);
+  //   coords_ordered.push_back(coords[vert]);
+  //  }
+  //
+  //
+  //
+  //
+  //  //Add the texture coordinates back to the original obj
+  //  vtkSmartPointer<vtkOBJReader> reader= vtkSmartPointer<vtkOBJReader>::New();
+  //  reader->SetFileName ( file.data() );
+  //  reader->Update();
+  //
+  //  vtkSmartPointer<vtkFloatArray> textureCoordinates = vtkSmartPointer<vtkFloatArray>::New();
+  //  textureCoordinates->SetNumberOfComponents(2);
+  //  textureCoordinates->SetName("TextureCoordinates");
+  //
+  //  for (size_t c_idx = 0; c_idx < coords_ordered.size(); c_idx++) {
+  //    float tuple[2] = {(float)coords_ordered[c_idx][0], (float)coords_ordered[c_idx][1]};
+  //    textureCoordinates->InsertNextTuple(tuple);
+  //  }
+  //
+  // //  reader->GetOutput()->GetPointData()->SetTCoords(textureCoordinates);
+  //
+  //
+  //
+  //  vtkSmartPointer<vtkPNGReader> pngReader = vtkSmartPointer<vtkPNGReader>::New();
+  //  std::string full_texture_file="/media/alex/Data/Master/SHK/vtk_scripts/RenderWindowUISingleInheritance/build/full_texture.png";
+  // //  std::string full_texture_file="/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/tex_0.png";
+  //  pngReader->SetFileName (full_texture_file.data() );
+  //  pngReader->Update();
+  //
+  //  vtkSmartPointer<vtkTexture> texture = vtkSmartPointer<vtkTexture>::New();
+  //  texture->SetInputConnection(pngReader->GetOutputPort());
+  //
+  //
+  //  vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+  //  mapper->SetInputData(reader->GetOutput());
+  //
+  //  vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+  //  actor->SetMapper(mapper);
+  //  actor->SetTexture(texture);
+  //
+  //  renderer->RemoveAllViewProps();
+  //  renderer->AddActor(actor);
+  //
+  //  renderer->ResetCamera();
+  //  this->ui->qvtkWidget->GetRenderWindow()->Render();
+  //
 
 
 
@@ -645,49 +645,49 @@ void Visualizer::on_loadFileButton_clicked(){
 
 
   //OWN OBJ IMPORTER-------------------------------------------------------------------------------------------------
-  // std::string file_name= "/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/researchDenslyTexturedMesh.obj";
-  //
-  // std::unique_ptr<OBJReader2> obj_reader(new OBJReader2());
-  //
-  // obj_reader->SetFileName(file_name);
-  // obj_reader->Update();
-  //
-  //  vtkSmartPointer<vtkPNGReader> pngReader = vtkSmartPointer<vtkPNGReader>::New();
-  //  std::string full_texture_file="/media/alex/Data/Master/SHK/vtk_scripts/RenderWindowUISingleInheritance/build/full_texture.png";
-  // //  std::string full_texture_file="/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/tex_0.png";
-  //  pngReader->SetFileName (full_texture_file.data() );
-  //  pngReader->Update();
-  //
-  //  vtkSmartPointer<vtkTexture> texture = vtkSmartPointer<vtkTexture>::New();
-  //  texture->SetInputConnection(pngReader->GetOutputPort());
-  //
-  //
-  //  vtkSmartPointer<vtkVertexGlyphFilter> glyphFilter = vtkSmartPointer<vtkVertexGlyphFilter>::New();
-  //  glyphFilter->SetInputData(obj_reader->GetOutput());
-  //
-  //
-  //  vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-  //
-  //  mapper->SetInputData(obj_reader->GetOutput());
-  //  //  mapper->SetInputConnection(glyphFilter->GetOutputPort());
-  //
-  //
-  //  std::cout << "starting to make actor" << std::endl;
-  //  vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
-  //  actor->SetMapper(mapper);
-  //  //  actor->SetTexture(texture);
-  //
-  //
-  //  std::cout << "removing all props" << std::endl;
-  //  renderer->RemoveAllViewProps();
-  //  std::cout << "adding actor" << std::endl;
-  //  renderer->AddActor(actor);
-  //
-  //
-  //  std::cout << "reseting camera" << std::endl;
-  //  renderer->ResetCamera();
-  //  std::cout << "rendering" << std::endl;
-  //  this->ui->qvtkWidget->GetRenderWindow()->Render();
+  std::string file_name= "/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/researchDenslyTexturedMesh.obj";
+
+  std::unique_ptr<OBJReader2> obj_reader(new OBJReader2());
+
+  obj_reader->SetFileName(file_name);
+  obj_reader->Update();
+
+   vtkSmartPointer<vtkPNGReader> pngReader = vtkSmartPointer<vtkPNGReader>::New();
+   std::string full_texture_file="/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/full_texture.png";
+  //  std::string full_texture_file="/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/tex_0.png";
+   pngReader->SetFileName (full_texture_file.data() );
+   pngReader->Update();
+
+   vtkSmartPointer<vtkTexture> texture = vtkSmartPointer<vtkTexture>::New();
+   texture->SetInputConnection(pngReader->GetOutputPort());
+
+
+   vtkSmartPointer<vtkVertexGlyphFilter> glyphFilter = vtkSmartPointer<vtkVertexGlyphFilter>::New();
+   glyphFilter->SetInputData(obj_reader->GetOutput());
+
+
+   vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+
+   mapper->SetInputData(obj_reader->GetOutput());
+   //  mapper->SetInputConnection(glyphFilter->GetOutputPort());
+
+
+   std::cout << "starting to make actor" << std::endl;
+   vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+   actor->SetMapper(mapper);
+    actor->SetTexture(texture);
+
+
+   std::cout << "removing all props" << std::endl;
+   renderer->RemoveAllViewProps();
+   std::cout << "adding actor" << std::endl;
+   renderer->AddActor(actor);
+
+
+   std::cout << "reseting camera" << std::endl;
+   renderer->ResetCamera();
+   std::cout << "rendering" << std::endl;
+   this->ui->qvtkWidget->GetRenderWindow()->Render();
 
   //finished own obj importer-------------------------------------------------------------------------
 
@@ -700,18 +700,19 @@ void Visualizer::on_loadFileButton_clicked(){
   // reader->GetOutput()
   // obj_reader-GetOutput()
 
-  std::cout << "starting debug" << std::endl;
+  // std::cout << "starting debug" << std::endl;
+  //
+  // vtkSmartPointer<vtkPoints> deb_points;
+  // deb_points=reader->GetOutput()->GetPoints();
+  // std::cout << "deb_points size is" << deb_points->GetNumberOfPoints() << std::endl;
+  // for (size_t i = 0; i < 10; i++) {
+  //   double tuple[3];
+  //   std::cout << "getting the tuple" << std::endl;
+  //   deb_points->GetPoint(i,tuple);
+  //   std::cout << "prnting point" << std::endl;
+  //   std::cout << "deb points is: " <<tuple[0] << " " <<tuple[1]<< " " << tuple[2] << std::endl;
+  // }
 
-  vtkSmartPointer<vtkPoints> deb_points;
-  deb_points=reader->GetOutput()->GetPoints();
-  std::cout << "deb_points size is" << deb_points->GetNumberOfPoints() << std::endl;
-  for (size_t i = 0; i < 10; i++) {
-    double tuple[3];
-    std::cout << "getting the tuple" << std::endl;
-    deb_points->GetPoint(i,tuple);
-    std::cout << "prnting point" << std::endl;
-    std::cout << "deb points is: " <<tuple[0] << " " <<tuple[1]<< " " << tuple[2] << std::endl;
-  }
 
 
 
