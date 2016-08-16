@@ -36,6 +36,7 @@
 #include <vtkOpenGLRenderWindow.h>
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkTextureUnitManager.h>
+#include <vtkVertexGlyphFilter.h>
 
 #include "vtkTexturingHelper.h"
 
@@ -58,6 +59,7 @@
 #include <QFileDialog>
 #include "Model.h"
 #include "Utils.h"
+#include "OBJReader2.h"
 #include "InteractorPointPicker.h"
 
 #include <QMainWindow>

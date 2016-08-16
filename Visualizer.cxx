@@ -505,12 +505,13 @@ void Visualizer::on_loadFileButton_clicked(){
          int coord_to_change=atoi(strs[1].data());
          coord_to_change=coord_to_change-1; // To account for the fact that obj faces start counting from 1
 
-        //  int vert_index=atoi(strs[0].data());
-        //  vert_index=vert_index-1;
-        //  vertex_indices.push_back[vert_index];
+         int vert_index=atoi(strs[0].data());
+         vert_index=vert_index-1;
+        //  vertex_indices[vert_index]=coord_to_change;
+        vertex_indices.push_back(vert_index);
 
 
-        //  std::cout << "changing coorindate " << coord_to_change << std::endl;
+        //  std::cout << "changing coorindate " << vert_index  << " " << coord_to_change << std::endl;
 
          //not hcange that coorindate only if it hasn't been already changed
          if (coords_checked[coord_to_change]==0){
@@ -537,18 +538,21 @@ void Visualizer::on_loadFileButton_clicked(){
 
 
 
-   for (size_t i = coords.size()-15; i < coords.size(); i++) {
-     std::cout << "coords " << i <<  " : " << coords[i][0] << " " << coords[i][1]  << std::endl;
-
-   }
+  //  for (size_t i = coords.size()-15; i < coords.size(); i++) {
+  //    std::cout << "coords " << i <<  " : " << coords[i][0] << " " << coords[i][1]  << std::endl;
+   //
+  //  }
 
 
    //Reoder them correctly taking into account that they should be in the order of the vertices
-  //  std::vector <int> coords_ordered(coords.size(),0);
-  //  for (size_t i = 0; i < vertex_indices.size(); i++) {
-  //    int vert=vertex_indices[i];
-  //    coords_ordered[vert]=coors[i];
-  //  }
+   matrix_type coords_ordered;
+   for (size_t i = 0; i < vertex_indices.size(); i++) {
+     int vert=vertex_indices[i];
+      // coords_ordered[i]=coords[vert];
+    //  coords_ordered[i].push_back(coords[vert][0]);
+    //  coords_ordered[i].push_back(coords[vert][1]);
+    coords_ordered.push_back(coords[vert]);
+   }
 
 
 
@@ -562,8 +566,8 @@ void Visualizer::on_loadFileButton_clicked(){
    textureCoordinates->SetNumberOfComponents(2);
    textureCoordinates->SetName("TextureCoordinates");
 
-   for (size_t c_idx = 0; c_idx < coords.size(); c_idx++) {
-     float tuple[2] = {(float)coords[c_idx][0], (float)coords[c_idx][1]};
+   for (size_t c_idx = 0; c_idx < coords_ordered.size(); c_idx++) {
+     float tuple[2] = {(float)coords_ordered[c_idx][0], (float)coords_ordered[c_idx][1]};
      textureCoordinates->InsertNextTuple(tuple);
    }
 
@@ -637,6 +641,83 @@ void Visualizer::on_loadFileButton_clicked(){
   //  cv::namedWindow( "Gray image", CV_WINDOW_AUTOSIZE );
   //  cv::imshow( "Gray image", full_texture );
   // //  waitKey(0);
+
+
+
+  //OWN OBJ IMPORTER-------------------------------------------------------------------------------------------------
+  // std::string file_name= "/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/researchDenslyTexturedMesh.obj";
+  //
+  // std::unique_ptr<OBJReader2> obj_reader(new OBJReader2());
+  //
+  // obj_reader->SetFileName(file_name);
+  // obj_reader->Update();
+  //
+  //  vtkSmartPointer<vtkPNGReader> pngReader = vtkSmartPointer<vtkPNGReader>::New();
+  //  std::string full_texture_file="/media/alex/Data/Master/SHK/vtk_scripts/RenderWindowUISingleInheritance/build/full_texture.png";
+  // //  std::string full_texture_file="/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/tex_0.png";
+  //  pngReader->SetFileName (full_texture_file.data() );
+  //  pngReader->Update();
+  //
+  //  vtkSmartPointer<vtkTexture> texture = vtkSmartPointer<vtkTexture>::New();
+  //  texture->SetInputConnection(pngReader->GetOutputPort());
+  //
+  //
+  //  vtkSmartPointer<vtkVertexGlyphFilter> glyphFilter = vtkSmartPointer<vtkVertexGlyphFilter>::New();
+  //  glyphFilter->SetInputData(obj_reader->GetOutput());
+  //
+  //
+  //  vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+  //
+  //  mapper->SetInputData(obj_reader->GetOutput());
+  //  //  mapper->SetInputConnection(glyphFilter->GetOutputPort());
+  //
+  //
+  //  std::cout << "starting to make actor" << std::endl;
+  //  vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+  //  actor->SetMapper(mapper);
+  //  //  actor->SetTexture(texture);
+  //
+  //
+  //  std::cout << "removing all props" << std::endl;
+  //  renderer->RemoveAllViewProps();
+  //  std::cout << "adding actor" << std::endl;
+  //  renderer->AddActor(actor);
+  //
+  //
+  //  std::cout << "reseting camera" << std::endl;
+  //  renderer->ResetCamera();
+  //  std::cout << "rendering" << std::endl;
+  //  this->ui->qvtkWidget->GetRenderWindow()->Render();
+
+  //finished own obj importer-------------------------------------------------------------------------
+
+
+
+
+
+
+  //DEbugging see what is happening inside
+  // reader->GetOutput()
+  // obj_reader-GetOutput()
+
+  std::cout << "starting debug" << std::endl;
+
+  vtkSmartPointer<vtkPoints> deb_points;
+  deb_points=reader->GetOutput()->GetPoints();
+  std::cout << "deb_points size is" << deb_points->GetNumberOfPoints() << std::endl;
+  for (size_t i = 0; i < 10; i++) {
+    double tuple[3];
+    std::cout << "getting the tuple" << std::endl;
+    deb_points->GetPoint(i,tuple);
+    std::cout << "prnting point" << std::endl;
+    std::cout << "deb points is: " <<tuple[0] << " " <<tuple[1]<< " " << tuple[2] << std::endl;
+  }
+
+
+
+
+
+
 
 
   int num_actors= renderer->GetActors()->GetNumberOfItems();
