@@ -6,6 +6,7 @@
 #include <vtkPoints.h>
 #include <vtkPointData.h>
 #include <vtkCellArray.h>
+#include <vtkDoubleArray.h>
 #include <math.h>
 #include <iterator>
 #include <algorithm>
@@ -29,6 +30,7 @@ public:
      vtkSmartPointer<vtkCellArray> cells;
      vtkSmartPointer<vtkUnsignedCharArray> colors_original; //original colors, rgb if present and all white if not
      vtkSmartPointer<vtkUnsignedCharArray> colors_active;
+     matrix_type normals;
 
      matrix_type points_wrapped;
      matrix_type points_unwrapped;
@@ -50,13 +52,14 @@ public:
      std::vector<vtkSmartPointer<vtkPolyData>> grid_cells;
 
      void clear();
-     void set_mesh(vtkPolyData*);
-     void set_texture(vtkTexture*);
+     void set_mesh(vtkSmartPointer<vtkPolyData>);
+     void set_texture(vtkSmartPointer<vtkTexture>);
      void read_info();
      vtkSmartPointer<vtkUnsignedCharArray> get_colors();
      double estimate_radius (matrix_type points );
      vtkSmartPointer<vtkPolyData> get_mesh();
      void compute_unwrap();
+     void compute_unwrap2();
      std::vector<double> compute_angles(matrix_type points);
      std::vector<double> compute_distances_to_radius(matrix_type points, double radius);
      double interpolate ( double input , double input_start, double input_end, double output_start, double output_end);

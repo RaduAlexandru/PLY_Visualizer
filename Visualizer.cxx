@@ -7,6 +7,24 @@
 
 
 
+
+template <typename T>
+std::vector<size_t> sort_indexes(const std::vector<T> &v) {
+
+  // initialize original index locations
+  std::vector<size_t> idx(v.size());
+  iota(idx.begin(), idx.end(), 0);
+
+  // sort indexes based on comparing values in v
+  sort(idx.begin(), idx.end(),
+       [&v](size_t i1, size_t i2) {return v[i1] > v[i2];});
+
+  return idx;
+}
+
+
+
+
 Visualizer::Visualizer():
   model(new Model()),
   renderer(vtkSmartPointer<vtkRenderer>::New()),
@@ -665,39 +683,375 @@ void Visualizer::on_loadFileButton_clicked(){
   updateView();
 
 
-  //  vtkSmartPointer<vtkPNGReader> pngReader = vtkSmartPointer<vtkPNGReader>::New();
-  // //  std::string full_texture_file="/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/full_texture.png";
-  // //  std::string full_texture_file="/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/tex_0.png";
-  //  pngReader->SetFileName (obj_reader->GetTexturePath().data() );
-  //  pngReader->Update();
-  //
-  //  vtkSmartPointer<vtkTexture> texture = vtkSmartPointer<vtkTexture>::New();
-  //  texture->SetInputConnection(pngReader->GetOutputPort());
-  //
-  //
-  //  vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-  //  mapper->SetInputData(obj_reader->GetOutput());
-  //
-  //  vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
-  //  actor->SetMapper(mapper);
-  //  actor->SetTexture(texture);
-  // //  actor->GetProperty()->BackfaceCullingOn();
-  //
-  //
-  //  renderer->RemoveAllViewProps();
-  //  renderer->AddActor(actor);
-  //
-  //  renderer->ResetCamera();
-  //  this->ui->qvtkWidget->GetRenderWindow()->Render();
+  //get the normals the was read in the model
+  //calculate the angle for each point
+  // make a pcl and colorize
 
-  //finished own obj importer-------------------------------------------------------------------------
+  //calculate the angle for each point
+  // std::vector<double> normal_angles(model->normals.size());
+  // for (size_t i = 0; i < model->normals.size(); i++) {
+  //   double x1= model->normals[i][0];
+  //   double y1=model->normals[i][1];
+  //
+  //   double x2=1.0;
+  //   double y2=0.0;
+  //
+  //   double dot = x1*x2 + y1*y2;      //dot produt
+  //   double det = x1*y2 - y1*x2;      //Determinant
+  //   double angle = atan2(det, dot) ;  // atan2(y, x) or atan2(sin, cos)
+  //
+  //   angle = 0.0 + ((360.0 - 0.0) / (M_PI - -M_PI)) * (angle - -M_PI);
+  //
+  //   // angle = interpolate ( angle , -M_PI, M_PI, 0.0, 1.0);
+  //
+  //   // std::cout << "angle is " << angle << std::endl;
+  //   normal_angles[i]=angle;
+  // }
+  //
+  //
+  //
+  // //histogram it
+  // double range=360.0;
+  // double bucket_size=20.0;
+  // int number_of_buckets = (int)ceil(range / bucket_size);
+  // std::vector<int> histogram(number_of_buckets,0);
+  //
+  // for (size_t i = 0; i <   normal_angles.size(); i++) {
+  //   int bucket = (int)floor(normal_angles[i] / bucket_size);
+  //   histogram[bucket]++;
+  // }
+  //
+  //
+  // for (auto i: sort_indexes(histogram)) {
+  //   std::cout << "hist: " << histogram[i] <<  " angle: " << i*bucket_size <<std::endl;
+  // }
+  //
+  // int smallest_angle=0;
+  // smallest_angle=sort_indexes(histogram)[0]*bucket_size;
+  // std::cout << "smallest angle is" << smallest_angle << std::endl;
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  // // Create the polydata where we will store all the geometric data
+  // vtkSmartPointer<vtkPolyData> linesPolyData =
+  //   vtkSmartPointer<vtkPolyData>::New();
+  //
+  //
+  // // Create three points
+  // double origin[3] = { 0.0, 0.0, 0.0 };
+  // smallest_angle=sort_indexes(histogram)[0]*bucket_size;
+  // double p0[3] = { 100* cos(smallest_angle * M_PI / 180.0), 100*sin(smallest_angle * M_PI / 180.0), 0.0 };
+  // smallest_angle=sort_indexes(histogram)[1]*bucket_size;
+  // double p1[3] = { 100* cos(smallest_angle * M_PI / 180.0), 100*sin(smallest_angle * M_PI / 180.0), 0.0 };
+  // smallest_angle=sort_indexes(histogram)[2]*bucket_size;
+  // double p2[3] = { 100* cos(smallest_angle * M_PI / 180.0), 100*sin(smallest_angle * M_PI / 180.0), 0.0 };
+  // smallest_angle=sort_indexes(histogram)[3]*bucket_size;
+  // double p3[3] = { 100* cos(smallest_angle * M_PI / 180.0), 100*sin(smallest_angle * M_PI / 180.0), 0.0 };
+  // smallest_angle=sort_indexes(histogram)[4]*bucket_size;
+  // double p4[3] = { 100* cos(smallest_angle * M_PI / 180.0), 100*sin(smallest_angle * M_PI / 180.0), 0.0 };
+  // smallest_angle=sort_indexes(histogram)[5]*bucket_size;
+  // double p5[3] = { 100* cos(smallest_angle * M_PI / 180.0), 100*sin(smallest_angle * M_PI / 180.0), 0.0 };
+  //
+  //
+  //
+  // draw_line(origin,p0);
+  // draw_line(origin,p1);
+  // draw_line(origin,p2);
+  // draw_line(origin,p3);
+  // draw_line(origin,p4);
+  // draw_line(origin,p5);
 
+
+
+
+
+  //REGION GROW
+  // pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+  //
+  // // Generate pointcloud data
+  // cloud->width = (model->points_wrapped.size());
+  // cloud->height = 1;
+  // cloud->points.resize (model->points_wrapped.size());
+  //
+  // for (size_t i = 0; i < cloud->points.size (); ++i)
+  // {
+  //   cloud->points[i].x = model->points_wrapped[i][0];
+  //   cloud->points[i].y = model->points_wrapped[i][1];
+  //   cloud->points[i].z = model->points_wrapped[i][2];
+  // }
+  //
+  //
+  // pcl::search::Search<pcl::PointXYZ>::Ptr tree = boost::shared_ptr<pcl::search::Search<pcl::PointXYZ> > (new pcl::search::KdTree<pcl::PointXYZ>);
+  // pcl::PointCloud <pcl::Normal>::Ptr normals (new pcl::PointCloud <pcl::Normal>);
+  // normals->width = (model->normals.size());
+  // normals->height = 1;
+  // normals->points.resize (model->normals.size());
+  // pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normal_estimator;
+  // normal_estimator.setSearchMethod (tree);
+  // normal_estimator.setInputCloud (cloud);
+  // normal_estimator.setKSearch (50);
+  // normal_estimator.compute (*normals);
+  //
+  //
+  //
+  // for (size_t i = 0; i < model->normals.size(); i++){
+  //     normals->points[i].normal_x = model->normals[i][0];
+  //     normals->points[i].normal_y = model->normals[i][1];
+  //     normals->points[i].normal_z = model->normals[i][2];
+  //
+  //  }
+  //
+  //
+  // // pcl::IndicesPtr indices (new std::vector <int>);
+  // // pcl::PassThrough<pcl::PointXYZ> pass;
+  // // pass.setInputCloud (cloud);
+  // // pass.setFilterFieldName ("z");
+  // // pass.setFilterLimits (0.0, 1.0);
+  // // pass.filter (*indices);
+  //
+  // pcl::RegionGrowing<pcl::PointXYZ, pcl::Normal> reg;
+  // reg.setMinClusterSize (50);
+  // reg.setMaxClusterSize (1000000);
+  // reg.setSearchMethod (tree);
+  // reg.setNumberOfNeighbours (30);
+  // reg.setInputCloud (cloud);
+  // //reg.setIndices (indices);
+  // reg.setInputNormals (normals);
+  // reg.setSmoothnessThreshold (4.5 / 180.0 * M_PI);
+  // // reg.setCurvatureThreshold (1.5);
+  //
+  // std::vector <pcl::PointIndices> clusters;
+  // reg.extract (clusters);
+  //
+  //
+  // std::cout << "Number of clusters is equal to " << clusters.size () << std::endl;
+  // std::cout << "First cluster has " << clusters[0].indices.size () << " points." << endl;
+  //
+  // // std::cout << "These are the indices of the points of the initial" <<
+  // //   std::endl << "cloud that belong to the first cluster:" << std::endl;
+  // // int counter = 0;
+  // // while (counter < clusters[0].indices.size ())
+  // // {
+  // //   std::cout << clusters[0].indices[counter] << ", ";
+  // //   counter++;
+  // //   if (counter % 10 == 0)
+  // //     std::cout << std::endl;
+  // // }
+  // // std::cout << std::endl;
+  //
+  //
+  // // pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud = reg.getColoredCloud ();
+  // // pcl::visualization::CloudViewer viewer ("Cluster viewer");
+  // // viewer.showCloud(colored_cloud);
+  // // while (!viewer.wasStopped ())
+  // // {
+  // // }
+
+
+
+
+
+
+  //OPENCV KMEANS CLUSTERING
+  cv::Mat samples(model->normals.size(), 3, CV_32F);
+  for( int y = 0; y < samples.rows; y++ ){
+    for( int x = 0; x < samples.cols; x++ ){
+      samples.at<float>(y,x)=model->normals[y][x];
+    }
+  }
+
+
+  int clusterCount = 8;
+  cv::Mat labels;
+  int attempts = 10;
+  cv::Mat centers;
+  cv::kmeans(samples, clusterCount, labels, cv::TermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 10000, 0.0001), attempts, cv::KMEANS_PP_CENTERS, centers );
+
+
+  
+
+
+
+  matrix_type_i colors;
+  colors.push_back(row_type_i {255,0,0});
+  colors.push_back(row_type_i {0,255,0});
+  colors.push_back(row_type_i {0,0,255});
+
+  colors.push_back(row_type_i {255,255,0});
+  colors.push_back(row_type_i {255,0,255});
+  colors.push_back(row_type_i {0,255,255});
+
+  colors.push_back(row_type_i {76,20,200});
+  colors.push_back(row_type_i {20,200,76});
+
+  //mesh cluster
+  //  pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+   //
+  //  p_cloud->width    = model->points_wrapped.size();
+  //  p_cloud->height   = 1;
+  //  p_cloud->is_dense = false;
+  //  p_cloud->points.resize (model->points_wrapped.size());
+   //
+   //
+  //  for (size_t i = 0; i < model->points_wrapped.size(); i++){
+  //     p_cloud->points[i].x = model->points_wrapped[i][0];
+  //     p_cloud->points[i].y = model->points_wrapped[i][1];
+  //     p_cloud->points[i].z = model->points_wrapped[i][2];
+   //
+  //     // p_cloud->points[i].r = normal_angles[i]*255;
+  //     // p_cloud->points[i].r = interpolate (model->normals[i][0], -1.0, 1.0, 0.0, 255.0  );
+  //     // p_cloud->points[i].g = interpolate (model->normals[i][1], -1.0, 1.0, 0.0, 255.0  );
+  //     // p_cloud->points[i].b = interpolate (model->normals[i][2], -1.0, 1.0, 0.0, 255.0  );
+   //
+  //     int label=labels.at<int>(i,0);
+   //
+  //     // p_cloud->points[i].r = interpolate (label, 0.0, clusterCount, 0.0, 255.0  );
+  //     p_cloud->points[i].r=colors[label][0];
+  //     p_cloud->points[i].g=colors[label][1];
+  //     p_cloud->points[i].b=colors[label][2];
+   //
+  //  }
+   //
+   //
+  //  pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer2");
+  //  viewer.showCloud (p_cloud);
+  //  while (!viewer.wasStopped ())
+  //  {
+  //  }
+
+
+
+
+
+
+
+
+
+
+
+  //Choose the bucket with the least angle. Rotate the mesh for that angle so that now the edge will be at 0.
+  //repeat the process of calculating angles and histograming
+
+
+  //mesh
+  //  pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+   //
+  //  p_cloud->width    = model->points_wrapped.size();
+  //  p_cloud->height   = 1;
+  //  p_cloud->is_dense = false;
+  //  p_cloud->points.resize (model->points_wrapped.size());
+   //
+   //
+  //  for (size_t i = 0; i < model->points_wrapped.size(); i++){
+  //     p_cloud->points[i].x = model->points_wrapped[i][0];
+  //     p_cloud->points[i].y = model->points_wrapped[i][1];
+  //     p_cloud->points[i].z = model->points_wrapped[i][2];
+   //
+  //     // p_cloud->points[i].r = normal_angles[i]*255;
+  //     p_cloud->points[i].r = interpolate (model->normals[i][0], -1.0, 1.0, 0.0, 255.0  );
+  //     p_cloud->points[i].g = interpolate (model->normals[i][1], -1.0, 1.0, 0.0, 255.0  );
+  //     p_cloud->points[i].b = interpolate (model->normals[i][2], -1.0, 1.0, 0.0, 255.0  );
+   //
+  //  }
+   //
+   //
+  //  pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer2");
+  //  viewer.showCloud (p_cloud);
+  //  while (!viewer.wasStopped ())
+  //  {
+  //  }
+
+
+  //normals
+  //  pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+   //
+  //  p_cloud->width    = model->normals.size();
+  //  p_cloud->height   = 1;
+  //  p_cloud->is_dense = false;
+  //  p_cloud->points.resize (model->normals.size());
+   //
+   //
+  //  for (size_t i = 0; i < model->normals.size(); i++){
+  //     p_cloud->points[i].x = model->normals[i][0];
+  //     p_cloud->points[i].y = model->normals[i][1];
+  //     p_cloud->points[i].z = model->normals[i][2];
+   //
+  //     // p_cloud->points[i].r = normal_angles[i]*255;
+  //     // p_cloud->points[i].g = 0;
+  //     // p_cloud->points[i].b = 0;
+  //  }
+   //
+  //  //add centers
+  //  for (size_t c = 0; c < clusterCount; c++) {
+  //    pcl::PointXYZRGB p;
+  //    p.x=centers.at<float>(c,0);
+  //    p.y=centers.at<float>(c,1);
+  //    p.z=centers.at<float>(c,2);
+  //    p.r=255;
+  //    p_cloud->push_back(p);
+  //  }
+   //
+   //
+   //
+  //  pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer2");
+  //  viewer.showCloud (p_cloud);
+  //  while (!viewer.wasStopped ())
+  //  {
+  //  }
 
 
 
   int num_actors= renderer->GetActors()->GetNumberOfItems();
   std::cout << "num of actors" << num_actors << std::endl;
 }
+
+
+
+
+
+void Visualizer::draw_line(double* p0,double* p1){
+
+  vtkSmartPointer<vtkLineSource> lineSource =
+    vtkSmartPointer<vtkLineSource>::New();
+  lineSource->SetPoint1(p0);
+  lineSource->SetPoint2(p1);
+  lineSource->Update();
+
+  // Visualize
+  vtkSmartPointer<vtkPolyDataMapper> mapper =
+    vtkSmartPointer<vtkPolyDataMapper>::New();
+  mapper->SetInputConnection(lineSource->GetOutputPort());
+  vtkSmartPointer<vtkActor> actor =
+    vtkSmartPointer<vtkActor>::New();
+  actor->SetMapper(mapper);
+  actor->GetProperty()->SetLineWidth(4);
+
+  renderer->AddActor(actor);
+
+}
+
+
+double Visualizer::interpolate ( double input , double input_start, double input_end, double output_start, double output_end){
+
+  double output;
+  output = output_start + ((output_end - output_start) / (input_end - input_start)) * (input - input_start);
+
+  return output;
+
+}
+
+
+
+
+
+
+
+
 
 void Visualizer::clearAll(){
   model->clear();
@@ -747,7 +1101,8 @@ void Visualizer::on_unwrapButton_clicked(){
   }
 
   if (model->points_unwrapped.empty() && !model->points_wrapped.empty()){
-    model->compute_unwrap();
+    // model->compute_unwrap();
+    model->compute_unwrap2();
   }
 
   updateView();

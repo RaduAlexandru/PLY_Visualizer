@@ -19,13 +19,14 @@ Model::Model():
 }
 
 
-void Model::set_mesh(vtkPolyData* mesh){
-  this->wall= mesh;
+void Model::set_mesh(vtkSmartPointer<vtkPolyData> mesh){
+  this->wall=(mesh);
   clear();
   read_info();
+  //center();
 }
 
-void Model::set_texture(vtkTexture* texture){
+void Model::set_texture(vtkSmartPointer<vtkTexture> texture){
   m_full_texture=texture;
 }
 
@@ -55,6 +56,15 @@ void Model::read_info(){
   this->num_points       =wall->GetNumberOfPoints();
   this->radius           = estimate_radius(points_wrapped);
   this->circumference    =2*M_PI*radius;
+
+
+  vtkSmartPointer<vtkDataArray> vtk_normals = wall->GetPointData()->GetNormals();
+  if(vtk_normals){
+    std::cout << "GOT NORMALS" << std::endl;
+  }else{
+    std::cout << "kein normal!!!!!!!!!1" << std::endl;
+  }
+  this->normals=vtk_normals_to_vector(vtk_normals);
 
   this->bounds=wall->GetBounds();
 
@@ -162,6 +172,15 @@ vtkSmartPointer<vtkPolyData> Model::get_mesh(){
   return normals_alg->GetOutput();
   //return wall;
 }
+
+void Model::compute_unwrap2(){
+  //get the normals for each vertex.
+  //Get the angle of those normals with respect to the x axis
+  //Histogram the angles
+
+
+}
+
 
 
 void Model::compute_unwrap(){

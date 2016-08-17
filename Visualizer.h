@@ -37,6 +37,7 @@
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkTextureUnitManager.h>
 #include <vtkVertexGlyphFilter.h>
+#include <vtkLine.h>
 
 #include "vtkTexturingHelper.h"
 
@@ -54,6 +55,12 @@
 
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/point_types.h>
+#include <pcl/search/search.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/filters/passthrough.h>
+#include <pcl/segmentation/region_growing.h>
 
 
 #include <QFileDialog>
@@ -84,6 +91,9 @@ public:
   vtkSmartPointer<vtkRenderer> renderer;
   vtkSmartPointer<InteractorPointPicker> interactor;
 
+
+void draw_line(double* p0,double* p1);
+double interpolate ( double input , double input_start, double input_end, double output_start, double output_end);
 
 
 public slots:
