@@ -23,7 +23,8 @@ void Model::set_mesh(vtkSmartPointer<vtkPolyData> mesh){
   this->wall=(mesh);
   clear();
   read_info();
-  //center();
+  center_mesh();
+  //scale_mesh();  //TODO: REMOVE this one because it was only used so as to better see the fitted planes
 }
 
 void Model::set_texture(vtkSmartPointer<vtkTexture> texture){
@@ -75,6 +76,65 @@ void Model::read_info(){
 
 
 }
+
+
+void Model::scale_mesh(){
+  double scale=0.3;
+  for (size_t i = 0; i < this->points_wrapped.size(); i++) {
+    for (size_t j = 0; j < this->points_wrapped[0].size(); j++) {
+      this->points_wrapped[i][j]= this->points_wrapped[i][j]*scale;
+    }
+  }
+}
+
+
+void Model::center_mesh(){
+  // center.resize(point_components);
+  // for (size_t i = 0; i < this->points_wrapped.size(); i++) {
+  //   for (size_t j = 0; j < this->points_wrapped[0].size(); j++) {
+  //     center[j]+=this->points_wrapped[i][j];
+  //   }
+  // }
+  //
+  // for (size_t i = 0; i < center.size(); i++) {
+  //   center[i]=center[i]/this->points_wrapped.size();
+  // }
+  //
+  // //now we move the points to that center
+  // for (size_t i = 0; i < this->points_wrapped.size(); i++) {
+  //   for (size_t j = 0; j < this->points_wrapped[0].size(); j++) {
+  //     this->points_wrapped[i][j]=this->points_wrapped[i][j]-center[j];
+  //   }
+  // }
+
+  center.resize(point_components);
+
+  double bounds[6];
+  wall->GetBounds(bounds);
+
+  std::cout  << "xmin: " << bounds[0] << " "
+             << "xmax: " << bounds[1] << std::endl
+             << "ymin: " << bounds[2] << " "
+             << "ymax: " << bounds[3] << std::endl
+             << "zmin: " << bounds[4] << " "
+             << "zmax: " << bounds[5] << std::endl;
+
+  center[0]=(bounds[1]+bounds[0])/2.0;
+  center[1]=(bounds[3]+bounds[2])/2.0;
+  center[2]=(bounds[5]+bounds[4])/2.0;
+
+  //now we move the points to that center
+  for (size_t i = 0; i < this->points_wrapped.size(); i++) {
+    for (size_t j = 0; j < this->points_wrapped[0].size(); j++) {
+      this->points_wrapped[i][j]=this->points_wrapped[i][j]-center[j];
+    }
+  }
+
+
+  std::cout << "center is " <<   center[0] << " " << center[1] << " " << center [2] << std::endl;
+
+}
+
 
 
 vtkSmartPointer<vtkUnsignedCharArray> Model::get_colors(){

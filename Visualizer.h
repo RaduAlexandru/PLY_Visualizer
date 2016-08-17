@@ -14,6 +14,7 @@
 #include <vtkProperty.h>
 #include <vtkBox.h>
 #include <vtkSphere.h>
+#include <vtkPlaneSource.h>
 #include <vtkClipPolyData.h>
 #include <vtkInteractorStyleTrackballCamera.h>
 #include <vtkObjectFactory.h>
@@ -61,6 +62,12 @@
 #include <pcl/features/normal_3d.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/segmentation/region_growing.h>
+#include <pcl/ModelCoefficients.h>
+#include <pcl/sample_consensus/method_types.h>
+#include <pcl/sample_consensus/model_types.h>
+#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/filters/extract_indices.h>
 
 
 #include <QFileDialog>
@@ -92,8 +99,12 @@ public:
   vtkSmartPointer<InteractorPointPicker> interactor;
 
 
-void draw_line(double* p0,double* p1);
-double interpolate ( double input , double input_start, double input_end, double output_start, double output_end);
+  void draw_line(double* p0,double* p1);
+  double interpolate ( double input , double input_start, double input_end, double output_start, double output_end);
+  void draw_plane(double c0,double c1, double c2, double c3, double r, double g, double b);
+  void draw_sphere(double x, double y, double z);
+
+  row_type normalize (row_type);
 
 
 public slots:

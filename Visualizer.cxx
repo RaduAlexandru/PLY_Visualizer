@@ -873,23 +873,24 @@ void Visualizer::on_loadFileButton_clicked(){
   cv::kmeans(samples, clusterCount, labels, cv::TermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 10000, 0.0001), attempts, cv::KMEANS_PP_CENTERS, centers );
 
 
-  
 
 
 
-  matrix_type_i colors;
-  colors.push_back(row_type_i {255,0,0});
-  colors.push_back(row_type_i {0,255,0});
-  colors.push_back(row_type_i {0,0,255});
 
-  colors.push_back(row_type_i {255,255,0});
-  colors.push_back(row_type_i {255,0,255});
-  colors.push_back(row_type_i {0,255,255});
-
-  colors.push_back(row_type_i {76,20,200});
-  colors.push_back(row_type_i {20,200,76});
 
   //mesh cluster
+  // matrix_type_i colors;
+  // colors.push_back(row_type_i {255,0,0});
+  // colors.push_back(row_type_i {0,255,0});
+  // colors.push_back(row_type_i {0,0,255});
+  //
+  // colors.push_back(row_type_i {255,255,0});
+  // colors.push_back(row_type_i {255,0,255});
+  // colors.push_back(row_type_i {0,255,255});
+  //
+  // colors.push_back(row_type_i {76,20,200});
+  // colors.push_back(row_type_i {20,200,76});
+  //
   //  pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
    //
   //  p_cloud->width    = model->points_wrapped.size();
@@ -1006,11 +1007,289 @@ void Visualizer::on_loadFileButton_clicked(){
 
 
 
+
+
+
+
+
+
+
+
+
+
+  //segment and etract indicies
+
+  // pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  //
+  //  cloud->width    = model->points_wrapped.size();
+  //  cloud->height   = 1;
+  //  cloud->is_dense = false;
+  //  cloud->points.resize (model->points_wrapped.size());
+  //
+  //
+  //  for (size_t i = 0; i < model->points_wrapped.size(); i++){
+  //     cloud->points[i].x = model->points_wrapped[i][0];
+  //     cloud->points[i].y = model->points_wrapped[i][1];
+  //     cloud->points[i].z = model->points_wrapped[i][2];
+  //  }
+  //
+  // std::cerr << "Point cloud data: " << cloud->points.size () << " points" << std::endl;
+  // // for (size_t i = 0; i < cloud->points.size (); ++i)
+  // //   std::cerr << "    " << cloud->points[i].x << " "
+  // //                       << cloud->points[i].y << " "
+  // //                       << cloud->points[i].z << std::endl;
+  //
+  // pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
+  // pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+  // // Create the segmentation object
+  // pcl::SACSegmentation<pcl::PointXYZ> seg;
+  // // Optional
+  // seg.setOptimizeCoefficients (true);
+  // // Mandatory
+  // seg.setModelType (pcl::SACMODEL_PLANE);
+  // seg.setMethodType (pcl::SAC_RANSAC);
+  // seg.setDistanceThreshold (0.01);
+  //
+  // seg.setInputCloud (cloud);
+  // seg.segment (*inliers, *coefficients);
+  //
+  // if (inliers->indices.size () == 0)
+  // {
+  //   PCL_ERROR ("Could not estimate a planar model for the given dataset.");
+  // }
+  //
+  // std::cerr << "Model coefficients: " << coefficients->values[0] << " "
+  //                                     << coefficients->values[1] << " "
+  //                                     << coefficients->values[2] << " "
+  //                                     << coefficients->values[3] << std::endl;
+  //
+  // std::cerr << "Model inliers: " << inliers->indices.size () << std::endl;
+  // for (size_t i = 0; i < inliers->indices.size (); ++i)
+  //   std::cerr << inliers->indices[i] << "    " << cloud->points[inliers->indices[i]].x << " "
+  //                                              << cloud->points[inliers->indices[i]].y << " "
+  //                                              << cloud->points[inliers->indices[i]].z << std::endl;
+
+
+  //
+  // pcl::ModelCoefficients plane_coeff;
+  // plane_coeff.values.resize (4);
+  // plane_coeff.values[0] = coefficients->values[0];
+  // plane_coeff.values[1] = coefficients->values[1];
+  // plane_coeff.values[2] = coefficients->values[2];
+  // plane_coeff.values[3] = coefficients->values[3];
+  // const std::string& id="";
+  // int viewport;
+  // pcl::visualization::PCLVisualizer::addPlane(plane_coeff, "plane",0);
+  //
+  // pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer2");
+  // viewer.addPlane(plane_coeff, "p1");
+  // viewer.addPointCloud(cloud, "c1");
+  // // viewer.showCloud (cloud);
+  //
+  // while (!viewer.wasStopped ())
+  // {
+  // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  //planar segmentation
+  //create vector of clouds
+  //create vector of planes
+
+  //segment every cloud to get the plane coefficients
+  //draw the planes
+
+  //vector of clouds
+
+  //Get number of elements in each cluster
+  // std::vector<int> labels_vec;
+  // for (size_t i = 0; i < labels.rows; i++) {
+  //   labels_vec.push_back(labels.at<int>(i,0));
+  // }
+  //
+  // std::vector<int> num_elements(clusterCount);
+  // for (size_t i = 0; i < clusterCount; i++) {
+  //   int num_elem = std::count (labels_vec.begin(), labels_vec.end(), i);
+  //   num_elements[i]=num_elem;
+  // }
+  //
+  // for (size_t i = 0; i < clusterCount; i++) {
+  //   std::cout << "num elements in " << i << " is " <<  num_elements[i] << std::endl;
+  // }
+
+  //vector of clouds
+  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clustered_clouds;
+  for (size_t clust = 0; clust < clusterCount; clust++) {
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    clustered_clouds.push_back(cloud);
+  }
+
+   for (size_t i = 0; i < model->points_wrapped.size(); i++){
+      int label=labels.at<int>(i,0);
+      pcl::PointXYZ p;
+      p.x=model->points_wrapped[i][0];
+      p.y=model->points_wrapped[i][1];
+      p.z=model->points_wrapped[i][2];
+      clustered_clouds[label]->push_back(p);
+   }
+
+
+   //vector of coefficients
+   std::vector<pcl::ModelCoefficients> planes;
+   for (size_t clust = 0; clust < clusterCount; clust++) {
+     pcl::ModelCoefficients plane_coeff;
+     plane_coeff.values.resize (4);
+     planes.push_back(plane_coeff);
+   }
+
+
+
+   //for each cloud segment it
+   for (size_t clust = 0; clust < clusterCount; clust++) {
+     pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+
+     pcl::SACSegmentation<pcl::PointXYZ> seg;
+
+     seg.setOptimizeCoefficients (true);
+     // Mandatory
+     seg.setModelType (pcl::SACMODEL_PLANE);
+     seg.setMethodType (pcl::SAC_RANSAC);
+     seg.setDistanceThreshold (0.01);
+
+     seg.setInputCloud (clustered_clouds[clust]);
+     seg.segment (*inliers, (planes[clust]));
+
+     if (inliers->indices.size () == 0)
+     {
+       PCL_ERROR ("Could not estimate a planar model for the given dataset.");
+     }
+
+     std::cerr << "Model coefficients: " << planes[clust].values[0] << " "
+                                          << planes[clust].values[1] << " "
+                                          << planes[clust].values[2] << " "
+                                          << planes[clust].values[3] << std::endl;
+
+   }
+
+
+
+
+   draw_sphere(0.0, 0.0, 0.0);
+
+
+
+
+   //sort the planes by the angle between their normal and x axis
+   //calculate the pairwise intersection line between them
+   //calculate the angle of those lines to the x axis
+   //for each point in the mesh get the two closest two lines
+      // given the distances to them and their angles. Calculate the angle of the point. (coordinate 1)
+      // calculate the distance of the points to the ransac plance we got earlier (coordinate 2)
+      // coordinate 3 will be just the z position of the points.
+
+
+
+   //Fix normals of planes so that they point towards the center
+   //Dot product between the (point on a plane- center) and the normal (if it's negative then flip the normal)
+   for (size_t i = 0; i < planes.size(); i++) {
+
+
+     //WATCHOUT I SET Z and Y to 0 because if I set x and y Imight not get a solution since the plane might be paralel to Z axis.
+
+     row_type dir(3);  //direction vector we get from a point on the plane and the center of mesh
+     dir[0]= (- (planes[i].values[3] / planes[i].values[0]) ) - model->center[0];
+     dir[1]= 0.0 - model->center[1];
+     dir[2]= 0.0 - model->center[2];
+     dir=normalize(dir);
+
+     row_type normal(3);  //normal of the plane
+     normal[0]=planes[i].values[0];
+     normal[1]=planes[i].values[1];
+     normal[2]=planes[i].values[2];
+     normal=normalize(normal);
+
+     double dot = normal[0] * dir[0]+
+                  normal[1] * dir[1]+
+                  normal[2] * dir[2];
+
+
+     if (dot<0.0){
+       std::cout << "flipping!!!!! " << i << std::endl;
+       planes[i].values[0]=-planes[i].values[0];
+       planes[i].values[1]=-planes[i].values[1];
+       planes[i].values[2]=-planes[i].values[2];
+       planes[i].values[3]=-planes[i].values[3];
+     }
+   }
+
+
+   std::vector<double> plane_angles(planes.size());
+   for (size_t i = 0; i < plane_angles.size(); i++) {
+       double x1= planes[i].values[0];
+       double y1= planes[i].values[1];
+
+       double x2=1.0;
+       double y2=0.0;
+
+       double dot = x1*x2 + y1*y2;      //dot produt
+       double det = x1*y2 - y1*x2;      //Determinant
+       double angle = atan2(det, dot) ;  // atan2(y, x) or atan2(sin, cos)
+
+      //  angle = 0.0 + ((360.0 - 0.0) / (M_PI - -M_PI)) * (angle - -M_PI);
+
+       angle = interpolate ( angle , -M_PI, M_PI, 0.0, 1.0);
+      //  angle = interpolate ( angle , 0.5, 0.9, 0.0, 1.0);
+
+       std::cout << "angle is " << angle << std::endl;
+       plane_angles[i]=angle;
+   }
+
+
+
+
+
+
+
+
+   for (size_t clust = 0; clust < clusterCount; clust++) {
+     draw_plane(planes[clust].values[0],planes[clust].values[1],planes[clust].values[2],planes[clust].values[3], plane_angles[clust],0.0,0.0);
+   }
+
+
+
+
+
   int num_actors= renderer->GetActors()->GetNumberOfItems();
   std::cout << "num of actors" << num_actors << std::endl;
 }
 
 
+
+row_type Visualizer::normalize (row_type vec){
+  double length=0.0;
+  for (size_t i = 0; i < vec.size(); i++) {
+      length += vec[i]*vec[i];
+  }
+  length=sqrt(length);
+
+  for (size_t i = 0; i < vec.size(); i++) {
+      vec[i]=vec[i]/length;
+  }
+
+  return vec;
+
+}
 
 
 
@@ -1034,6 +1313,62 @@ void Visualizer::draw_line(double* p0,double* p1){
   renderer->AddActor(actor);
 
 }
+
+
+void Visualizer::draw_plane(double c0,double c1, double c2, double c3, double r, double g, double b){
+
+  std::cout << "creating plane" << std::endl;
+
+  // Create a plane
+  vtkSmartPointer<vtkPlaneSource> planeSource =
+    vtkSmartPointer<vtkPlaneSource>::New();
+  planeSource->SetCenter(0.0, 0.0, 0.0);
+  planeSource->SetNormal(c0, c1, c2);
+  planeSource->Push(-c3);
+  planeSource->Update();
+
+  vtkPolyData* plane = planeSource->GetOutput();
+
+  // Create a mapper and actor
+  vtkSmartPointer<vtkPolyDataMapper> mapper =
+    vtkSmartPointer<vtkPolyDataMapper>::New();
+
+  mapper->SetInputData(plane);
+
+  vtkSmartPointer<vtkActor> actor =
+    vtkSmartPointer<vtkActor>::New();
+  actor->SetMapper(mapper);
+  actor->GetProperty()->SetColor(r, g, b); //(R,G,B)
+  actor->GetProperty()->BackfaceCullingOn();
+
+    renderer->AddActor(actor);
+
+
+
+}
+
+
+void  Visualizer::draw_sphere(double x, double y, double z){
+
+  // Create a sphere
+    vtkSmartPointer<vtkSphereSource> sphereSource =
+      vtkSmartPointer<vtkSphereSource>::New();
+    sphereSource->SetCenter(x, y, z);
+    sphereSource->SetRadius(0.3);
+
+    vtkSmartPointer<vtkPolyDataMapper> mapper =
+      vtkSmartPointer<vtkPolyDataMapper>::New();
+    mapper->SetInputConnection(sphereSource->GetOutputPort());
+
+    vtkSmartPointer<vtkActor> actor =
+      vtkSmartPointer<vtkActor>::New();
+    actor->SetMapper(mapper);
+
+    renderer->AddActor(actor);
+
+}
+
+
 
 
 double Visualizer::interpolate ( double input , double input_start, double input_end, double output_start, double output_end){

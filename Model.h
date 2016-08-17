@@ -34,6 +34,7 @@ public:
 
      matrix_type points_wrapped;
      matrix_type points_unwrapped;
+     row_type center;
 
      std::vector<double> angles;
      std::vector<double> distances_to_radius;
@@ -67,6 +68,8 @@ public:
      void compute_rgb_colors();
      void compute_depth_colors();
      void create_grid();
+     void scale_mesh();
+     void center_mesh();
 
 };
 
