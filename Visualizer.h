@@ -81,6 +81,45 @@
 typedef std::vector<double> row_type;
 typedef std::vector<row_type> matrix_type;
 
+struct plane_struct {
+    pcl::ModelCoefficients coef;
+    double angle;
+};
+
+struct line_struct {
+    row_type direction;
+    row_type point;
+    double angle;   //angle of the line with respect to the x axis
+    double distance; //distance from a point to this line. Will be changed in each iteration when a point is checked
+    int index; //index assigned to indicat the ordering with respect to the angle
+};
+
+
+struct by_angle {
+    bool operator()(plane_struct const &a, plane_struct const &b) {
+        return a.angle < b.angle;
+    }
+};
+
+struct by_angle_line {
+    bool operator()(line_struct const &a, line_struct const &b) {
+        return a.angle < b.angle;
+    }
+};
+
+struct by_distance {
+    bool operator()(line_struct const &a, line_struct const &b) {
+        return a.distance < b.distance;
+    }
+};
+
+
+static bool abs_compare(int a, int b)
+{
+    return (std::abs(a) < std::abs(b));
+}
+
+
 // Forward Qt class declarations
 class Ui_Visualizer;
 //class Model;
@@ -103,7 +142,9 @@ public:
   double interpolate ( double input , double input_start, double input_end, double output_start, double output_end);
   void draw_plane(double c0,double c1, double c2, double c3, double r, double g, double b);
   void draw_sphere(double x, double y, double z);
-
+  double dot (row_type vec1, row_type vec2);
+  row_type cross (row_type N_1, row_type N_2);
+  double norm (row_type vec);
   row_type normalize (row_type);
 
 
