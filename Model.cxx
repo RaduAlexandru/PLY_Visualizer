@@ -12,7 +12,8 @@ Model::Model():
   wall(vtkSmartPointer<vtkPolyData>::New()),
   cells(vtkSmartPointer<vtkCellArray>::New()),
   colors_original(vtkSmartPointer<vtkUnsignedCharArray>::New()),
-  colors_active(vtkSmartPointer<vtkUnsignedCharArray>::New())
+  colors_active(vtkSmartPointer<vtkUnsignedCharArray>::New()),
+  deleted_streached_trigs(false)
 {
   std::cout << "MODEL CONSTRUCT" << std::endl;
 
@@ -217,6 +218,10 @@ vtkSmartPointer<vtkPolyData> Model::get_mesh(){
   wall->SetPolys(this->cells);
   wall->GetPointData()->SetScalars(this->colors_active);
 
+  if (this->is_unwrapped)
+    delete_streched_trigs();
+
+
   this->bounds=wall->GetBounds();
 
   // for (size_t i = 0; i < 6; i++) {
@@ -229,9 +234,93 @@ vtkSmartPointer<vtkPolyData> Model::get_mesh(){
   normals_alg->Update();
 
 
+
   return normals_alg->GetOutput();
   //return wall;
 }
+
+
+void Model::delete_streched_trigs(){
+  //get all the cells and calculate the perimeter. If the perimeter excedes a certain value, delete the cell (poly)
+
+
+  if (deleted_streached_trigs)
+    return;
+
+  deleted_streached_trigs=true;
+
+  // std::cout << "delete streached trigs" << std::endl;
+  wall->BuildLinks();
+
+  vtkIdType n_pts=-1,*pts;
+  wall->GetPolys()->InitTraversal();
+  for (size_t i = 0; i < wall->GetPolys()->GetNumberOfCells(); i++) {
+    wall->GetPolys()->GetNextCell(n_pts,pts);
+
+
+
+    double p[3];
+    matrix_type trig(3);
+    for (size_t j = 0; j < 3; j++) {
+      trig[j].resize(3);
+    }
+    for (size_t j = 0; j < 3; j++) {
+      wall->GetPoints()->GetPoint(pts[j],trig[j].data());
+      // std::cout << "Point " << i << " : (" << p[0] << " " << p[1] << " " << p[2] << ")" << std::endl;
+    }
+
+    //Now we have a triangle with 3 points InsideOutOff
+    double thresh=0.2;
+    if (  dist(trig[0], trig[1])  > thresh || dist(trig[0], trig[2]) >thresh  || dist(trig[2], trig[1]) >thresh ){
+      std::cout << "delete cell" << i << std::endl;
+      wall->DeleteCell(i);
+    }
+
+  }
+
+  wall->RemoveDeletedCells();
+
+  // //clean and read again
+  // vtkSmartPointer<vtkCleanPolyData> clean = vtkSmartPointer<vtkCleanPolyData>::New();
+  // clean->SetInputData(wall);
+  // clean->Update();
+
+  // this->wall=clean->GetOutput();
+  // read_info();
+
+  //Read inf again but now into points unwrapped
+  vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+  points=wall->GetPoints();
+  this->points_unwrapped= vtk_to_vector(points);
+  this->point_components = points->GetData()->GetNumberOfComponents();
+  this->cells            =this->wall->GetPolys();
+  this->colors_original  = get_colors();
+  this->colors_active  = get_colors();
+  this->num_points       =wall->GetNumberOfPoints();
+  this->radius           = estimate_radius(points_wrapped);
+  this->circumference    =2*M_PI*radius;
+
+
+  vtkSmartPointer<vtkDataArray> vtk_normals = wall->GetPointData()->GetNormals();
+  if(vtk_normals){
+    std::cout << "GOT NORMALS" << std::endl;
+  }else{
+    std::cout << "kein normal!!!!!!!!!1" << std::endl;
+  }
+  this->normals=vtk_normals_to_vector(vtk_normals);
+  this->bounds=wall->GetBounds();
+
+}
+
+
+double Model::dist(row_type vec1, row_type vec2){
+  double dist=0.0;
+  for (size_t i = 0; i < vec1.size(); i++) {
+    dist+= std::pow (vec1[i] - vec2[i],2);
+  }
+  dist=sqrt(dist);
+}
+
 
 void Model::compute_unwrap2(){
   //get the normals for each vertex.
@@ -347,16 +436,53 @@ void Model::compute_rgb_colors(){
 
 void Model::compute_depth_colors(){
 
-  distances_to_radius = compute_distances_to_radius(points_wrapped, radius);
 
-  double max_dist=*(std::max_element(std::begin(distances_to_radius), std::end(distances_to_radius)));
-  double min_dist=*(std::min_element(std::begin(distances_to_radius), std::end(distances_to_radius)));
 
-  std::vector<double> depth;
-  depth.resize(num_points);
+  // //FIRST WAY OF DOING IT- WORKED WITH THE CYLINDER
+  // distances_to_radius = compute_distances_to_radius(points_wrapped, radius);
+  //
+  // double max_dist=*(std::max_element(std::begin(distances_to_radius), std::end(distances_to_radius)));
+  // double min_dist=*(std::min_element(std::begin(distances_to_radius), std::end(distances_to_radius)));
+  //
+  // std::vector<double> depth;
+  // depth.resize(num_points);
+  //
+  // for (size_t i = 0; i < num_points; i++) {
+  //   depth[i]=interpolate(distances_to_radius[i], min_dist, max_dist, 255.0, 0.0);
+  // }
+  //
+  // colors_active->Reset();
+  // colors_active = vtkSmartPointer<vtkUnsignedCharArray>::New();
+  // colors_active->SetNumberOfComponents(3);
+  // colors_active->SetName("depth");
+  //
+  //
+  // std::cout << "starting to create colors" << std::endl;
+  // for (size_t i = 0; i < num_points; i++) {
+  //   //colors->InsertNextTuple3(angles[i]*255.0,0,0);
+  //   colors_active->InsertNextTuple3(depth[i],depth[i],depth[i]);
+  //   //points_unwrapped.InsertNextPoint( angles[i] *circumference,distances_from_radius[i],point[2])
+  // }
+  // std::cout << "finishing to create colors" << std::endl;
+  // //FINISHED FIRST WAY---------------
+
+
+
+  //Second way
+  compute_unwrap2(); //Compute unwrap to actually get unwrapped points
+
+
+  int column_num = 1;
+  double max_dist = (*std::max_element(this->points_unwrapped.begin(), this->points_unwrapped.end(), column_comparer(column_num)))[column_num];
+  double min_dist = (*std::min_element(this->points_unwrapped.begin(), this->points_unwrapped.end(), column_comparer(column_num)))[column_num];
+
+
+  std::cout << "max, min dist is" << max_dist << " " << min_dist << std::endl;
+
+  std::vector<double> depth(num_points);
 
   for (size_t i = 0; i < num_points; i++) {
-    depth[i]=interpolate(distances_to_radius[i], min_dist, max_dist, 255.0, 0.0);
+    depth[i]=interpolate(this->points_unwrapped[i][1], min_dist, max_dist, 255.0, 0.0);
   }
 
   colors_active->Reset();
@@ -373,8 +499,7 @@ void Model::compute_depth_colors(){
   }
   std::cout << "finishing to create colors" << std::endl;
 
-  //new_wall.GetPointData().SetScalars(new_colors)
-  //wall->GetPointData()->SetScalars(colors_active);
+
 }
 
 

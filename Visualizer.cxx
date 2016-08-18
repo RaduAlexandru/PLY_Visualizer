@@ -35,6 +35,7 @@ Visualizer::Visualizer():
 
   this->ui->colorComboBox->addItem("Plain");
   this->ui->colorComboBox->addItem("RGB");
+  this->ui->colorComboBox->addItem("IR");
   this->ui->colorComboBox->addItem("Depth");
   this->ui->colorComboBox->addItem("Curvature");
 
@@ -1099,7 +1100,7 @@ void Visualizer::on_loadFileButton_clicked(){
 
 
 
-
+  //--------------WORKS BuT SLOW ------------------------------------------------------------------------
 
 
 
@@ -1129,6 +1130,532 @@ void Visualizer::on_loadFileButton_clicked(){
   // }
 
   //vector of clouds
+  // std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clustered_clouds;
+  // for (size_t clust = 0; clust < clusterCount; clust++) {
+  //   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  //   clustered_clouds.push_back(cloud);
+  // }
+  //
+  //  for (size_t i = 0; i < model->points_wrapped.size(); i++){
+  //     int label=labels.at<int>(i,0);
+  //     pcl::PointXYZ p;
+  //     p.x=model->points_wrapped[i][0];
+  //     p.y=model->points_wrapped[i][1];
+  //     p.z=model->points_wrapped[i][2];
+  //     clustered_clouds[label]->push_back(p);
+  //  }
+  //
+  //
+  //  //vector of coefficients
+  //  std::vector<pcl::ModelCoefficients> planes;
+  //  for (size_t clust = 0; clust < clusterCount; clust++) {
+  //    pcl::ModelCoefficients plane_coeff;
+  //    plane_coeff.values.resize (4);
+  //    planes.push_back(plane_coeff);
+  //  }
+  //
+  //
+  //
+  //  //for each cloud segment it
+  //  for (size_t clust = 0; clust < clusterCount; clust++) {
+  //    pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+  //
+  //    pcl::SACSegmentation<pcl::PointXYZ> seg;
+  //
+  //    seg.setOptimizeCoefficients (true);
+  //    // Mandatory
+  //    seg.setModelType (pcl::SACMODEL_PLANE);
+  //    seg.setMethodType (pcl::SAC_RANSAC);
+  //    seg.setDistanceThreshold (0.01);
+  //
+  //    seg.setInputCloud (clustered_clouds[clust]);
+  //    seg.segment (*inliers, (planes[clust]));
+  //
+  //    if (inliers->indices.size () == 0)
+  //    {
+  //      PCL_ERROR ("Could not estimate a planar model for the given dataset.");
+  //    }
+  //
+  //    std::cerr << "Model coefficients: " << planes[clust].values[0] << " "
+  //                                         << planes[clust].values[1] << " "
+  //                                         << planes[clust].values[2] << " "
+  //                                         << planes[clust].values[3] << std::endl;
+  //
+  //  }
+  //
+  //
+  //
+  //
+  //  draw_sphere(0.0, 0.0, 0.0);
+  //
+  //
+  //
+  //
+  //  //sort the planes by the angle between their normal and x axis
+  //  //calculate the pairwise intersection line between them
+  //  //calculate the angle of those lines to the x axis
+  //  //for each point in the mesh get the two closest two lines
+  //     // given the distances to them and their angles. Calculate the angle of the point. (coordinate 1)
+  //     // calculate the distance of the points to the ransac plance we got earlier (coordinate 2)
+  //     // coordinate 3 will be just the z position of the points.
+  //
+  //
+  //
+  //  //Fix normals of planes so that they point towards the center
+  //  //Dot product between the (point on a plane- center) and the normal (if it's negative then flip the normal)
+  //  for (size_t i = 0; i < planes.size(); i++) {
+  //
+  //
+  //    //WATCHOUT I SET Z and Y to 0 because if I set x and y Imight not get a solution since the plane might be paralel to Z axis.
+  //
+  //    row_type dir(3);  //direction vector we get from a point on the plane and the center of mesh
+  //    dir[0]= (- (planes[i].values[3] / planes[i].values[0]) ) - model->center[0];
+  //    dir[1]= 0.0 - model->center[1];
+  //    dir[2]= 0.0 - model->center[2];
+  //    dir=normalize(dir);
+  //
+  //    row_type normal(3);  //normal of the plane
+  //    normal[0]=planes[i].values[0];
+  //    normal[1]=planes[i].values[1];
+  //    normal[2]=planes[i].values[2];
+  //    normal=normalize(normal);
+  //
+  //    double dot = normal[0] * dir[0]+
+  //                 normal[1] * dir[1]+
+  //                 normal[2] * dir[2];
+  //
+  //
+  //    if (dot<0.0){
+  //      std::cout << "flipping!!!!! " << i << std::endl;
+  //      planes[i].values[0]=-planes[i].values[0];
+  //      planes[i].values[1]=-planes[i].values[1];
+  //      planes[i].values[2]=-planes[i].values[2];
+  //      planes[i].values[3]=-planes[i].values[3];
+  //    }
+  //  }
+  //
+  //
+  //  //get the angles
+  //  std::vector<double> plane_angles(planes.size());
+  //  for (size_t i = 0; i < plane_angles.size(); i++) {
+  //      double x1= planes[i].values[0];
+  //      double y1= planes[i].values[1];
+  //
+  //      double x2=1.0;
+  //      double y2=0.0;
+  //
+  //      double dot = x1*x2 + y1*y2;      //dot produt
+  //      double det = x1*y2 - y1*x2;      //Determinant
+  //      double angle = atan2(det, dot) ;  // atan2(y, x) or atan2(sin, cos)
+  //
+  //     //  angle = 0.0 + ((360.0 - 0.0) / (M_PI - -M_PI)) * (angle - -M_PI);
+  //
+  //      angle = interpolate ( angle , -M_PI, M_PI, 0.0, 1.0);
+  //     //  angle = interpolate ( angle , 0.5, 0.9, 0.0, 1.0);
+  //
+  //     //  std::cout << "angle is " << angle << std::endl;
+  //      plane_angles[i]=angle;
+  //  }
+  //
+  //
+  //  //order the planes with respect to the angles
+  //  //Need to establish some relation between them so we make a new vector
+  //  std::vector<plane_struct> planes_ordered(planes.size());
+  //
+  //  //fill it
+  //  for (size_t i = 0; i < planes.size(); i++) {
+  //    planes_ordered[i].coef=planes[i];
+  //    planes_ordered[i].angle=plane_angles[i];
+  //  }
+  //  std::sort(planes_ordered.begin(), planes_ordered.end(), by_angle());
+  //
+  //
+  //
+  //
+  //
+  //  //go though every plane pair and get the line between them
+  //  //https://www.mathworks.com/matlabcentral/fileexchange/17618-plane-intersection/content/plane_intersect.m
+  //  std::vector <line_struct> lines(planes_ordered.size());
+  //  for (size_t i = 0; i < planes_ordered.size(); i++) {
+  //    int curr = i;
+  //    int next = i +1;
+  //    if (next >= planes_ordered.size()) {
+  //      next=0;
+  //    }
+  //
+  //    std::cout << "intersect betwen " << curr << " " << next  << std::endl;
+  //    //need the direction vetor which is the cross product between the normals of the two planes_ordered
+  //    row_type N_1(3);
+  //    row_type N_2(3);
+  //
+  //    N_1[0]=planes_ordered[curr].coef.values[0];
+  //    N_1[1]=planes_ordered[curr].coef.values[1];
+  //    N_1[2]=planes_ordered[curr].coef.values[2];
+  //
+  //    N_2[0]=planes_ordered[next].coef.values[0];
+  //    N_2[1]=planes_ordered[next].coef.values[1];
+  //    N_2[2]=planes_ordered[next].coef.values[2];
+  //
+  //    row_type A1(3);  //Point that belong on plane 1
+  //    row_type A2(3);  //Point that belong on plane 2
+  //
+  //    A1[0]=(- (planes[curr].values[3] / planes[curr].values[0]) );
+  //    A1[1]=0.0;
+  //    A1[2]=0.0;
+  //
+  //    A2[0]=(- (planes[next].values[3] / planes[next].values[0]) );
+  //    A2[1]=0.0;
+  //    A2[2]=0.0;
+  //
+  //
+  //    row_type P(3);  //Point on the line that lies on the intersection
+  //    row_type N(3);  //direction vector of the intersect line
+  //
+  //    //  N=cross(N1,N2);
+  //    N[0]= N_1[1]*N_2[2] - N_1[2]*N_2[1];
+  //    N[1]= N_1[2]*N_2[0] - N_1[0]*N_2[2];
+  //    N[2]= N_1[0]*N_2[1] - N_1[1]*N_2[0];
+  //
+  //    std::cout << "N is " << N[0] << " " << N[1] << " " << N[2] << std::endl;
+  //
+  //    double d1=planes_ordered[curr].coef.values[3]; //constant of plane 1
+  //    double d2=planes_ordered[next].coef.values[3]; //constant of plane 2
+  //
+  //
+  //    //find the maximum coordinate in the N vector and 0 that one
+  //    int maxc=std::distance(N.begin(), std::max_element(N.begin(), N.end(), abs_compare));
+  //    std::cout << "maxc is" << maxc << std::endl;
+  //
+  //    //TODO:Fill the other cases.
+  //    switch (maxc) {
+  //      case 0:
+  //
+  //      break;
+  //
+  //      case 1:
+  //      break;
+  //
+  //      case 2:
+  //
+  //      break;
+  //    }
+  //
+  //    P[0]=(d2*N_1[1] - d1*N_2[1]) / N[2];
+  //    P[1]=(d1*N_2[0] - d2*N_1[0]) / N[2];
+  //    P[2]=0.0;
+  //
+  //    lines[i].direction=N;
+  //    lines[i].point=P;
+  //
+  //    std::cout << "point of intersect is" << P[0] << " " << P[1] << " " << P[2] << std::endl;
+  //
+  //    draw_sphere(P[0], P[1], P[2] );
+  //
+  //
+  //  }
+  //
+  //  //Calculate the angle of the lines
+  //  for (size_t i = 0; i < lines.size(); i++) {
+  //      double x1= lines[i].point[0];
+  //      double y1= lines[i].point[1];
+  //
+  //      double x2=1.0;
+  //      double y2=0.0;
+  //
+  //      double dot = x1*x2 + y1*y2;      //dot produt
+  //      double det = x1*y2 - y1*x2;      //Determinant
+  //      double angle = atan2(det, dot) ;  // atan2(y, x) or atan2(sin, cos)
+  //
+  //     //  angle = 0.0 + ((360.0 - 0.0) / (M_PI - -M_PI)) * (angle - -M_PI);
+  //
+  //      angle = interpolate ( angle , -M_PI, M_PI, 0.0, 1.0);
+  //     //  angle = interpolate ( angle , 0.5, 0.9, 0.0, 1.0);
+  //
+  //      std::cout << "angle of line is " << angle << std::endl;
+  //     lines[i].angle=angle;
+  //  }
+  //
+  //  //sort them to assign indices
+  //  std::sort(lines.begin(),lines.end(),by_angle_line());
+  //  for (size_t i = 0; i < lines.size(); i++) {
+  //    lines[i].index=i;
+  //  }
+  //
+  //
+  //  std::cout << "Starting to calculate actual angle for all the points" << std::endl;
+  //  std::vector<double> test_angles;
+  //  std::vector<double> test_distances;
+  //  for (size_t i = 0; i < model->points_wrapped.size(); i++) {
+  //    //calculate the distance to all the lines
+  //    //Sort the lines vector by distance
+  //    //grab the 2 closest lines
+  //    //calculate the distance between the points of those two lines
+  //    // with the angle of the 2 closest lines and the distance to them and betweem them we get the angle of the mesh point
+  //
+  //    //get the label of the mesh point (from the previous kmeans segmentation)
+  //    //from that label we know the index of the plane asociated
+  //    //calculate distance from point to plane
+  //
+  //
+  //    //http://gamedev.stackexchange.com/questions/72528/how-can-i-project-a-3d-point-onto-a-3d-line
+  //    //A + dot(AP,AB) / dot(AB,AB) * AB
+  //
+  //
+  //    for (size_t line_idx = 0; line_idx < lines.size(); line_idx++) {
+  //     //  row_type AP, AB, inter;  //AB is the normal vector of the line, AP is the vector between the mesh point the line.point
+  //     //  double dot_ap_ab;
+  //     //  double dot_ab_ab;
+  //      //
+  //     //  AP[0]=points_wrapped[i][0] -  line[line_idx].point[0];
+  //     //  AP[1]=points_wrapped[i][1] -  line[line_idx].point[1];
+  //     //  AP[2]=points_wrapped[i][2] -  line[line_idx].point[2];
+  //      //
+  //     //  inter[0]=line[line_idx].point[0] + dot (AP,AB) / dot (AB,AB) * line[line_idx].normal[0];
+  //     //  inter[1]=line[line_idx].point[1] + dot (AP,AB) / dot (AB,AB) * line[line_idx].normal[1];
+  //     //  inter[2]=line[line_idx].point[2] + dot (AP,AB) / dot (AB,AB) * line[line_idx].normal[2];
+  //      //
+  //     //  //now calculate distance between
+  //
+  //     //http://geomalgorithms.com/a02-_lines.html
+  //     row_type w(3); //w is mesh_point-line.point;
+  //     w[0]=model->points_wrapped[i][0] -  lines[line_idx].point[0];
+  //     w[1]=model->points_wrapped[i][1] -  lines[line_idx].point[1];
+  //     w[2]=model->points_wrapped[i][2] -  lines[line_idx].point[2];
+  //
+  //     row_type u_l= normalize (lines[line_idx].direction);
+  //
+  //     row_type cross_res;
+  //     cross_res= cross(u_l,w);
+  //
+  //
+  //     double distance= norm(cross_res);
+  //     lines[line_idx].distance=distance;
+  //
+  //
+  //    }
+  //
+  //    //sort the lines by distance
+  //    std::sort(lines.begin(), lines.end(), by_distance());
+  //    //
+  //   //  std::cout << "dist of 1 " <<  lines[0].distance  << std::endl;
+  //   //  std::cout << "dist of 2 " <<  lines[1].distance  << std::endl;
+  //   //  std::cout << "dist of 3 " <<  lines[2].distance  << std::endl;
+  //   //  std::cout << "/* message */" << std::endl;
+  //   //  std::cout << "/* message */" << std::endl;
+  //
+  //    double dist_total;
+  //    dist_total=lines[0].distance + lines[1].distance;
+  //
+  //    double angle=0.0;
+  //    angle=  (lines[0].distance/ dist_total) * lines[1].angle + (lines[1].distance/ dist_total) * lines[0].angle;
+  //
+  //    //need to take into account if the point is between face 7 and 0. Then face 0 needs to be considered at angle 1.0 not 0.0
+  //    if (lines[0].index==0 && lines[1].index==lines.size()-1){
+  //      angle=  (lines[0].distance/ dist_total) * lines[1].angle + (lines[1].distance/ dist_total) * 1.0;
+  //    }
+  //
+  //    if (lines[1].index==0 && lines[0].index==lines.size()-1){
+  //      angle=  (lines[0].distance/ dist_total) * 1.0 + (lines[1].distance/ dist_total) * lines[0].angle;
+  //    }
+  //
+  //   //  std::cout << "angle is " << angle << std::endl;
+  //   test_angles.push_back(angle);
+  //
+  //
+  //
+  //   //calculate distance to plane
+  //   int label=labels.at<int>(i,0);
+  //
+  //   //http://mathinsight.org/distance_point_plane
+  //   // double numerator;
+  //   // double denominator;
+  //   //
+  //   //
+  //   // numerator= abs( planes[label].values[0] * model->points_wrapped[i][0] +
+  //   //                 planes[label].values[1] * model->points_wrapped[i][1] +
+  //   //                 planes[label].values[2] * model->points_wrapped[i][2] +
+  //   //                 planes[label].values[3] );
+  //   //
+  //   // denominator=sqrt( planes[label].values[0]*planes[label].values[0] +
+  //   //                   planes[label].values[1]*planes[label].values[1] +
+  //   //                   planes[label].values[2]*planes[label].values[2]);
+  //   //
+  //   // // std::cout << "numerator " << numerator << std::endl;
+  //   // // std::cout << "denominator " << denominator << std::endl;
+  //   //
+  //   // double distance= numerator/denominator;
+  //   //
+  //   // // std::cout << "distance is " << distance  << std::endl;
+  //
+  //
+  //
+  //   //http://mathworld.wolfram.com/HessianNormalForm.html
+  //   double p;
+  //   p = planes[label].values[3]/ sqrt( planes[label].values[0]*planes[label].values[0] +
+  //                                      planes[label].values[1]*planes[label].values[1] +
+  //                                      planes[label].values[2]*planes[label].values[2]);
+  //
+  //
+  //   double dot_res;
+  //   row_type normal(3);
+  //   normal[0]=planes[label].values[0];
+  //   normal[1]=planes[label].values[1];
+  //   normal[2]=planes[label].values[2];
+  //
+  //   dot_res=dot(normal,model->points_wrapped[i]);
+  //
+  //   double distance = dot_res + p;
+  //
+  //   //TODO: Remove this, only added for debugging purposes
+  //   if (fabs(distance) > 0.5){
+  //     // std::cout << "slammmmm" << std::endl;
+  //     distance=0.0;
+  //   }
+  //
+  //   // std::cout << "distance is " << distance  << std::endl;
+  //   test_distances.push_back(distance);
+  //
+  //
+  //
+  //  }
+  //
+  //
+  //
+  //  //estimate circumference as the biggest distance between the center and line.
+  //  // if the mesh is centerred then he center is 0
+  //  double radius=-9999;
+  //  for (size_t line_idx = 0; line_idx < lines.size(); line_idx++) {
+  //    row_type w(3); //w is mesh_point-line.point;
+  //    w[0]=0.0 -  lines[line_idx].point[0];
+  //    w[1]=0.0 -  lines[line_idx].point[1];
+  //    w[2]=0.0 -  lines[line_idx].point[2];
+  //
+  //    row_type u_l= normalize (lines[line_idx].direction);
+  //
+  //    row_type cross_res;
+  //    cross_res= cross(u_l,w);
+  //
+  //    double distance= norm(cross_res);
+  //    if (distance>radius){
+  //      radius=distance;
+  //    }
+  //  }
+  //  std::cout << "estimated radius is " << radius  << std::endl;
+  //  double circumference=2*M_PI*radius;
+  //
+  //
+  //
+  //
+  //
+  //
+  //  //also need to rotate the normals taking into account the normals of the planes
+  //
+  //
+  //
+  //
+  //  //brute forcing and writing directly into the model
+  //  model->points_unwrapped.resize(model->num_points);
+  //  for (size_t i = 0; i < model->num_points; i++) {
+  //    model->points_unwrapped[i].resize(model->point_components);
+  //    model->points_unwrapped[i][0]=test_angles[i] *circumference;
+  //    model->points_unwrapped[i][1]=test_distances[i];
+  //    model->points_unwrapped[i][2]=model->points_wrapped[i][2];
+  //  }
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //  //PCL mesh with angles
+  //   // pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+  //   //
+  //   // p_cloud->width    = model->points_wrapped.size();
+  //   // p_cloud->height   = 1;
+  //   // p_cloud->is_dense = false;
+  //   // p_cloud->points.resize (model->points_wrapped.size());
+  //   //
+  //   //
+  //   // for (size_t i = 0; i < model->points_wrapped.size(); i++){
+  //   //   //  p_cloud->points[i].x = model->points_wrapped[i][0];
+  //   //   //  p_cloud->points[i].y = model->points_wrapped[i][1];
+  //   //   //  p_cloud->points[i].z = model->points_wrapped[i][2];
+  //   //
+  //   //   p_cloud->points[i].x = test_angles[i] *circumference;
+  //   //   p_cloud->points[i].y = test_distances[i];
+  //   //   p_cloud->points[i].z = model->points_wrapped[i][2];
+  //   //
+  //   //
+  //   //
+  //   //    // p_cloud->points[i].r = normal_angles[i]*255;
+  //   //   //  p_cloud->points[i].r = test_angles[i]*255;
+  //   //   //  p_cloud->points[i].g = 0.0;
+  //   //   //  p_cloud->points[i].b = 0.0;
+  //   //
+  //   //   p_cloud->points[i].r = interpolate (model->normals[i][0], -1.0, 1.0, 0.0, 255.0  );
+  //   //   p_cloud->points[i].g = interpolate (model->normals[i][1], -1.0, 1.0, 0.0, 255.0  );
+  //   //   p_cloud->points[i].b = interpolate (model->normals[i][2], -1.0, 1.0, 0.0, 255.0  );
+  //   //
+  //   // }
+  //   //
+  //   //
+  //   // pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer2");
+  //   // viewer.showCloud (p_cloud);
+  //   // while (!viewer.wasStopped ())
+  //   // {
+  //   // }
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //  for (size_t clust = 0; clust < clusterCount; clust++) {
+  //    draw_plane(planes_ordered[clust].coef.values[0],
+  //               planes_ordered[clust].coef.values[1],
+  //               planes_ordered[clust].coef.values[2],
+  //               planes_ordered[clust].coef.values[3],
+  //               planes_ordered[clust].angle,0.0,0.0);
+  //  }
+
+
+  //----------Finished works but slow----------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+  //VERSION 2 using direct translation and rotation
+
+  //get the planes
+  //from the angle of the plane we know were to map all the points that belong to it.
+
+  //Get number of elements in each cluster
+  std::vector<int> labels_vec;
+  for (size_t i = 0; i < labels.rows; i++) {
+    labels_vec.push_back(labels.at<int>(i,0));
+  }
+
+  std::vector<int> num_elements(clusterCount);
+  for (size_t i = 0; i < clusterCount; i++) {
+    int num_elem = std::count (labels_vec.begin(), labels_vec.end(), i);
+    num_elements[i]=num_elem;
+  }
+
+  for (size_t i = 0; i < clusterCount; i++) {
+    std::cout << "num elements in " << i << " is " <<  num_elements[i] << std::endl;
+  }
+
+  //vector of clouds
   std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clustered_clouds;
   for (size_t clust = 0; clust < clusterCount; clust++) {
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
@@ -1145,7 +1672,72 @@ void Visualizer::on_loadFileButton_clicked(){
    }
 
 
-   //vector of coefficients
+   //Discard the points in the middle of th cloud so as to better estimate the edges.
+   //Find the center of each cloud
+  //  matrix_type cluster_centers;
+  //  for (size_t clust = 0; clust < clusterCount; clust++) {
+  //    row_type cluster_center(3);
+  //    for (size_t i = 0; i < clustered_clouds[clust]->points.size()  ; i++) {
+  //      cluster_center[0]+=clustered_clouds[clust]->points[i].x;
+  //      cluster_center[1]+=clustered_clouds[clust]->points[i].y;
+  //      cluster_center[2]+=clustered_clouds[clust]->points[i].z;
+  //    }
+  //    cluster_center[0]= cluster_center[0]/ clustered_clouds[clust]->points.size();
+  //    cluster_center[1]= cluster_center[1]/ clustered_clouds[clust]->points.size();
+  //    cluster_center[2]= cluster_center[2]/ clustered_clouds[clust]->points.size();
+   //
+  //    cluster_centers.push_back(cluster_center);
+   //
+  //    std::cout << "cluster center is" << cluster_center[0] << " " << cluster_center[1] << " " << cluster_center[2] << std::endl;
+   //
+  //  }
+   //
+  //  //Point that are withing a certain distance of the center are discarded. Distance only in x and y. Z does not matter
+  //  double dist_thresh=0.1;
+  //  matrix_type_i del_indices;
+  //  for (size_t clust = 0; clust < clusterCount; clust++) {
+   //
+  //    for (size_t i = 0; i < clustered_clouds[clust]->points.size()  ; i++) {
+  //      double distance= std::pow (clustered_clouds[clust]->points[i].x - cluster_centers[clust][0], 2) +
+  //                       std::pow (clustered_clouds[clust]->points[i].y - cluster_centers[clust][1], 2);
+   //
+  //      distance=sqrt(distance);
+   //
+  //      if (distance<dist_thresh){
+  //        row_type_i del_vec(2);
+  //        del_vec[0]=clust;
+  //        del_vec[1]=i;
+  //        del_indices.push_back(del_vec);
+  //        //  std::vector<>::iterator nth = clustered_clouds[clust]->points.begin() + i;
+  //       //  std::cout << "deleting pont from cloud" << clust << std::endl;
+  //        std::cout << "deleting point " << i << std::endl;
+  //       //  auto it = std::next(clustered_clouds[clust]->points.begin(), i);
+  //       //  clustered_clouds[clust]->erase(it);
+  //      }
+   //
+  //    }
+   //
+  //  }
+   //
+  //  for (size_t i = 0; i < del_indices.size(); i++) {
+  //     int clust= del_indices[0];
+  //     int del=del_indices[0];
+   //
+  //     auto it = std::next(clustered_clouds[clust]->points.begin(), i);
+  //     clustered_clouds[clust]->erase(it);
+  //  }
+
+
+
+
+
+
+
+
+
+
+
+   //vector of plane coefficients
    std::vector<pcl::ModelCoefficients> planes;
    for (size_t clust = 0; clust < clusterCount; clust++) {
      pcl::ModelCoefficients plane_coeff;
@@ -1161,7 +1753,7 @@ void Visualizer::on_loadFileButton_clicked(){
 
      pcl::SACSegmentation<pcl::PointXYZ> seg;
 
-     seg.setOptimizeCoefficients (true);
+    //  seg.setOptimizeCoefficients (true);
      // Mandatory
      seg.setModelType (pcl::SACMODEL_PLANE);
      seg.setMethodType (pcl::SAC_RANSAC);
@@ -1186,18 +1778,6 @@ void Visualizer::on_loadFileButton_clicked(){
 
 
    draw_sphere(0.0, 0.0, 0.0);
-
-
-
-
-   //sort the planes by the angle between their normal and x axis
-   //calculate the pairwise intersection line between them
-   //calculate the angle of those lines to the x axis
-   //for each point in the mesh get the two closest two lines
-      // given the distances to them and their angles. Calculate the angle of the point. (coordinate 1)
-      // calculate the distance of the points to the ransac plance we got earlier (coordinate 2)
-      // coordinate 3 will be just the z position of the points.
-
 
 
    //Fix normals of planes so that they point towards the center
@@ -1225,13 +1805,21 @@ void Visualizer::on_loadFileButton_clicked(){
 
 
      if (dot<0.0){
-       std::cout << "flipping!!!!! " << i << std::endl;
        planes[i].values[0]=-planes[i].values[0];
        planes[i].values[1]=-planes[i].values[1];
        planes[i].values[2]=-planes[i].values[2];
        planes[i].values[3]=-planes[i].values[3];
      }
    }
+
+
+  //  //We may need to flip the normal of the planes
+  //  for (size_t i = 0; i < planes.size(); i++) {
+  //    planes[i].values[0]=-planes[i].values[0];
+  //    planes[i].values[1]=-planes[i].values[1];
+  //    planes[i].values[2]=-planes[i].values[2];
+  //  }
+
 
 
    //get the angles
@@ -1257,309 +1845,18 @@ void Visualizer::on_loadFileButton_clicked(){
    }
 
 
-   //order the planes with respect to the angles
-   //Need to establish some relation between them so we make a new vector
-   std::vector<plane_struct> planes_ordered(planes.size());
 
-   //fill it
-   for (size_t i = 0; i < planes.size(); i++) {
-     planes_ordered[i].coef=planes[i];
-     planes_ordered[i].angle=plane_angles[i];
-   }
-   std::sort(planes_ordered.begin(), planes_ordered.end(), by_angle());
+    std::vector<plane_struct> planes_ordered(planes.size());
 
-
-
-
-
-   //go though every plane pair and get the line between them
-   //https://www.mathworks.com/matlabcentral/fileexchange/17618-plane-intersection/content/plane_intersect.m
-   std::vector <line_struct> lines(planes_ordered.size());
-   for (size_t i = 0; i < planes_ordered.size(); i++) {
-     int curr = i;
-     int next = i +1;
-     if (next >= planes_ordered.size()) {
-       next=0;
-     }
-
-     std::cout << "intersect betwen " << curr << " " << next  << std::endl;
-     //need the direction vetor which is the cross product between the normals of the two planes_ordered
-     row_type N_1(3);
-     row_type N_2(3);
-
-     N_1[0]=planes_ordered[curr].coef.values[0];
-     N_1[1]=planes_ordered[curr].coef.values[1];
-     N_1[2]=planes_ordered[curr].coef.values[2];
-
-     N_2[0]=planes_ordered[next].coef.values[0];
-     N_2[1]=planes_ordered[next].coef.values[1];
-     N_2[2]=planes_ordered[next].coef.values[2];
-
-     row_type A1(3);  //Point that belong on plane 1
-     row_type A2(3);  //Point that belong on plane 2
-
-     A1[0]=(- (planes[curr].values[3] / planes[curr].values[0]) );
-     A1[1]=0.0;
-     A1[2]=0.0;
-
-     A2[0]=(- (planes[next].values[3] / planes[next].values[0]) );
-     A2[1]=0.0;
-     A2[2]=0.0;
-
-
-     row_type P(3);  //Point on the line that lies on the intersection
-     row_type N(3);  //direction vector of the intersect line
-
-     //  N=cross(N1,N2);
-     N[0]= N_1[1]*N_2[2] - N_1[2]*N_2[1];
-     N[1]= N_1[2]*N_2[0] - N_1[0]*N_2[2];
-     N[2]= N_1[0]*N_2[1] - N_1[1]*N_2[0];
-
-     std::cout << "N is " << N[0] << " " << N[1] << " " << N[2] << std::endl;
-
-     double d1=planes_ordered[curr].coef.values[3]; //constant of plane 1
-     double d2=planes_ordered[next].coef.values[3]; //constant of plane 2
-
-
-     //find the maximum coordinate in the N vector and 0 that one
-     int maxc=std::distance(N.begin(), std::max_element(N.begin(), N.end(), abs_compare));
-     std::cout << "maxc is" << maxc << std::endl;
-
-     //TODO:Fill the other cases.
-     switch (maxc) {
-       case 0:
-
-       break;
-
-       case 1:
-       break;
-
-       case 2:
-
-       break;
-     }
-
-     P[0]=(d2*N_1[1] - d1*N_2[1]) / N[2];
-     P[1]=(d1*N_2[0] - d2*N_1[0]) / N[2];
-     P[2]=0.0;
-
-     lines[i].direction=N;
-     lines[i].point=P;
-
-     std::cout << "point of intersect is" << P[0] << " " << P[1] << " " << P[2] << std::endl;
-
-     draw_sphere(P[0], P[1], P[2] );
-
-
-   }
-
-   //Calculate the angle of the lines
-   for (size_t i = 0; i < lines.size(); i++) {
-       double x1= lines[i].point[0];
-       double y1= lines[i].point[1];
-
-       double x2=1.0;
-       double y2=0.0;
-
-       double dot = x1*x2 + y1*y2;      //dot produt
-       double det = x1*y2 - y1*x2;      //Determinant
-       double angle = atan2(det, dot) ;  // atan2(y, x) or atan2(sin, cos)
-
-      //  angle = 0.0 + ((360.0 - 0.0) / (M_PI - -M_PI)) * (angle - -M_PI);
-
-       angle = interpolate ( angle , -M_PI, M_PI, 0.0, 1.0);
-      //  angle = interpolate ( angle , 0.5, 0.9, 0.0, 1.0);
-
-       std::cout << "angle of line is " << angle << std::endl;
-      lines[i].angle=angle;
-   }
-
-   //sort them to assign indices
-   std::sort(lines.begin(),lines.end(),by_angle_line());
-   for (size_t i = 0; i < lines.size(); i++) {
-     lines[i].index=i;
-   }
-
-
-   std::cout << "Starting to calculate actual angle for all the points" << std::endl;
-   std::vector<double> test_angles;
-   std::vector<double> test_distances;
-   for (size_t i = 0; i < model->points_wrapped.size(); i++) {
-     //calculate the distance to all the lines
-     //Sort the lines vector by distance
-     //grab the 2 closest lines
-     //calculate the distance between the points of those two lines
-     // with the angle of the 2 closest lines and the distance to them and betweem them we get the angle of the mesh point
-
-     //get the label of the mesh point (from the previous kmeans segmentation)
-     //from that label we know the index of the plane asociated
-     //calculate distance from point to plane
-
-
-     //http://gamedev.stackexchange.com/questions/72528/how-can-i-project-a-3d-point-onto-a-3d-line
-     //A + dot(AP,AB) / dot(AB,AB) * AB
-
-
-     for (size_t line_idx = 0; line_idx < lines.size(); line_idx++) {
-      //  row_type AP, AB, inter;  //AB is the normal vector of the line, AP is the vector between the mesh point the line.point
-      //  double dot_ap_ab;
-      //  double dot_ab_ab;
-       //
-      //  AP[0]=points_wrapped[i][0] -  line[line_idx].point[0];
-      //  AP[1]=points_wrapped[i][1] -  line[line_idx].point[1];
-      //  AP[2]=points_wrapped[i][2] -  line[line_idx].point[2];
-       //
-      //  inter[0]=line[line_idx].point[0] + dot (AP,AB) / dot (AB,AB) * line[line_idx].normal[0];
-      //  inter[1]=line[line_idx].point[1] + dot (AP,AB) / dot (AB,AB) * line[line_idx].normal[1];
-      //  inter[2]=line[line_idx].point[2] + dot (AP,AB) / dot (AB,AB) * line[line_idx].normal[2];
-       //
-      //  //now calculate distance between
-
-      //http://geomalgorithms.com/a02-_lines.html
-      row_type w(3); //w is mesh_point-line.point;
-      w[0]=model->points_wrapped[i][0] -  lines[line_idx].point[0];
-      w[1]=model->points_wrapped[i][1] -  lines[line_idx].point[1];
-      w[2]=model->points_wrapped[i][2] -  lines[line_idx].point[2];
-
-      row_type u_l= normalize (lines[line_idx].direction);
-
-      row_type cross_res;
-      cross_res= cross(u_l,w);
-
-
-      double distance= norm(cross_res);
-      lines[line_idx].distance=distance;
-
-
-     }
-
-     //sort the lines by distance
-     std::sort(lines.begin(), lines.end(), by_distance());
-     //
-    //  std::cout << "dist of 1 " <<  lines[0].distance  << std::endl;
-    //  std::cout << "dist of 2 " <<  lines[1].distance  << std::endl;
-    //  std::cout << "dist of 3 " <<  lines[2].distance  << std::endl;
-    //  std::cout << "/* message */" << std::endl;
-    //  std::cout << "/* message */" << std::endl;
-
-     double dist_total;
-     dist_total=lines[0].distance + lines[1].distance;
-
-     double angle=0.0;
-     angle=  (lines[0].distance/ dist_total) * lines[1].angle + (lines[1].distance/ dist_total) * lines[0].angle;
-
-     //need to take into account if the point is between face 7 and 0. Then face 0 needs to be considered at angle 1.0 not 0.0
-     if (lines[0].index==0 && lines[1].index==lines.size()-1){
-       angle=  (lines[0].distance/ dist_total) * lines[1].angle + (lines[1].distance/ dist_total) * 1.0;
-     }
-
-     if (lines[1].index==0 && lines[0].index==lines.size()-1){
-       angle=  (lines[0].distance/ dist_total) * 1.0 + (lines[1].distance/ dist_total) * lines[0].angle;
-     }
-
-    //  std::cout << "angle is " << angle << std::endl;
-    test_angles.push_back(angle);
-
-
-
-    //calculate distance to plane
-    int label=labels.at<int>(i,0);
-
-    //http://mathinsight.org/distance_point_plane
-    // double numerator;
-    // double denominator;
-    //
-    //
-    // numerator= abs( planes[label].values[0] * model->points_wrapped[i][0] +
-    //                 planes[label].values[1] * model->points_wrapped[i][1] +
-    //                 planes[label].values[2] * model->points_wrapped[i][2] +
-    //                 planes[label].values[3] );
-    //
-    // denominator=sqrt( planes[label].values[0]*planes[label].values[0] +
-    //                   planes[label].values[1]*planes[label].values[1] +
-    //                   planes[label].values[2]*planes[label].values[2]);
-    //
-    // // std::cout << "numerator " << numerator << std::endl;
-    // // std::cout << "denominator " << denominator << std::endl;
-    //
-    // double distance= numerator/denominator;
-    //
-    // // std::cout << "distance is " << distance  << std::endl;
-
-
-
-    //http://mathworld.wolfram.com/HessianNormalForm.html
-    double p;
-    p = planes[label].values[3]/ sqrt( planes[label].values[0]*planes[label].values[0] +
-                                       planes[label].values[1]*planes[label].values[1] +
-                                       planes[label].values[2]*planes[label].values[2]);
-
-
-    double dot_res;
-    row_type normal(3);
-    normal[0]=planes[label].values[0];
-    normal[1]=planes[label].values[1];
-    normal[2]=planes[label].values[2];
-
-    dot_res=dot(normal,model->points_wrapped[i]);
-
-    double distance = dot_res + p;
-
-    //TODO: Remove this, only added for debugging purposes
-    if (fabs(distance) > 0.5){
-      // std::cout << "slammmmm" << std::endl;
-      distance=0.0;
+    //fill it
+    for (size_t i = 0; i < planes.size(); i++) {
+      planes_ordered[i].coef=planes[i];
+      planes_ordered[i].angle=plane_angles[i];
+      planes_ordered[i].index_cluster=i;
     }
 
-    // std::cout << "distance is " << distance  << std::endl;
-    test_distances.push_back(distance);
-
-
-
-   }
-
-
-
-   //estimate circumference as the biggest distance between the center and line.
-   // if the mesh is centerred then he center is 0
-   double radius=-9999;
-   for (size_t line_idx = 0; line_idx < lines.size(); line_idx++) {
-     row_type w(3); //w is mesh_point-line.point;
-     w[0]=0.0 -  lines[line_idx].point[0];
-     w[1]=0.0 -  lines[line_idx].point[1];
-     w[2]=0.0 -  lines[line_idx].point[2];
-
-     row_type u_l= normalize (lines[line_idx].direction);
-
-     row_type cross_res;
-     cross_res= cross(u_l,w);
-
-     double distance= norm(cross_res);
-     if (distance>radius){
-       radius=distance;
-     }
-   }
-   std::cout << "estimated radius is " << radius  << std::endl;
-   double circumference=2*M_PI*radius;
-
-
-
-
-
-
-   //also need to rotate the normals taking into account the normals of the planes
-
-
-
-
-   //brute forcing and writing directly into the model
-   model->points_unwrapped.resize(model->num_points);
-   for (size_t i = 0; i < model->num_points; i++) {
-     model->points_unwrapped[i].resize(model->point_components);
-     model->points_unwrapped[i][0]=test_angles[i] *circumference;
-     model->points_unwrapped[i][1]=test_distances[i];
-     model->points_unwrapped[i][2]=model->points_wrapped[i][2];
-   }
+    //We don't sort the planes ordered because each one of them are asociated with a cluster. actually we only use it because we need a struct that has angles
+    std::sort(planes_ordered.begin(), planes_ordered.end(), by_angle());
 
 
 
@@ -1567,64 +1864,187 @@ void Visualizer::on_loadFileButton_clicked(){
 
 
 
-   //PCL mesh with angles
-    // pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-    //
-    // p_cloud->width    = model->points_wrapped.size();
-    // p_cloud->height   = 1;
-    // p_cloud->is_dense = false;
-    // p_cloud->points.resize (model->points_wrapped.size());
-    //
-    //
-    // for (size_t i = 0; i < model->points_wrapped.size(); i++){
-    //   //  p_cloud->points[i].x = model->points_wrapped[i][0];
-    //   //  p_cloud->points[i].y = model->points_wrapped[i][1];
-    //   //  p_cloud->points[i].z = model->points_wrapped[i][2];
-    //
-    //   p_cloud->points[i].x = test_angles[i] *circumference;
-    //   p_cloud->points[i].y = test_distances[i];
-    //   p_cloud->points[i].z = model->points_wrapped[i][2];
-    //
-    //
-    //
-    //    // p_cloud->points[i].r = normal_angles[i]*255;
-    //   //  p_cloud->points[i].r = test_angles[i]*255;
-    //   //  p_cloud->points[i].g = 0.0;
-    //   //  p_cloud->points[i].b = 0.0;
-    //
-    //   p_cloud->points[i].r = interpolate (model->normals[i][0], -1.0, 1.0, 0.0, 255.0  );
-    //   p_cloud->points[i].g = interpolate (model->normals[i][1], -1.0, 1.0, 0.0, 255.0  );
-    //   p_cloud->points[i].b = interpolate (model->normals[i][2], -1.0, 1.0, 0.0, 255.0  );
-    //
-    // }
-    //
-    //
-    // pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer2");
-    // viewer.showCloud (p_cloud);
-    // while (!viewer.wasStopped ())
-    // {
-    // }
+    double circumference=2.05539*2*M_PI; //TODO: ACTUAL CODE FOR GETTING CIRCUMFERENCE.
+
+    // go through the planes and calculate the rotation translation matrix to map them
+    for (size_t i = 0; i < planes_ordered.size(); i++) {
+
+      std::cout << "calcuating for plane" << i << std::endl;
+
+      vtkSmartPointer<vtkPlaneSource> planeSource =
+        vtkSmartPointer<vtkPlaneSource>::New();
+      planeSource->SetCenter(0.0, 0.0, 0.0);
+      planeSource->SetNormal( planes_ordered[i].coef.values[0],
+                              planes_ordered[i].coef.values[1],
+                              planes_ordered[i].coef.values[2]);
+      planeSource->Push(-planes_ordered[i].coef.values[3]);
+      planeSource->Update();
+
+      double center_vtk[3];
+      planeSource->GetCenter(center_vtk);
+      row_type plane_center(3);
+      plane_center[0]=center_vtk[0];
+      plane_center[1]=center_vtk[1];
+      plane_center[2]=center_vtk[2];
+
+      //Make all the centers be at the same z
+      plane_center[2]=0.0;
+
+
+
+      draw_sphere(plane_center[0],plane_center[1],plane_center[2]);
+      // std::cout << "plane center" << plane_center[0] << " " << plane_center[1] << " " << plane_center[2] << std::endl;
+
+      std::cout << "plane angle is" << planes_ordered[i].angle << std::endl;
+
+      double offset= 0.1*i;    //Each plane gets less and less x value so that they are closer together
+
+      row_type end_point(3);
+      end_point[0]= planes_ordered[i].angle * circumference - offset; //I don't know why it needs to be summed and not -
+      end_point[1]= 0.0;
+      end_point[2]= 0.0;
+
+      row_type translation(3);
+      translation[0]=end_point[0];
+      translation[1]=end_point[1];
+      translation[2]=end_point[2];
+
+
+
+
+      Eigen::Affine3f transform_2 = Eigen::Affine3f::Identity();
+      Eigen::Affine3f transform_center = Eigen::Affine3f::Identity();
+
+      // Define a translation of 2.5 meters on the x axis.
+      transform_2.translation() << translation[0], translation[1], translation[2];
+      transform_center.translation() << -plane_center[0], -plane_center[1], -plane_center[2];
+
+
+
+      // rotate from the normal of the plane to 0,1,0
+      row_type normal(3);
+      normal[0]=-planes_ordered[i].coef.values[0];
+      normal[2]=-planes_ordered[i].coef.values[1];
+      normal[2]=-planes_ordered[i].coef.values[2];
+      normal=normalize(normal);
+      double r= dot(normal,row_type {0.0, 1.0, 0.0});
+      r= std::acos(r);
+
+      r = (90 * M_PI /180) + interpolate (planes_ordered[i].angle, 0.0, 1.0, -M_PI, M_PI);  //for some reason the previous line always gives 90 degrees
+
+      std::cout << "rotation angle is " << r << std::endl;
+      // The same rotation matrix as before; theta radians arround Z axis
+      transform_2.rotate (Eigen::AngleAxisf (r, Eigen::Vector3f::UnitZ()));
+
+      // Print the transformation
+      printf ("\nMethod #2: using an Affine3f\n");
+      std::cout << transform_2.matrix() << std::endl;
+
+
+      int clust_idx= planes_ordered[i].index_cluster;
+
+      pcl::transformPointCloud (*(clustered_clouds[clust_idx]), *(clustered_clouds[clust_idx]), transform_center);
+      pcl::transformPointCloud (*(clustered_clouds[clust_idx]), *(clustered_clouds[clust_idx]), transform_2);
+
+    }
+
+
+
+
+    //View the final cloud
+    //  PCL mesh with angles
+      // pcl::PointCloud<pcl::PointXYZ>::Ptr p_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+      //
+      // *p_cloud  = *(clustered_clouds[0]);
+      // for (size_t i = 0; i < clustered_clouds.size(); i++) {
+      //   *p_cloud += *(clustered_clouds[i]);
+      // }
+      //
+      //
+      // pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer2");
+      // viewer.showCloud (p_cloud);
+      // while (!viewer.wasStopped ())
+      // {
+      // }
+
+
+      // //Get the maximum and minimum x for each cluster. Used for exp falloff of y coordinate
+      // matrix_type cluster_bounds(clusterCount);
+      //
+      // for (size_t clust = 0; clust < clusterCount; clust++) {
+      //   double min=99999;
+      //   double max=-99999;
+      //
+      //   for (size_t i = 0; i < clustered_clouds[clust]->points.size(); i++) {
+      //     if (clustered_clouds[clust]->points[i].x > max){
+      //       max=clustered_clouds[clust]->points[i].x;
+      //     }
+      //     if (clustered_clouds[clust]->points[i].x < min){
+      //       min=clustered_clouds[clust]->points[i].x;
+      //     }
+      //   }
+      //
+      //   cluster_bounds[clust].push_back(min);
+      //   cluster_bounds[clust].push_back(max);
+      // }
+
+
+
+
+
+      //Plug it back into the model
+      model->points_unwrapped.resize(model->num_points);
+      for (size_t i = 0; i < model->num_points; i++) {
+        model->points_unwrapped[i].resize(model->point_components);
+      }
+
+      for (size_t clust = 0; clust < clusterCount; clust++) {
+        int idx=0;
+
+
+        for (size_t i = 0; i < clustered_clouds[clust]->points.size(); i++) {
+
+          //we have a point and an index to insert it to, move the index until it winds the fisrt label
+          while(labels.at<int>(idx,0)!=clust){
+            idx++;
+          }
+
+          model->points_unwrapped[idx][0]= clustered_clouds[clust]->points[i].x;
+          model->points_unwrapped[idx][1]= clustered_clouds[clust]->points[i].y;
+          model->points_unwrapped[idx][2]= clustered_clouds[clust]->points[i].z;
+
+          //clap the distance
+          if ( fabs(model->points_unwrapped[idx][1]) > 0.1 ){
+            model->points_unwrapped[idx][1]=0.0;
+          }
+
+
+          //Need to check the nearest neightbours to fix the y (ditance to the plane)
 
 
 
 
 
 
+          idx++;
+        }
+      }
 
 
 
 
 
 
-   for (size_t clust = 0; clust < clusterCount; clust++) {
-     draw_plane(planes_ordered[clust].coef.values[0],
-                planes_ordered[clust].coef.values[1],
-                planes_ordered[clust].coef.values[2],
-                planes_ordered[clust].coef.values[3],
-                planes_ordered[clust].angle,0.0,0.0);
-   }
+    for (size_t clust = 0; clust < clusterCount; clust++) {
+      draw_plane(planes_ordered[clust].coef.values[0],
+                 planes_ordered[clust].coef.values[1],
+                 planes_ordered[clust].coef.values[2],
+                 planes_ordered[clust].coef.values[3],
+                 planes_ordered[clust].angle,0.0,0.0);
+    }
 
 
+    //-----------Finish version 2--------------------------
 
 
 
@@ -1723,7 +2143,7 @@ void Visualizer::draw_plane(double c0,double c1, double c2, double c3, double r,
     vtkSmartPointer<vtkActor>::New();
   actor->SetMapper(mapper);
   actor->GetProperty()->SetColor(r, g, b); //(R,G,B)
-  // actor->GetProperty()->BackfaceCullingOn();
+  actor->GetProperty()->BackfaceCullingOn();
 
     renderer->AddActor(actor);
 
@@ -1791,7 +2211,9 @@ void  Visualizer::updateView(int reset_camera){
   mapper->Update();
   vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
   actor->SetMapper(mapper);
-  actor->SetTexture(model->m_full_texture);
+
+  if (this->ui->colorComboBox->currentText()=="RGB")
+    actor->SetTexture(model->m_full_texture);
   actor->GetProperty()->BackfaceCullingOn();
 
   renderer->AddActor(actor);
@@ -1836,6 +2258,10 @@ void Visualizer::on_colorComboBox_currentIndexChanged(const QString & text){
   }
   if (text.toStdString() == "RGB"){
     std::cout << "calculating RGB colors" << std::endl;
+    model->compute_rgb_colors();
+  }
+  if (text.toStdString() == "IR"){
+    std::cout << "calculating IR colors" << std::endl;
     model->compute_rgb_colors();
   }
   if (text.toStdString() == "Depth"){

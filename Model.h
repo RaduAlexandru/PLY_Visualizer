@@ -15,10 +15,29 @@
 #include <vtkPolyDataNormals.h>
 #include <vtkImageData.h>
 #include <vtkTexture.h>
+#include <vtkCleanPolyData.h>
 #include "Utils.h"
 
 typedef std::vector<double> row_type;
 typedef std::vector<row_type> matrix_type;
+
+
+struct column_comparer
+{
+    int column_num;
+    column_comparer(int c) : column_num(c) {}
+
+    bool operator()(const std::vector<double> & lhs, const std::vector<double> & rhs) const
+    {
+        return lhs[column_num] < rhs[column_num];
+    }
+};
+
+
+
+
+
+
 
 class Model
 {
@@ -49,6 +68,7 @@ public:
      bool is_unwrapped;
      bool selecting_defects;
      bool selecting_grid;
+     bool deleted_streached_trigs;
 
      std::vector<vtkSmartPointer<vtkPolyData>> grid_cells;
 
@@ -70,6 +90,9 @@ public:
      void create_grid();
      void scale_mesh();
      void center_mesh();
+     void delete_streched_trigs();
+
+     double dist(row_type vec1, row_type vec2);
 
 };
 

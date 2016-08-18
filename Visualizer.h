@@ -68,6 +68,8 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/extract_indices.h>
+#include <pcl/console/parse.h>
+#include <pcl/common/transforms.h>
 
 
 #include <QFileDialog>
@@ -84,6 +86,7 @@ typedef std::vector<row_type> matrix_type;
 struct plane_struct {
     pcl::ModelCoefficients coef;
     double angle;
+    int index_cluster; //index to indicate which cluster is the plane resposible for
 };
 
 struct line_struct {
