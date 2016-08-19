@@ -2001,6 +2001,8 @@ void Visualizer::on_loadFileButton_clicked(){
       for (size_t clust = 0; clust < clusterCount; clust++) {
         int idx=0;
 
+        pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+        kdtree.setInputCloud (clustered_clouds[clust]);
 
         for (size_t i = 0; i < clustered_clouds[clust]->points.size(); i++) {
 
@@ -2013,17 +2015,52 @@ void Visualizer::on_loadFileButton_clicked(){
           model->points_unwrapped[idx][1]= clustered_clouds[clust]->points[i].y;
           model->points_unwrapped[idx][2]= clustered_clouds[clust]->points[i].z;
 
-          //clap the distance
-          if ( fabs(model->points_unwrapped[idx][1]) > 0.1 ){
-            model->points_unwrapped[idx][1]=0.0;
-          }
+
+
 
 
           //Need to check the nearest neightbours to fix the y (ditance to the plane)
+          pcl::PointXYZ searchPoint;
+          searchPoint.x = clustered_clouds[clust]->points[i].x;
+          searchPoint.y = clustered_clouds[clust]->points[i].y;
+          searchPoint.z = clustered_clouds[clust]->points[i].z;
+
+          int K = 50;
+          // double radius=0.1;
+          double radius=0.05;
+
+          std::vector<int> pointIdxNKNSearch(K);
+          std::vector<float> pointNKNSquaredDistance(K);
+
+          double avg_dist=0.0;
+
+          if (  kdtree.radiusSearch (searchPoint, radius, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
+          {
+           for (size_t p = 0; p < pointIdxNKNSearch.size (); ++p){
+            //  std::cout << "    "  <<   clustered_clouds[clust]->points[ pointIdxNKNSearch[p] ].x
+            //            << " " << clustered_clouds[clust]->points[ pointIdxNKNSearch[p] ].y
+            //            << " " << clustered_clouds[clust]->points[ pointIdxNKNSearch[p] ].z
+            //            << " (squared distance: " << pointNKNSquaredDistance[p] << ")" << std::endl;
+
+              // //average the dist of the K nearest neghbours
+              avg_dist+=clustered_clouds[clust]->points[ pointIdxNKNSearch[p] ].y;
+            }
+          }
+
+          avg_dist=avg_dist/pointIdxNKNSearch.size ();
+
+
+          model->points_unwrapped[idx][1]=model->points_unwrapped[idx][1]-avg_dist;
+
+          // std::cout << "iterated through a point" << std::endl;
 
 
 
-
+          //clap the distance
+          if ( fabs(model->points_unwrapped[idx][1]) > 0.1 ){
+            model->points_unwrapped[idx][1]=0.0;
+            clustered_clouds[clust]->points[i].y=0.0;
+          }
 
 
           idx++;
