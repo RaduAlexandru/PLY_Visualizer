@@ -21,6 +21,7 @@
 #include <vtkPoints.h>
 #include <vtkFloatArray.h>
 #include <vtkCellArray.h>
+#include <vtkCleanPolyData.h>
 
 
 

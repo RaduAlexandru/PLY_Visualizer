@@ -27,79 +27,6 @@ void OBJReader2::Update(){
   transform_tcoords();
   write_to_poly();
 
-
-
-
-
-
-  std::cout << "after reeading we have points " << m_points.size() << std::endl;
-  std::cout << "after reeading we have normals " << m_normals.size() << std::endl;
-  std::cout << "after reeading we have tcoords" << m_tcoords.size() << std::endl;
-  std::cout << "after reeading we have polys" << m_polys.size() << std::endl;
-
-
-
-  //pcl
-  // pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
-  //
-  // cloud->width    = sqrt(128468 +10);
-  // cloud->height   = sqrt(128468 +10);
-  // cloud->is_dense = false;
-  // cloud->points.resize (cloud->width * cloud->height);
-  //
-  // for (size_t i = 0; i < m_tcoords.size (); ++i){
-  //    cloud->points[i].x = m_tcoords[i][0];
-  //    cloud->points[i].y =m_tcoords[i][1];
-  //    cloud->points[i].z=0.0;
-  // }
-  //
-  // pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer");
-  // viewer.showCloud (cloud);
-  // while (!viewer.wasStopped ())
-  // {
-  // }
-
-
-  // for (size_t i = 0; i < 10; i++) {
-  // std::cout << "points: " << m_tcoords[i][0] << " " << m_tcoords[i][1] << m_tcoords[i][2]  << std::endl;
-  // }
-
-
-  // for (size_t i = 0; i < m_tcoord_offsets.size(); i++) {
-  //   std::cout << "t coord offser is " << i << " : " << m_tcoord_offsets[i][0] << " " << m_tcoord_offsets[i][1] << std::endl;
-  // }
-  //
-
-  // for (size_t i = 0; i < 2; i++) {
-  //   std::cout << "polys are " << std::endl;
-  //
-  //   for (size_t j = 0; j < 3; j++) {
-  //     for (size_t k= 0; k < 3; k++) {
-  //       std::cout << m_polys[0][i][j][k]   << std::endl;
-  //     }
-  //
-  //   }
-  //
-  // }
-
-
-
-
-
-
-
-  // cv::Size size(200,200);
-  // cv::resize(m_full_texture, m_full_texture,size);//resize image
-  // cv::namedWindow( "Gray image", CV_WINDOW_AUTOSIZE );
-  // cv::imshow( "Gray image", m_full_texture );
-  // cv::waitKey(0);
-
-
-
-
-
-
-
 }
 
 
@@ -117,7 +44,8 @@ void OBJReader2::read_mtl_file(){
   std::ifstream mtl_file;
   mtl_file.open(mtl_file_name.data());
   if (!mtl_file.is_open()) {
-    std::cout << "could not open the mtl file" << std::endl;
+    std::cout << "OBJ_READER: could not open the mtl file" << std::endl;
+    return;
   }
 
   while (mtl_file.good()) {
@@ -185,7 +113,8 @@ void OBJReader2::read_obj(){
    std::ifstream obj_file;
    obj_file.open(m_obj_file_name.data());
    if (!obj_file.is_open()) {
-       std::cout << "could open the obj file" << std::endl;
+       std::cout << "OBJ_READER: could open the obj file" << std::endl;
+       return;
    }
 
 
@@ -224,13 +153,8 @@ void OBJReader2::read_obj(){
 
       if (word== "f"){
         std::vector<std::string> split;
-        // std::cout << "x= " << x << std::endl;
-        // std::cout << "y= " << y << std::endl;
-        // std::cout << "z= " << z << std::endl;
 
         matrix_type_i face;
-
-
         row_type_i face_point;
 
         boost::split(split, x, boost::is_any_of("/"));
@@ -246,7 +170,6 @@ void OBJReader2::read_obj(){
         face.push_back(face_point);
 
         m_polys[mat_idx].push_back(face);
-
 
       }
 
@@ -266,7 +189,6 @@ void OBJReader2::transform_tcoords(){
       for (size_t point_idx = 0; point_idx < 3; point_idx++) {
         int tcoord_idx=m_polys[mat_idx][poly_idx][point_idx][1];
 
-        // std::cout << "t coord" << tcoord_idx << std::endl;
 
         if (!tcoords_checked[tcoord_idx]){
           for (size_t t = 0; t < m_tcoords[0].size(); t++) {
@@ -296,74 +218,126 @@ void OBJReader2::write_to_poly(){
 
   vtkSmartPointer<vtkCellArray> vtk_polys = vtkSmartPointer<vtkCellArray>::New();
 
-  // for (size_t i = 0; i < m_points.size(); i++) {
-  //   vtk_points->InsertNextPoint(m_points[i][0],m_points[i][1],m_points[i][2]);
-  // }
-  //
-  //
-  // for (size_t i = 0; i < m_normals.size(); i++) {
-  //   float tuple[3];
-  //   tuple[0]=m_normals[i][0];
-  //   tuple[1]=m_normals[i][1];
-  //   tuple[2]=m_normals[i][2];
-  //
-  //   // vtk_normals->InsertNextTuple(m_normals[i].data());
-  //   vtk_normals->InsertNextTuple(tuple);
-  // }
-  //
-  // for (size_t i = 0; i < m_tcoords.size(); i++) {
-  //   float tuple[3];
-  //   tuple[0]=m_tcoords[i][0];
-  //   tuple[1]=m_tcoords[i][1];
-  //   tuple[2]=m_tcoords[i][2];
-  //   // vtk_tcoords->InsertNextTuple(m_tcoords[i].data());
-  //   vtk_tcoords->InsertNextTuple(tuple);
-  // }
-  //
-  //
-  //
-  // // vtk_polys->InsertNextCell(0);
-  // for (size_t mat_idx = 0; mat_idx < m_textures.size(); mat_idx++) {
-  //   for (size_t poly_idx = 0; poly_idx < m_polys[mat_idx].size(); poly_idx++) {
-  //     // vtk_polys->InsertNextCell(0);
-  //     // std::vector <int> face_vertices;
-  //     for (size_t point_idx = 0; point_idx < 3; point_idx++) {
-  //       // face_vertices.push_back(m_polys[mat_idx][poly_idx][point_idx][0]);
-  //       int test=m_polys[mat_idx][poly_idx][point_idx][0];
-  //       std::cout << "test is " << test  << std::endl;
-  //       vtk_polys->InsertCellPoint(m_polys[mat_idx][poly_idx][point_idx][0]);
-  //
-  //
-  //
-  //
-  //     }
-  //
-  //     // vtk_polys->InsertNextCell(3, face_vertices.data());
-  //
-  //     vtkIdType pts[3] = {m_polys[mat_idx][poly_idx][0][0], m_polys[mat_idx][poly_idx][1][0], m_polys[mat_idx][poly_idx][2][0]};
-  //     vtk_polys->InsertNextCell(3,pts);
-  //
-  //   }
-  // }
-  //
-  //
-  // // vtk_polys->UpdateCellCount(m_points.size());
-  // // vtk_tcoords->UpdateCellCount(m_tcoords.size());
-  // // vtk_normals->UpdateCellCount(m_normals.size());
-  //
-  // m_polyData->SetPoints(vtk_points);
-  // m_polyData->GetPointData()->SetNormals(vtk_normals);
-  // m_polyData->GetPointData()->SetTCoords(vtk_tcoords);
-  // m_polyData->SetPolys(vtk_polys);
-
-
-
-
 
 
   //get through the faces and grab the indeces for the v, vt and vn
 
-  int gl_idx=0;  //global index that just indicates point in the mesh
+  // int gl_idx=0;  //global index that just indicates point in the mesh
+  // for (size_t mat_idx = 0; mat_idx < m_textures.size(); mat_idx++) {
+  //   for (size_t poly_idx = 0; poly_idx < m_polys[mat_idx].size(); poly_idx++) {
+  //     vtk_polys->InsertNextCell(3);
+  //     for (size_t point_idx = 0; point_idx < 3; point_idx++) {
+  //
+  //       int v_idx= m_polys[mat_idx][poly_idx][point_idx][0];
+  //       int vt_idx= m_polys[mat_idx][poly_idx][point_idx][1];
+  //       int vn_idx= m_polys[mat_idx][poly_idx][point_idx][2];
+  //
+  //
+  //
+  //       vtk_points->InsertNextPoint(m_points[v_idx][0],m_points[v_idx][1],m_points[v_idx][2]);
+  //
+  //
+  //       float tuple_n[3];
+  //       tuple_n[0]=m_normals[vn_idx][0];
+  //       tuple_n[1]=m_normals[vn_idx][1];
+  //       tuple_n[2]=m_normals[vn_idx][2];
+  //       // vtk_normals->InsertNextTuple(m_normals[i].data());
+  //       vtk_normals->InsertNextTuple(tuple_n);
+  //
+  //
+  //       float tuple_t[3];
+  //       tuple_t[0]=m_tcoords[vt_idx][0];
+  //       tuple_t[1]=m_tcoords[vt_idx][1];
+  //       tuple_t[2]=m_tcoords[vt_idx][2];
+  //       // vtk_tcoords->InsertNextTuple(m_tcoords[i].data());
+  //       vtk_tcoords->InsertNextTuple(tuple_t);
+  //
+  //
+  //       vtk_polys->InsertCellPoint(gl_idx);   //gl_idx will point to the previous point in the vtk_points
+  //       gl_idx++;
+  //     }
+  //
+  //
+  //
+  //   }
+  //
+  // }
+
+
+
+
+
+
+
+  //Attempt 2 at writing into polydata in a more compact way
+  // std::vector <int> vt_added (m_tcoords.size(), 0);  //Checking on tcoord because the is the biggest size vector.
+  //
+  // for (size_t mat_idx = 0; mat_idx < m_textures.size(); mat_idx++) {
+  //   for (size_t poly_idx = 0; poly_idx < m_polys[mat_idx].size(); poly_idx++) {
+  //     vtk_polys->InsertNextCell(3);
+  //     for (size_t point_idx = 0; point_idx < 3; point_idx++) {
+  //
+  //       int v_idx= m_polys[mat_idx][poly_idx][point_idx][0];
+  //       int vt_idx= m_polys[mat_idx][poly_idx][point_idx][1];
+  //       int vn_idx= m_polys[mat_idx][poly_idx][point_idx][2];
+  //
+  //
+  //
+  //       if (!vt_added[vt_idx]){
+  //         //vt
+  //         float tuple_t[3];
+  //         tuple_t[0]=m_tcoords[vt_idx][0];
+  //         tuple_t[1]=m_tcoords[vt_idx][1];
+  //         tuple_t[2]=m_tcoords[vt_idx][2];
+  //         vtk_tcoords->InsertNextTuple(tuple_t);
+  //         vt_added[vt_idx]=1;
+  //
+  //         //v
+  //         vtk_points->InsertNextPoint(m_points[v_idx][0],m_points[v_idx][1],m_points[v_idx][2]);
+  //
+  //         //vn
+  //         float tuple_n[3];
+  //         tuple_n[0]=m_normals[vn_idx][0];
+  //         tuple_n[1]=m_normals[vn_idx][1];
+  //         tuple_n[2]=m_normals[vn_idx][2];
+  //         // vtk_normals->InsertNextTuple(m_normals[i].data());
+  //         vtk_normals->InsertNextTuple(tuple_n);
+  //       }
+  //
+  //
+  //       vtk_polys->InsertCellPoint(vt_idx);   //adding vt_idx which will be the point in the mesh, Can be repeted and duplicated
+  //     }
+  //
+  //   }
+  //
+  // }
+
+
+
+  //Attempt 3. Attempt 2 already workd but it can be made more readable
+
+  //Calculate the maximum of v, vt and vn. If one is bigger than the others it indicates that the points might share that parameter in different faces. Eg: If we have more t_coords than points that means that one points will have different texture coordinates for different faces.
+
+  int max_param;
+  int max_size=0;
+  if (m_points.size() > max_size){
+    max_size=m_points.size();
+    max_param=0;
+  }
+  if (m_tcoords.size() > max_size){
+    max_size=m_tcoords.size();
+    max_param=1;
+  }
+  if (m_normals.size() > max_size){
+    max_size=m_normals.size();
+    max_param=2;
+  }
+
+  std::cout << "obj_reader: maximum parameter is " << max_param << std::endl;
+  std::cout << "obj_reader: 0= points, 1= tcoords, 2=normals" << std::endl;
+
+  std::vector <int> point_is_added (max_size, 0);  //Checking on tcoord because the is the biggest size vector.
+
   for (size_t mat_idx = 0; mat_idx < m_textures.size(); mat_idx++) {
     for (size_t poly_idx = 0; poly_idx < m_polys[mat_idx].size(); poly_idx++) {
       vtk_polys->InsertNextCell(3);
@@ -375,36 +349,24 @@ void OBJReader2::write_to_poly(){
 
 
 
-        vtk_points->InsertNextPoint(m_points[v_idx][0],m_points[v_idx][1],m_points[v_idx][2]);
+        if (!point_is_added[  m_polys[mat_idx][poly_idx][point_idx][max_param]   ]){
+          vtk_points->InsertNextPoint(m_points[v_idx][0],m_points[v_idx][1],m_points[v_idx][2]);
+          vtk_tcoords->InsertNextTuple(m_tcoords[vt_idx].data());
+          vtk_normals->InsertNextTuple(m_normals[vn_idx].data());
+
+          point_is_added[m_polys[mat_idx][poly_idx][point_idx][max_param]]=1;
+        }
 
 
-        float tuple_n[3];
-        tuple_n[0]=m_normals[vn_idx][0];
-        tuple_n[1]=m_normals[vn_idx][1];
-        tuple_n[2]=m_normals[vn_idx][2];
-        // vtk_normals->InsertNextTuple(m_normals[i].data());
-        vtk_normals->InsertNextTuple(tuple_n);
-
-
-        float tuple_t[3];
-        tuple_t[0]=m_tcoords[vt_idx][0];
-        tuple_t[1]=m_tcoords[vt_idx][1];
-        tuple_t[2]=m_tcoords[vt_idx][2];
-        // vtk_tcoords->InsertNextTuple(m_tcoords[i].data());
-        vtk_tcoords->InsertNextTuple(tuple_t);
-
-
-        vtk_polys->InsertCellPoint(gl_idx);   //gl_idx will point to the previous point in the vtk_points
-        gl_idx++;
+        vtk_polys->InsertCellPoint( m_polys[mat_idx][poly_idx][point_idx][max_param]  );   //normally it is vt_idx which will be the point in the mesh, Can be repeted and duplicated
       }
-
-
 
     }
 
   }
 
-  std::cout << "finished filling the vtk_vectors" << std::endl;
+
+
 
   // vtk_polys->UpdateCellCount(3);
 
