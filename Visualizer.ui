@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>675</width>
+    <width>674</width>
     <height>619</height>
    </rect>
   </property>
@@ -186,6 +186,19 @@ p, li { white-space: pre-wrap; }
      </property>
      <property name="text">
       <string>updateView</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="showProgressButton">
+     <property name="geometry">
+      <rect>
+       <x>120</x>
+       <y>550</y>
+       <width>80</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>showProgress</string>
      </property>
     </widget>
    </widget>

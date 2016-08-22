@@ -40,8 +40,6 @@
 #include <vtkVertexGlyphFilter.h>
 #include <vtkLine.h>
 
-#include "vtkTexturingHelper.h"
-
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -73,6 +71,9 @@
 
 
 #include <QFileDialog>
+#include <QLabel>
+#include <QMovie>
+#include <QPushButton>
 #include "Model.h"
 #include "Utils.h"
 #include "OBJReader2.h"
@@ -155,6 +156,7 @@ public slots:
 
   virtual void slotExit();
   void on_loadFileButton_clicked();
+  void on_loadFileButton2_clicked();
   void on_clearButton_clicked();
   void on_unwrapButton_clicked();
   void on_colorComboBox_currentIndexChanged(const QString & text);
@@ -163,6 +165,7 @@ public slots:
   void on_gridButton_clicked();
 
   void on_updateViewButton_clicked();
+  void on_showProgressButton_clicked();
 
 
 private:

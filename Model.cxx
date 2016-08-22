@@ -15,7 +15,7 @@ Model::Model():
   colors_active(vtkSmartPointer<vtkUnsignedCharArray>::New()),
   deleted_streached_trigs(false)
 {
-  std::cout << "MODEL CONSTRUCT" << std::endl;
+  
 
 }
 
@@ -74,6 +74,8 @@ void Model::read_info(){
   //   std::cout << "bounds: " << i << " is " << bounds[i] << std::endl;
   // }
 
+
+  std::cout << "model::readinfo; num points= " <<num_points << std::endl;
 
 
 }
@@ -272,7 +274,7 @@ void Model::delete_streched_trigs(){
     //Now we have a triangle with 3 points InsideOutOff
     double thresh=0.2;
     if (  dist(trig[0], trig[1])  > thresh || dist(trig[0], trig[2]) >thresh  || dist(trig[2], trig[1]) >thresh ){
-      std::cout << "delete cell" << i << std::endl;
+      // std::cout << "delete cell" << i << std::endl;
       wall->DeleteCell(i);
     }
 
@@ -305,7 +307,7 @@ void Model::delete_streched_trigs(){
   if(vtk_normals){
     std::cout << "GOT NORMALS" << std::endl;
   }else{
-    std::cout << "kein normal!!!!!!!!!1" << std::endl;
+    std::cout << "no normals!" << std::endl;
   }
   this->normals=vtk_normals_to_vector(vtk_normals);
   this->bounds=wall->GetBounds();

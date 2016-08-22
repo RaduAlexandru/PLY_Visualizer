@@ -40,6 +40,71 @@ Visualizer::Visualizer():
   this->ui->colorComboBox->addItem("Curvature");
 
 
+
+  // //NEW UI
+  // QGridLayout *layout = new QGridLayout;
+  // QWidget * central = new QWidget();
+  // setCentralWidget(central);
+  //
+  // // QLabel *lbl = new QLabel;
+  // // QMovie *movie = new QMovie("/media/alex/Data/Master/SHK/vtk_scripts/gifs/spinner.gif");
+  // // lbl->setMovie(movie);
+  // // lbl->show();
+  // // lbl->setWindowFlags(Qt::FramelessWindowHint);
+  // // lbl->setStyleSheet("background-color: rgba(225,255,255,0);");
+  // // lbl->setAttribute( Qt::WA_TranslucentBackground, true );
+  // // movie->start();
+  // //
+  // // lbl->hide();
+  // // lbl->show();
+  // // lbl->raise();
+  //
+  // QVTKWidget *qvtkWidget = new QVTKWidget;
+  //
+  // // layout->addWidget(lbl);
+  // layout->addWidget(qvtkWidget);
+  //
+  // centralWidget()->setLayout(layout);
+  //
+  // setWindowTitle("Camera Window");
+  // // setFixedSize(1000, 800);
+  //
+  //
+  // renderer->GradientBackgroundOn();
+  // renderer->SetBackground(1.0,1.0,1.0);
+  // renderer->SetBackground2(0.1,0.1,0.1);
+  //
+  // qvtkWidget->GetRenderWindow()->AddRenderer(renderer);
+  //
+  //
+  // // QPushButton* _widgetOnTheTop = new QPushButton(this);
+  // //     _widgetOnTheTop->setGeometry(10,10,100,35);
+  // //     _widgetOnTheTop->show();
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  // QLabel *lbl = new QLabel(this);
+  // QMovie *movie = new QMovie("/media/alex/Data/Master/SHK/vtk_scripts/gifs/spinner.gif");
+  // lbl->setMovie(movie);
+  // lbl->setWindowFlags(Qt::FramelessWindowHint);
+  // lbl->setStyleSheet("background-color: rgba(225,255,255,0);");
+  // lbl->setStyleSheet("background-color: rgba(0,0,0,0%)");
+  //
+  // // lbl->setAttribute( Qt::WA_TranslucentBackground, true );
+  // lbl->setAttribute(Qt::WA_NoSystemBackground, true);
+  //
+  // lbl->setGeometry(100,100,666,666);
+  // lbl->show();
+  // movie->start();
+  //
+
+
+
+
   // // //ui
   // // self.centralWidget = QtGui.QWidget(MainWindow)
   // // self.gridlayout = QtGui.QGridLayout(self.centralWidget)
@@ -106,10 +171,13 @@ Visualizer::Visualizer():
   // Set up action signals and slots
   connect(this->ui->actionExit, SIGNAL(triggered()), this, SLOT(slotExit()));
 
+
+  std::cout << "finished visualizer constructor" << std::endl;
+
 }
 
 
-void Visualizer::on_loadFileButton_clicked(){
+void Visualizer::on_loadFileButton2_clicked(){
   // QString fileName;
 	// fileName = QFileDialog::getOpenFileName(this,
 	// 	tr("Open File"), "./", tr("File (*.*)"));
@@ -2090,6 +2158,74 @@ void Visualizer::on_loadFileButton_clicked(){
 }
 
 
+void Visualizer::on_loadFileButton_clicked(){
+  QString fileName;
+  QString selfilter = tr("Mesh (*.obj *.ply)");
+  fileName = QFileDialog::getOpenFileName(this,
+  	         tr("Open File"), "./", selfilter);
+
+  if (fileName.isEmpty()){
+    return;
+  }
+
+  std::cout << "filename: " << fileName.toStdString() << std::endl;
+
+
+
+  if (boost::ends_with(fileName.toStdString(), ".ply")) {
+    std::cout << "reading .ply file" << std::endl;
+  }else if (boost::ends_with(fileName.toStdString(), ".obj")){
+    std::cout << "reading .obj file" << std::endl;
+  }else{
+    std::cout << "NOT VALID FORMAT" << std::endl;
+    return;
+  }
+
+    vtkSmartPointer<vtkPLYReader> reader = vtkSmartPointer<vtkPLYReader>::New();
+    // vtkSmartPointer<vtkOBJReader> reader = vtkSmartPointer<vtkOBJReader>::New();
+    reader->SetFileName ( fileName.toStdString().c_str() );
+    reader->Update();
+    //reader->GetOutput()->GetPointData()->SetNormals(NULL);
+
+
+    //cut the cylinder
+    vtkSmartPointer<vtkBox> box_cut = vtkSmartPointer<vtkBox>::New();
+  //  box_cut->SetBounds (0.0, 1000, -0.005, 0.005, -1000.0, 1000.0);
+     box_cut->SetBounds (0.0, 1000, -0.007, 0.007, -1000.0, 1000.0);
+    vtkSmartPointer<vtkClipPolyData> clipper= vtkSmartPointer<vtkClipPolyData>::New();
+    clipper->SetInputConnection(reader->GetOutputPort());
+    clipper->SetClipFunction(box_cut);
+    clipper->InsideOutOff();
+    clipper->Update();
+    clipper->GenerateClippedOutputOn();
+
+    model->set_mesh(clipper->GetOutput());
+
+    ui->colorComboBox->setCurrentIndex(ui->colorComboBox->findText("RGB"));
+
+
+    // //trying to detect the bug in the reader
+    // std::string inputFilename= "/media/alex/Nuevo_vol/Master/SHK/Data/Chimney/result/result.ply";
+    // vtkSmartPointer<vtkPLYReader> reader =
+    //   vtkSmartPointer<vtkPLYReader>::New();
+    // reader->SetFileName ( inputFilename.c_str() );
+    // reader->Update();
+    // vtkSmartPointer<vtkPolyDataMapper> mapper =
+    //   vtkSmartPointer<vtkPolyDataMapper>::New();
+    // mapper->SetInputConnection(reader->GetOutputPort());
+    // vtkSmartPointer<vtkActor> actor =
+    //   vtkSmartPointer<vtkActor>::New();
+    // actor->SetMapper(mapper);
+    // renderer->AddActor(actor);
+    // this->ui->qvtkWidget->GetRenderWindow()->Render();
+
+
+    updateView();
+
+
+}
+
+
 
 row_type Visualizer::normalize (row_type vec){
   double length=0.0;
@@ -2381,6 +2517,12 @@ void Visualizer::on_gridButton_clicked(){
 void Visualizer::on_updateViewButton_clicked(){
   std::cout << "updating iew" << std::endl;
   updateView();
+}
+
+void Visualizer::on_showProgressButton_clicked(){
+  std::cout << "showing progress bar" << std::endl;
+  QPushButton* pb = new QPushButton("Hey");
+  // this->gridlayout->addWidget(pb);
 }
 
 
