@@ -2,29 +2,31 @@
 #include <iostream>
 
 Model::Model():
-  num_points(0),
-  point_components(0),
-  radius(0.0),
-  circumference(0.0),
-  is_unwrapped(false),
-  selecting_defects(false),
-  selecting_grid(false),
-  wall(vtkSmartPointer<vtkPolyData>::New()),
-  cells(vtkSmartPointer<vtkCellArray>::New()),
-  colors_original(vtkSmartPointer<vtkUnsignedCharArray>::New()),
-  colors_active(vtkSmartPointer<vtkUnsignedCharArray>::New()),
-  deleted_streached_trigs(false)
+  m_num_points(0),
+  m_point_components(0),
+  m_radius(0.0),
+  m_circumference(0.0),
+  m_is_unwrapped(false),
+  m_selecting_defects(false),
+  m_selecting_grid(false),
+  m_wall(vtkSmartPointer<vtkPolyData>::New()),
+  m_cells(vtkSmartPointer<vtkCellArray>::New()),
+  m_colors_original(vtkSmartPointer<vtkUnsignedCharArray>::New()),
+  m_colors_active(vtkSmartPointer<vtkUnsignedCharArray>::New()),
+  m_deleted_streached_trigs(false),
+  m_draw_grid_active(true),
+  m_draw_grid_inactive(false)
 {
-  
+
 
 }
 
 
 void Model::set_mesh(vtkSmartPointer<vtkPolyData> mesh){
-  this->wall=(mesh);
   clear();
-  read_info();
+  m_wall=(mesh);
   center_mesh();
+  read_info();
   //scale_mesh();  //TODO: REMOVE this one because it was only used so as to better see the fitted planes
 }
 
@@ -33,108 +35,112 @@ void Model::set_texture(vtkSmartPointer<vtkTexture> texture){
 }
 
 void Model::clear(){
-  this->is_unwrapped=false;
-  this->selecting_defects=false;
-  this->num_points=0;
-  this->point_components=0;
-  this->radius=0.0;
-  this->circumference=0.0;
-  this->points_wrapped.clear();
-  this->points_unwrapped.clear();
-  this->distances_to_radius.clear();
-  this->distances_to_center.clear();
-  this->angles.clear();
+  m_is_unwrapped=false;
+  m_selecting_defects=false;
+  m_selecting_grid=false;
+  m_deleted_streached_trigs=false;
+  m_num_points=0;
+  m_point_components=0;
+  m_radius=0.0;
+  m_circumference=0.0;
+  m_points_wrapped.clear();
+  m_points_unwrapped.clear();
+  distances_to_radius.clear();
+  distances_to_center.clear();
+  m_angles.clear();
+  m_grid.clear();
+  m_grid_cells_active.clear();
 }
 
 
 void Model::read_info(){
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-  points=wall->GetPoints();
-  this->points_wrapped= vtk_to_vector(points);
-  this->point_components = points->GetData()->GetNumberOfComponents();
-  this->cells            =this->wall->GetPolys();
-  this->colors_original  = get_colors();
-  this->colors_active  = get_colors();
-  this->num_points       =wall->GetNumberOfPoints();
-  this->radius           = estimate_radius(points_wrapped);
-  this->circumference    =2*M_PI*radius;
+  points=m_wall->GetPoints();
+  m_points_wrapped= vtk_to_vector(points);
+  m_points_wrapped_ds=compute_decimated(m_points_wrapped);
+  m_point_components = points->GetData()->GetNumberOfComponents();
+  m_cells            =this->m_wall->GetPolys();
+  m_colors_original  = get_colors();
+  m_colors_active  = get_colors();
+  m_num_points       =m_wall->GetNumberOfPoints();
+  m_radius           = estimate_radius(m_points_wrapped_ds);
+  m_circumference    =2*M_PI*m_radius;   //In the case of a non cylindrical one, the circumference is the perimeter of all the walls
+
+  // see law of cosines
+  double angle_wall=360.0/(double)m_num_walls;
+  angle_wall= angle_wall *M_PI/180.0;
+  m_circumference =m_num_walls * sqrt (m_radius*m_radius +m_radius*m_radius -2*m_radius*m_radius* cos (angle_wall));
+
+  std::cout << "circumefrence is " << m_circumference << std::endl;
 
 
-  vtkSmartPointer<vtkDataArray> vtk_normals = wall->GetPointData()->GetNormals();
+  vtkSmartPointer<vtkDataArray> vtk_normals = m_wall->GetPointData()->GetNormals();
   if(vtk_normals){
-    std::cout << "GOT NORMALS" << std::endl;
+    std::cout << "the polydata has normals" << std::endl;
   }else{
-    std::cout << "kein normal!!!!!!!!!1" << std::endl;
+    std::cout << "the polydata does not have normals" << std::endl;
   }
-  this->normals=vtk_normals_to_vector(vtk_normals);
+  m_normals=vtk_normals_to_vector(vtk_normals);
 
-  this->bounds=wall->GetBounds();
-
-  // for (size_t i = 0; i < 6; i++) {
-  //   std::cout << "bounds: " << i << " is " << bounds[i] << std::endl;
-  // }
+  m_bounds=m_wall->GetBounds();
 
 
-  std::cout << "model::readinfo; num points= " <<num_points << std::endl;
 
 
+
+  std::cout << "model::readinfo: num points= " <<m_num_points << std::endl;
 }
 
 
 void Model::scale_mesh(){
   double scale=0.3;
-  for (size_t i = 0; i < this->points_wrapped.size(); i++) {
-    for (size_t j = 0; j < this->points_wrapped[0].size(); j++) {
-      this->points_wrapped[i][j]= this->points_wrapped[i][j]*scale;
+  for (size_t i = 0; i < this->m_points_wrapped.size(); i++) {
+    for (size_t j = 0; j < this->m_points_wrapped[0].size(); j++) {
+      this->m_points_wrapped[i][j]= this->m_points_wrapped[i][j]*scale;
     }
   }
 }
 
 
 void Model::center_mesh(){
-  // center.resize(point_components);
-  // for (size_t i = 0; i < this->points_wrapped.size(); i++) {
-  //   for (size_t j = 0; j < this->points_wrapped[0].size(); j++) {
-  //     center[j]+=this->points_wrapped[i][j];
-  //   }
-  // }
+  // m_center.resize(m_point_components);
   //
-  // for (size_t i = 0; i < center.size(); i++) {
-  //   center[i]=center[i]/this->points_wrapped.size();
-  // }
+  // m_center[0]=(m_bounds[1]+m_bounds[0])/2.0;
+  // m_center[1]=(m_bounds[3]+m_bounds[2])/2.0;
+  // m_center[2]=(m_bounds[5]+m_bounds[4])/2.0;
   //
   // //now we move the points to that center
-  // for (size_t i = 0; i < this->points_wrapped.size(); i++) {
-  //   for (size_t j = 0; j < this->points_wrapped[0].size(); j++) {
-  //     this->points_wrapped[i][j]=this->points_wrapped[i][j]-center[j];
+  // for (size_t i = 0; i < this->m_points_wrapped.size(); i++) {
+  //   for (size_t j = 0; j < this->m_points_wrapped[0].size(); j++) {
+  //     this->m_points_wrapped[i][j]=this->m_points_wrapped[i][j]-m_center[j];
   //   }
   // }
-
-  center.resize(point_components);
-
-  double bounds[6];
-  wall->GetBounds(bounds);
-
-  std::cout  << "xmin: " << bounds[0] << " "
-             << "xmax: " << bounds[1] << std::endl
-             << "ymin: " << bounds[2] << " "
-             << "ymax: " << bounds[3] << std::endl
-             << "zmin: " << bounds[4] << " "
-             << "zmax: " << bounds[5] << std::endl;
-
-  center[0]=(bounds[1]+bounds[0])/2.0;
-  center[1]=(bounds[3]+bounds[2])/2.0;
-  center[2]=(bounds[5]+bounds[4])/2.0;
-
-  //now we move the points to that center
-  for (size_t i = 0; i < this->points_wrapped.size(); i++) {
-    for (size_t j = 0; j < this->points_wrapped[0].size(); j++) {
-      this->points_wrapped[i][j]=this->points_wrapped[i][j]-center[j];
-    }
-  }
+  //
+  // std::cout << "center is " <<   m_center[0] << " " << m_center[1] << " " << m_center [2] << std::endl;
+  //
+  // this->m_bounds=m_wall->GetBounds();
 
 
-  std::cout << "center is " <<   center[0] << " " << center[1] << " " << center [2] << std::endl;
+  m_bounds=m_wall->GetBounds();
+
+  m_center.resize(3);
+  m_center[0]=(m_bounds[1]+m_bounds[0])/2.0;
+  m_center[1]=(m_bounds[3]+m_bounds[2])/2.0;
+  m_center[2]=(m_bounds[5]+m_bounds[4])/2.0;
+
+  vtkSmartPointer<vtkTransform> translation =
+    vtkSmartPointer<vtkTransform>::New();
+  translation->Translate(-m_center[0], -m_center[1], -m_center[2]);
+
+  vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter =
+    vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+  transformFilter->SetInputData(m_wall);
+  transformFilter->SetTransform(translation);
+  transformFilter->Update();
+
+  m_wall=transformFilter->GetOutput();
+
+  // std::cout << "center is " <<   m_center[0] << " " << m_center[1] << " " << m_center [2] << std::endl;
 
 }
 
@@ -145,8 +151,8 @@ vtkSmartPointer<vtkUnsignedCharArray> Model::get_colors(){
   vtkSmartPointer<vtkUnsignedCharArray> rgb= vtkSmartPointer<vtkUnsignedCharArray>::New();
   rgb->SetNumberOfComponents(3);
 
-  int num       =wall->GetNumberOfPoints();
-  auto scalars  =wall->GetPointData()->GetScalars();
+  int num       =m_wall->GetNumberOfPoints();
+  auto scalars  =m_wall->GetPointData()->GetScalars();
 
 
 
@@ -158,106 +164,106 @@ vtkSmartPointer<vtkUnsignedCharArray> Model::get_colors(){
   }else{
     std::cout << "yes it has color " << std::endl;
     int num_colors=scalars->GetSize();
-    std::cout << "number of values it has: " << num_colors << std::endl;
 
     //To avoid it inserting more colors than points
     int min= std::min (num_colors, num);
-
     for (vtkIdType i = 0; i < min; i++) {
       rgb->InsertNextTuple(scalars->GetTuple(i));
-
     }
-
   }
 
   rgb->SetName("rgb");
 
-  wall->GetPointData()->AddArray(rgb);
+  m_wall->GetPointData()->AddArray(rgb);
 
   return rgb;
-
 }
 
-double Model::estimate_radius(matrix_type points ){
-  std::cout << "esimating radius" << std::endl;
+double Model::estimate_radius(pcl::PointCloud<pcl::PointXYZ>::Ptr points ){
 
-  int num_points=points.size();
-  distances_to_center.resize(num_points);
+  std::cout << "estimating radius" << std::endl;
+  double radius=0.0;
 
-  //no need to substract the center because we assume it's already centered
-  //we do not use the z component since we suppose that the cylinder is oriented
-  for (size_t i = 0; i < num_points; i++) {
-    distances_to_center[i]= sqrt( points[i][0]*points[i][0]  + points[i][1]*points[i][1] );
+  //Get the points that are further away
+  std::sort(m_points_wrapped_ds->points.begin(), m_points_wrapped_ds->points.end(), by_distance_center());
+
+  int further_num=50;
+  std::vector< pcl::PointXYZ > further_points(m_points_wrapped_ds->points.begin(), m_points_wrapped_ds->points.begin() + further_num);
+
+
+  //Get the median of those distance as the radius
+  row_type distances(further_num);
+  for (size_t i = 0; i < further_points.size(); i++) {
+    float dist= pcl::geometry::distance(further_points[i], pcl::PointXYZ (0.0, 0.0, further_points[i].z));
+    distances[i]=dist;
   }
 
+  radius= median(distances);
 
-  //median of it will be the radius of the cylinder
-  std::vector<double> calc(distances_to_center);
-  size_t n = calc.size() / 2;
-  std::nth_element(calc.begin(), calc.begin()+n, calc.end());
-  double median= calc[n];
-  std::cout << "radius estimated is:" << median << std::endl;
-  return median;
+  std::cout << "radius is " << radius << std::endl;
+
+  std::cout << "finish estimating radius" << std::endl;
+  return radius;
+
 }
 
 
 vtkSmartPointer<vtkPolyData> Model::get_mesh(){
   std::cout << "model::updating mesh" << std::endl;
 
-  if (num_points==0){ //Wall has not been set yet
-    return wall;
+  write_points_to_mesh();
+  return m_wall;
+
+}
+
+void Model::write_points_to_mesh(){
+  if (m_num_points==0){ //m_wall has not been set yet
+    return;
   }
 
   //Set points
   vtkSmartPointer<vtkPoints> points_active = vtkSmartPointer<vtkPoints>::New() ;
-  if (this->is_unwrapped){
-    points_active=vector_to_vtk(this->points_unwrapped);
+  if (this->m_is_unwrapped){
+    points_active=vector_to_vtk(this->m_points_unwrapped);
   }else{
-    points_active=vector_to_vtk(this->points_wrapped);
+    points_active=vector_to_vtk(this->m_points_wrapped);
   }
 
-  wall->SetPoints(points_active);
-  wall->SetPolys(this->cells);
-  wall->GetPointData()->SetScalars(this->colors_active);
+  m_wall->SetPoints(points_active);
+  m_wall->SetPolys(this->m_cells);
+  m_wall->GetPointData()->SetScalars(this->m_colors_active);
 
-  if (this->is_unwrapped)
+  if (this->m_is_unwrapped)
     delete_streched_trigs();
 
 
-  this->bounds=wall->GetBounds();
+  this->m_bounds=m_wall->GetBounds();
 
-  // for (size_t i = 0; i < 6; i++) {
-  //   std::cout << "bounds: " << i << " is " << bounds[i] << std::endl;
-  // }
-
-
+  //TODO: we should recalculate new normals, insted we should have normal_wrapped and normals unwrapped
   vtkSmartPointer<vtkPolyDataNormals> normals_alg = vtkSmartPointer<vtkPolyDataNormals>::New();
-  normals_alg->SetInputData(wall);
+  normals_alg->SetInputData(m_wall);
   normals_alg->Update();
 
+  m_wall=normals_alg->GetOutput();
 
-
-  return normals_alg->GetOutput();
-  //return wall;
 }
 
 
 void Model::delete_streched_trigs(){
   //get all the cells and calculate the perimeter. If the perimeter excedes a certain value, delete the cell (poly)
 
-
-  if (deleted_streached_trigs)
+  if (m_deleted_streached_trigs)
     return;
 
-  deleted_streached_trigs=true;
+  m_deleted_streached_trigs=true;
 
   // std::cout << "delete streached trigs" << std::endl;
-  wall->BuildLinks();
+  m_wall->BuildLinks();
 
   vtkIdType n_pts=-1,*pts;
-  wall->GetPolys()->InitTraversal();
-  for (size_t i = 0; i < wall->GetPolys()->GetNumberOfCells(); i++) {
-    wall->GetPolys()->GetNextCell(n_pts,pts);
+  m_wall->GetPolys()->InitTraversal();
+  for (size_t i = 0; i < m_wall->GetPolys()->GetNumberOfCells(); i++) {
+    m_wall->GetPolys()->GetNextCell(n_pts,pts);
 
 
 
@@ -267,50 +273,37 @@ void Model::delete_streched_trigs(){
       trig[j].resize(3);
     }
     for (size_t j = 0; j < 3; j++) {
-      wall->GetPoints()->GetPoint(pts[j],trig[j].data());
+      m_wall->GetPoints()->GetPoint(pts[j],trig[j].data());
       // std::cout << "Point " << i << " : (" << p[0] << " " << p[1] << " " << p[2] << ")" << std::endl;
     }
 
-    //Now we have a triangle with 3 points InsideOutOff
+    //Now we have a triangle with 3 points
     double thresh=0.2;
     if (  dist(trig[0], trig[1])  > thresh || dist(trig[0], trig[2]) >thresh  || dist(trig[2], trig[1]) >thresh ){
       // std::cout << "delete cell" << i << std::endl;
-      wall->DeleteCell(i);
+      m_wall->DeleteCell(i);
     }
 
   }
 
-  wall->RemoveDeletedCells();
+  m_wall->RemoveDeletedCells();
 
-  // //clean and read again
+  // //clean and read again but now into points unwrapped
   // vtkSmartPointer<vtkCleanPolyData> clean = vtkSmartPointer<vtkCleanPolyData>::New();
-  // clean->SetInputData(wall);
+  // clean->SetInputData(m_wall);
   // clean->Update();
 
-  // this->wall=clean->GetOutput();
+  // this->m_wall=clean->GetOutput();
   // read_info();
 
   //Read inf again but now into points unwrapped
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-  points=wall->GetPoints();
-  this->points_unwrapped= vtk_to_vector(points);
-  this->point_components = points->GetData()->GetNumberOfComponents();
-  this->cells            =this->wall->GetPolys();
-  this->colors_original  = get_colors();
-  this->colors_active  = get_colors();
-  this->num_points       =wall->GetNumberOfPoints();
-  this->radius           = estimate_radius(points_wrapped);
-  this->circumference    =2*M_PI*radius;
-
-
-  vtkSmartPointer<vtkDataArray> vtk_normals = wall->GetPointData()->GetNormals();
-  if(vtk_normals){
-    std::cout << "GOT NORMALS" << std::endl;
-  }else{
-    std::cout << "no normals!" << std::endl;
-  }
-  this->normals=vtk_normals_to_vector(vtk_normals);
-  this->bounds=wall->GetBounds();
+  points=m_wall->GetPoints();
+  this->m_points_unwrapped= vtk_to_vector(points);
+  this->m_cells            =this->m_wall->GetPolys();
+  this->m_colors_original  = get_colors();
+  this->m_colors_active  = get_colors();
+  this->m_num_points       =m_wall->GetNumberOfPoints();
 
 }
 
@@ -325,9 +318,275 @@ double Model::dist(row_type vec1, row_type vec2){
 
 
 void Model::compute_unwrap2(){
-  //get the normals for each vertex.
-  //Get the angle of those normals with respect to the x axis
-  //Histogram the angles
+  std::cout << "computing unwrap 2" << std::endl;
+
+
+  //Cluster the normals of the points.
+  cv::Mat samples(m_normals.size(), 3, CV_32F);
+  for( int y = 0; y < samples.rows; y++ ){
+    for( int x = 0; x < samples.cols; x++ ){
+      samples.at<float>(y,x)=m_normals[y][x];
+    }
+  }
+
+  int cluster_count = m_num_walls;
+  cv::Mat labels;
+  int attempts = 10;
+  cv::Mat centers;
+  cv::kmeans(samples, cluster_count, labels, cv::TermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 10000, 0.001), attempts, cv::KMEANS_PP_CENTERS, centers );
+
+  //Get number of elements in each cluster
+  std::vector<int> labels_vec;
+  for (size_t i = 0; i < labels.rows; i++) {
+    labels_vec.push_back(labels.at<int>(i,0));
+  }
+
+
+
+  //Build a vector of cloud points and then fit planes through each cloud
+  //vector of clouds
+  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clustered_clouds;
+  for (size_t clust = 0; clust < cluster_count; clust++) {
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    // int num_items = std::count(labels_vec.begin(), labels_vec.end(), clust);
+    // cloud->points.resize(num_items);
+    clustered_clouds.push_back(cloud);
+  }
+
+   for (size_t i = 0; i < m_points_wrapped.size(); i++){
+      int label=labels.at<int>(i,0);
+      pcl::PointXYZ p;
+      p.x=m_points_wrapped[i][0];
+      p.y=m_points_wrapped[i][1];
+      p.z=m_points_wrapped[i][2];
+      clustered_clouds[label]->push_back(p);
+   }
+
+
+
+   //Decimate the clouds
+   std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clustered_clouds_ds;
+   for (size_t clust = 0; clust < cluster_count; clust++) {
+     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+     clustered_clouds_ds.push_back(cloud);
+   }
+   for (size_t clust = 0; clust < cluster_count; clust++) {
+     pcl::VoxelGrid<pcl::PointXYZ> ds;  //create downsampling filter
+     ds.setInputCloud (clustered_clouds[clust]);
+     ds.setLeafSize (0.1, 0.1, 0.1);
+     ds.filter (*clustered_clouds_ds[clust]);
+
+    //  pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer2");
+    //  viewer.showCloud (clustered_clouds_ds[clust]);
+    //  while (!viewer.wasStopped ())
+    //  {
+    //  }
+   }
+
+
+
+
+
+  //vector of planes that will be ftted to the clouds
+  std::vector<plane_struct> planes(cluster_count);
+  for (size_t i = 0; i < cluster_count; i++) {
+     planes[i].coef.values.resize(4);
+     planes[i].index_cluster=i;
+   }
+
+
+   std::cout << "segmenting" << std::endl;
+   //segmtn each cloud and gt the coefficients of the planes fitted
+   #pragma omp parallel for
+   for (size_t clust = 0; clust < cluster_count; clust++) {
+     pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+     pcl::SACSegmentation<pcl::PointXYZ> seg;
+
+     //  seg.setOptimizeCoefficients (true);
+
+     seg.setModelType (pcl::SACMODEL_PLANE);
+     seg.setMethodType (pcl::SAC_RANSAC);
+     seg.setDistanceThreshold (0.02);
+
+     seg.setInputCloud (clustered_clouds_ds[clust]);
+     seg.segment (*inliers, (planes[clust].coef));
+
+     if (inliers->indices.size () == 0)
+     {
+       PCL_ERROR ("Could not estimate a planar model for the given dataset.");
+     }
+
+     std::cerr << "Model coefficients: " << planes[clust].coef.values[0] << " "
+                                          << planes[clust].coef.values[1] << " "
+                                          << planes[clust].coef.values[2] << " "
+                                          << planes[clust].coef.values[3] << std::endl;
+  }
+
+
+  //Add the normal as an eigen vector for easier calculations
+  for (size_t i = 0; i < planes.size(); i++) {
+    planes[i].normal = Eigen::Vector3f::Map(planes[i].coef.values.data(), 3);
+  }
+
+
+  //Fix normals of planes so that they point towards the center
+  //Dot product between the (point on a plane- center) and the normal (if it's negative then flip the normal)
+  //WATCHOUT I SET Z and Y to 0 because if I set x and y Imight not get a solution since the plane might be paralel to Z axis.
+  //Needs a more reobust way of finding points to account for parallel planes
+  for (size_t i = 0; i < planes.size(); i++) {
+    Eigen::Vector3f dir((- (planes[i].coef.values[3] / planes[i].coef.values[0]) ) - m_center[0],
+                        - m_center[1],
+                        - m_center[2]);
+
+    double dot= planes[i].normal.dot(dir);
+
+    if (dot<0.0){
+      std::for_each(planes[i].coef.values.begin(), planes[i].coef.values.end(), [](float& d) { d=-d;});
+      planes[i].normal = Eigen::Vector3f::Map(planes[i].coef.values.data(), 3);
+    }
+  }
+
+
+
+  //get the angles of the planes with respect to the x axis
+  for (size_t i = 0; i < planes.size(); i++) {
+      Eigen::Vector2f normal = Eigen::Vector2f::Map(planes[i].coef.values.data(), 2);
+      Eigen::Vector2f x_axis (1.0, 0.0);
+
+
+      float dot = normal.dot(x_axis);      //dot produt
+      float cross = normal.x()*x_axis.y() - x_axis.x()*normal.y(); //cross, determinant
+      double angle = atan2(cross, dot) ;  // atan2(y, x) or atan2(sin, cos)
+
+      angle = interpolate ( angle , -M_PI, M_PI, 0.0, 1.0);
+
+      planes[i].angle=angle;
+  }
+  std::sort(planes.begin(), planes.end(), by_angle());
+
+
+
+
+  // go through the planes and calculate the rotation translation matrix to map them
+  for (size_t i = 0; i < planes.size(); i++) {
+    //TODO::MAKE ALL this code use to use eigen, clean it
+
+    vtkSmartPointer<vtkPlaneSource> planeSource = vtkSmartPointer<vtkPlaneSource>::New();
+    planeSource->SetCenter(0.0, 0.0, 0.0);
+    planeSource->SetNormal( planes[i].coef.values[0],
+                            planes[i].coef.values[1],
+                            planes[i].coef.values[2]);
+    planeSource->Push(-planes[i].coef.values[3]);
+    planeSource->Update();
+
+    double center_vtk[3];
+    planeSource->GetCenter(center_vtk);
+    // Eigen::Vector3f plane_center = Eigen::Vector3f::Map(center_vtk, 3);
+    // plane_center[2]=0.0;
+
+    Eigen::Vector3f plane_center;
+    plane_center[0]=center_vtk[0];
+    plane_center[1]=center_vtk[1];
+    plane_center[2]=0.0;
+
+
+    double offset= 0.03*i;  //TODO REMOVE: Each plane gets closer and closer
+
+
+    row_type end_point(3);
+    end_point[0]= planes[i].angle * m_circumference - offset; //I don't know why it needs to be summed and not -
+    end_point[1]= 0.0;
+    end_point[2]= 0.0;
+
+    Eigen::Affine3f transform_2 = Eigen::Affine3f::Identity();
+    Eigen::Affine3f transform_center = Eigen::Affine3f::Identity();
+
+    // Define a translation of 2.5 meters on the x axis.
+    transform_2.translation() << end_point[0], end_point[1], end_point[2];
+    transform_center.translation() << -plane_center[0], -plane_center[1], -plane_center[2];
+
+
+    double r = (90 * M_PI /180) + interpolate (planes[i].angle, 0.0, 1.0, -M_PI, M_PI);
+    transform_2.rotate (Eigen::AngleAxisf (r, Eigen::Vector3f::UnitZ()));
+
+
+    std::cout << transform_2.matrix() << std::endl;
+    int clust_idx= planes[i].index_cluster;
+
+    pcl::transformPointCloud (*(clustered_clouds[clust_idx]), *(clustered_clouds[clust_idx]), transform_center);
+    pcl::transformPointCloud (*(clustered_clouds[clust_idx]), *(clustered_clouds[clust_idx]), transform_2);
+
+  }
+
+
+
+  //write the unwrapped points
+  m_points_unwrapped.resize(m_num_points);
+  for (size_t i = 0; i < m_num_points; i++) {
+    m_points_unwrapped[i].resize(m_point_components);
+  }
+
+  for (size_t clust = 0; clust < cluster_count; clust++) {
+    int idx=0;
+
+    pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+    kdtree.setInputCloud (clustered_clouds[clust]);
+
+
+
+    for (size_t i = 0; i < clustered_clouds[clust]->points.size(); i++) {
+
+      //we have a point and an index to insert it to, move the index until it winds the fisrt label
+      while(labels.at<int>(idx,0)!=clust){
+        idx++;
+      }
+
+      m_points_unwrapped[idx][0]= clustered_clouds[clust]->points[i].x;
+      m_points_unwrapped[idx][1]= clustered_clouds[clust]->points[i].y;
+      m_points_unwrapped[idx][2]= clustered_clouds[clust]->points[i].z;
+
+
+      //Need to check the nearest neightbours to fix the y (ditance to the plane)
+      pcl::PointXYZ searchPoint;
+      searchPoint=clustered_clouds[clust]->points[i];
+
+      int K = 50;
+      // double radius=0.1;
+      double radius=0.05;
+      //  double radius=0.16;
+
+      std::vector<int> pointIdxNKNSearch(K);
+      std::vector<float> pointNKNSquaredDistance(K);
+
+      double avg_dist=0.0;
+
+      if (  kdtree.radiusSearch (searchPoint, radius, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
+      {
+       for (size_t p = 0; p < pointIdxNKNSearch.size (); ++p){
+          // //average the dist of the K nearest neghbours
+          avg_dist+=clustered_clouds[clust]->points[ pointIdxNKNSearch[p] ].y;
+        }
+      }
+
+      avg_dist=avg_dist/pointIdxNKNSearch.size ();
+
+
+      m_points_unwrapped[idx][1]=m_points_unwrapped[idx][1]-avg_dist;
+
+
+
+      //clap the distance
+      if ( fabs(m_points_unwrapped[idx][1]) > 0.1 ){
+        m_points_unwrapped[idx][1]=0.0;
+        clustered_clouds[clust]->points[i].y=0.0;
+      }
+
+
+      idx++;
+    }
+  }
+
+
 
 
 }
@@ -336,20 +595,20 @@ void Model::compute_unwrap2(){
 
 void Model::compute_unwrap(){
   std::cout << "compute_unwrap" << std::endl;
-  //Check if we have a wall
+  //Check if we have a m_wall
   //If we already have an unwrap for it, show it, otherwise, calculate it
 
-  angles              =compute_angles(points_wrapped);
-  distances_to_radius = compute_distances_to_radius(points_wrapped, radius);
+  m_angles              =compute_angles(m_points_wrapped);
+  distances_to_radius = compute_distances_to_radius(m_points_wrapped, m_radius);
 
 
   //assign the new points
-  points_unwrapped.resize(num_points);
-  for (size_t i = 0; i < num_points; i++) {
-    points_unwrapped[i].resize(point_components);
-    points_unwrapped[i][0]=angles[i] *circumference;
-    points_unwrapped[i][1]=distances_to_radius[i];
-    points_unwrapped[i][2]=points_wrapped[i][2];
+  m_points_unwrapped.resize(m_num_points);
+  for (size_t i = 0; i < m_num_points; i++) {
+    m_points_unwrapped[i].resize(m_point_components);
+    m_points_unwrapped[i][0]=m_angles[i] *m_circumference;
+    m_points_unwrapped[i][1]=distances_to_radius[i];
+    m_points_unwrapped[i][2]=m_points_wrapped[i][2];
   }
   std::cout << "finish asign points" << std::endl;
 
@@ -360,11 +619,10 @@ std::vector<double> Model::compute_angles(matrix_type points){
 
 
   //we again suppose that the center is already at 0,0,0
-  int num_points=points.size();
   std::vector<double> angles;
-  angles.resize(num_points);
+  angles.resize(m_num_points);
 
-  for (size_t i = 0; i < num_points; i++) {
+  for (size_t i = 0; i < m_num_points; i++) {
     double ax=points[i][0];
     double ay=points[i][1];
     angles[i]=atan2(-ay,-ax);
@@ -379,12 +637,11 @@ std::vector<double> Model::compute_angles(matrix_type points){
 
 
 std::vector<double> Model::compute_distances_to_radius(matrix_type points, double radius){
-  int num_points=points.size();
   std::vector<double> dist;
-  dist.resize(num_points);
+  dist.resize(m_num_points);
 
   //Calculate first the distance to center.
-  for (size_t i = 0; i < num_points; i++) {
+  for (size_t i = 0; i < m_num_points; i++) {
     dist[i]= sqrt( points[i][0]*points[i][0]  + points[i][1]*points[i][1] );
     dist[i]= dist[i]-radius;
   }
@@ -392,47 +649,37 @@ std::vector<double> Model::compute_distances_to_radius(matrix_type points, doubl
   return dist;
 }
 
-double Model::interpolate ( double input , double input_start, double input_end, double output_start, double output_end){
-
-  double output;
-  output = output_start + ((output_end - output_start) / (input_end - input_start)) * (input - input_start);
-
-  return output;
-
-}
-
-
 
 
 void Model::compute_plain_colors(){
 
 
-  colors_active->Reset();
-  colors_active = vtkSmartPointer<vtkUnsignedCharArray>::New();
-  colors_active->SetNumberOfComponents(3);
-  colors_active->SetName("plain");
+  m_colors_active->Reset();
+  m_colors_active = vtkSmartPointer<vtkUnsignedCharArray>::New();
+  m_colors_active->SetNumberOfComponents(3);
+  m_colors_active->SetName("plain");
 
-  for (size_t i = 0; i < num_points; i++) {
-    colors_active->InsertNextTuple3(255.0 ,255.0 ,255.0);
+  for (size_t i = 0; i < m_num_points; i++) {
+    m_colors_active->InsertNextTuple3(255.0 ,255.0 ,255.0);
   }
-  std::cout << "finishing to create colors" << std::endl;
+  std::cout << "finishing creating colors" << std::endl;
 
-  //wall->GetPointData()->SetScalars(colors_active);
+  //m_wall->GetPointData()->SetScalars(colors_active);
 
 }
 
 void Model::compute_rgb_colors(){
 
-  colors_active->Reset();
-  colors_active = vtkSmartPointer<vtkUnsignedCharArray>::New();
-  colors_active->SetNumberOfComponents(3);
-  colors_active->SetName("rgb");
+  m_colors_active->Reset();
+  m_colors_active = vtkSmartPointer<vtkUnsignedCharArray>::New();
+  m_colors_active->SetNumberOfComponents(3);
+  m_colors_active->SetName("rgb");
 
-  for (vtkIdType i = 0; i < num_points; i++) {
-    colors_active->InsertNextTuple(colors_original->GetTuple(i));
+  for (vtkIdType i = 0; i < m_num_points; i++) {
+    m_colors_active->InsertNextTuple(m_colors_original->GetTuple(i));
   }
 
-  //wall->GetPointData()->SetScalars(colors_active);
+  //m_wall->GetPointData()->SetScalars(colors_active);
 
 }
 
@@ -441,7 +688,7 @@ void Model::compute_depth_colors(){
 
 
   // //FIRST WAY OF DOING IT- WORKED WITH THE CYLINDER
-  // distances_to_radius = compute_distances_to_radius(points_wrapped, radius);
+  // distances_to_radius = compute_distances_to_radius(m_points_wrapped, radius);
   //
   // double max_dist=*(std::max_element(std::begin(distances_to_radius), std::end(distances_to_radius)));
   // double min_dist=*(std::min_element(std::begin(distances_to_radius), std::end(distances_to_radius)));
@@ -463,7 +710,7 @@ void Model::compute_depth_colors(){
   // for (size_t i = 0; i < num_points; i++) {
   //   //colors->InsertNextTuple3(angles[i]*255.0,0,0);
   //   colors_active->InsertNextTuple3(depth[i],depth[i],depth[i]);
-  //   //points_unwrapped.InsertNextPoint( angles[i] *circumference,distances_from_radius[i],point[2])
+  //   //m_points_unwrapped.InsertNextPoint( angles[i] *circumference,distances_from_radius[i],point[2])
   // }
   // std::cout << "finishing to create colors" << std::endl;
   // //FINISHED FIRST WAY---------------
@@ -471,33 +718,36 @@ void Model::compute_depth_colors(){
 
 
   //Second way
-  compute_unwrap2(); //Compute unwrap to actually get unwrapped points
+  if (m_points_unwrapped.empty()){
+    compute_unwrap2(); //Compute unwrap to actually get unwrapped points
+  }
+
 
 
   int column_num = 1;
-  double max_dist = (*std::max_element(this->points_unwrapped.begin(), this->points_unwrapped.end(), column_comparer(column_num)))[column_num];
-  double min_dist = (*std::min_element(this->points_unwrapped.begin(), this->points_unwrapped.end(), column_comparer(column_num)))[column_num];
+  double max_dist = (*std::max_element(this->m_points_unwrapped.begin(), this->m_points_unwrapped.end(), column_comparer(column_num)))[column_num];
+  double min_dist = (*std::min_element(this->m_points_unwrapped.begin(), this->m_points_unwrapped.end(), column_comparer(column_num)))[column_num];
 
 
   std::cout << "max, min dist is" << max_dist << " " << min_dist << std::endl;
 
-  std::vector<double> depth(num_points);
+  std::vector<double> depth(m_num_points);
 
-  for (size_t i = 0; i < num_points; i++) {
-    depth[i]=interpolate(this->points_unwrapped[i][1], min_dist, max_dist, 255.0, 0.0);
+  for (size_t i = 0; i < m_num_points; i++) {
+    depth[i]=interpolate(this->m_points_unwrapped[i][1], min_dist, max_dist, 255.0, 0.0);
   }
 
-  colors_active->Reset();
-  colors_active = vtkSmartPointer<vtkUnsignedCharArray>::New();
-  colors_active->SetNumberOfComponents(3);
-  colors_active->SetName("depth");
+  m_colors_active->Reset();
+  m_colors_active = vtkSmartPointer<vtkUnsignedCharArray>::New();
+  m_colors_active->SetNumberOfComponents(3);
+  m_colors_active->SetName("depth");
 
 
   std::cout << "starting to create colors" << std::endl;
-  for (size_t i = 0; i < num_points; i++) {
+  for (size_t i = 0; i < m_num_points; i++) {
     //colors->InsertNextTuple3(angles[i]*255.0,0,0);
-    colors_active->InsertNextTuple3(depth[i],depth[i],depth[i]);
-    //points_unwrapped.InsertNextPoint( angles[i] *circumference,distances_from_radius[i],point[2])
+    m_colors_active->InsertNextTuple3(depth[i],depth[i],depth[i]);
+    //m_points_unwrapped.InsertNextPoint( angles[i] *circumference,distances_from_radius[i],point[2])
   }
   std::cout << "finishing to create colors" << std::endl;
 
@@ -507,58 +757,162 @@ void Model::compute_depth_colors(){
 
 void Model::create_grid(){
 
-  std::cout << "model:creating grid" << std::endl;
-  this->bounds=wall->GetBounds();
+
+
+  //Downsample the points
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud= compute_decimated(m_points_unwrapped);
+  get_mesh(); //Do this so that we set the unwrap point to the mesh and therefore have correct bounds
+  m_bounds=m_wall->GetBounds();
+
+  //Attempt 2, faster since we only create the boundinx boxes and don't cut the mesh
+  std::cout << "creating grid" << std::endl;
+
+
 
   //define the bounds of the box that will move around and cut. Size is 1x1m
-  double box_size_x=40.0;
-  double box_size_z=40.0;
+  double box_size_x=1.0;
+  double box_size_z=1.0;
 
-  double box_bounds[6];  //xmin,xmax, ymin,ymax, zmin,zmax
-  box_bounds[0]=0.0;
-  box_bounds[1]=box_size_x;
-  box_bounds[2]=-100000.0;  //the custom data I made is centered this way
-  box_bounds[3]=+100000.0;
-  box_bounds[4]=0.0;
-  box_bounds[5]=box_size_z;
+  //First unwrap //TODO
+  //get mesh (now we applied the points to the mesh and also got the updated bounds) //TODO
 
+  int grid_size_x=ceil( (fabs(m_bounds[1]) + fabs(m_bounds[0]) ) /box_size_x);     //  xmax/box_size_x
+  int grid_size_z=ceil( (fabs(m_bounds[5]) + fabs(m_bounds[4]) ) /box_size_z);     //  zmax/box_size_z
 
-  int grid_size_x=ceil(bounds[1]/box_size_x);     //  xmax/box_size_x
-  int grid_size_z=ceil(bounds[5]/box_size_z);     //  zmax/box_size_z
+  std::cout << "grid_size_x and z is " << grid_size_x << " " << grid_size_z << std::endl;
 
-  std::cout << "The grid will have a total of " << grid_size_x*grid_size_z << " cells " << std::endl;
+  m_grid.resize(grid_size_z*grid_size_x );
 
+  double x_min=m_bounds[0];
+  double z_min=m_bounds[4];
   for (size_t i = 0; i < grid_size_z; i++) {
     for (size_t j = 0; j < grid_size_x; j++) {
-      //cut
-      vtkSmartPointer<vtkBox> box_cut = vtkSmartPointer<vtkBox>::New();
-      box_cut->SetBounds (box_bounds);
-      vtkSmartPointer<vtkClipPolyData> clipper= vtkSmartPointer<vtkClipPolyData>::New();
-      clipper->SetInputData(wall);
-      clipper->SetClipFunction(box_cut);
-      clipper->InsideOutOn();
-      clipper->Update();
-      //clipper->GenerateClippedOutputOn();
+      row_type bounds(6, 0.0);
 
-      std::cout << "cell has num of points" << clipper->GetOutput()->GetNumberOfPoints() << std::endl;
+      //Fill these bounds
+      bounds[0]=x_min;
+      bounds[1]=x_min+box_size_x;
 
+      bounds[4]=z_min;
+      bounds[5]=z_min+box_size_z;
 
-      //add polydata to the vector
-      grid_cells.push_back(clipper->GetOutput());
-      std::cout << "pushed a cell" << std::endl;
+      //The Y max and min will be the one of the mesh
+      bounds[2]=m_bounds[2];
+      bounds[3]=m_bounds[3];
 
-      //move box in x axis
-      box_bounds[0]+=box_size_x;
-      box_bounds[1]+=box_size_x;
+      m_grid[ i*grid_size_x  +j  ]=bounds;
+
+      x_min+=box_size_x;
     }
-    //reset the box in the origin of x
-    box_bounds[0]=0.0;
-    box_bounds[1]=box_size_x;
-    //move the box in the z axis
-    box_bounds[4]+=box_size_z;
-    box_bounds[5]+=box_size_z;
+    x_min=m_bounds[0];
+    z_min+=box_size_z;
   }
 
-  std::cout << "at the finale of crating grid, we have cells: " << grid_cells.size() << std::endl;
+  //Detect cells that have now points inside
+  row_type_i cells_occupied(m_grid.size(), 0);
+  for (size_t point_idx = 0; point_idx < cloud->points.size(); point_idx++) {
+    for (size_t cell_idx = 0; cell_idx < m_grid.size(); cell_idx++) {
+      bool ocupied=is_contained(cloud->points[point_idx], m_grid[cell_idx]);
+      if (ocupied){
+        cells_occupied[cell_idx]=1;
+      }
+    }
+  }
 
+
+  //delete the ones that have 0 in cells_occupied
+  int i=0;
+  while ( i < m_grid.size() ) {
+    if ( cells_occupied[i]==0 ) {
+        m_grid.erase(m_grid.begin() + i);
+        cells_occupied.erase(cells_occupied.begin() + i);
+    } else {
+        ++i;
+    }
+  }
+
+
+  m_grid_cells_active.resize(m_grid.size(), 0);
+  std::cout << "model: finished creating the grid with" << m_grid.size() << std::endl;
+
+
+}
+
+
+bool Model::is_contained(pcl::PointXYZ point , row_type bounds){
+
+  if (point.x < bounds[0] || point.x > bounds[1])  //x
+    return false;
+  if (point.y < bounds[2] || point.y > bounds[3])  //y
+    return false;
+  if (point.z < bounds[4] || point.z > bounds[5])  //z
+    return false;
+
+  return true;
+}
+
+bool Model::is_contained(row_type point , row_type bounds){
+
+  if (point[0] < bounds[0] || point[0] > bounds[1])  //x
+    return false;
+  // if (point[1] < bounds[2] || point[1] > bounds[3])  //y   //Do not chck in the y axis because it's so small
+  //   return false;
+  if (point[2] < bounds[4] || point[2] > bounds[5])  //z
+    return false;
+
+  return true;
+}
+
+
+
+pcl::PointCloud<pcl::PointXYZ>::Ptr Model::compute_decimated(matrix_type points){
+
+  std::cout << "started decimating nr: " << points.size()  << std::endl;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+
+  cloud->width    = points.size();
+  cloud->height   = 1;
+  cloud->is_dense = false;
+  cloud->points.resize (points.size());
+
+  for (size_t i = 0; i < points.size(); i++){
+    cloud->points[i].x = points[i][0];
+    cloud->points[i].y = points[i][1];
+    cloud->points[i].z = points[i][2];
+  }
+
+
+  pcl::VoxelGrid<pcl::PointXYZ> ds;  //create downsampling filter
+  ds.setInputCloud (cloud);
+  ds.setLeafSize (0.07, 0.07, 0.07);
+  ds.filter (*cloud);
+
+  std::cout << "finished decimating with " << cloud->points.size() << std::endl;
+
+
+    // pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer2");
+    // viewer.showCloud (cloud);
+    // while (!viewer.wasStopped ())
+    // {
+    // }
+
+  return cloud;
+
+
+}
+
+
+void Model::right_click_pressed_slot(row_type point){
+  std::cout << "Model:: received points" << point[0] << " " << point[1]  << " "<< point[2] << std::endl;
+  for (size_t i = 0; i < m_grid.size(); i++) {
+    bool occupied= is_contained(point, m_grid[i] );
+    if (occupied){
+      if (  m_grid_cells_active[i]==1){
+        m_grid_cells_active[i]=0;
+      }else{
+        m_grid_cells_active[i]=1;
+      }
+    }
+  }
+  emit grid_changed_signal();
 }

@@ -56,6 +56,26 @@ matrix_type vtk_normals_to_vector(vtkSmartPointer<vtkDataArray>  vtk_normals){
   }
 
   return cpp_matrix;
+}
 
 
+double interpolate ( double input , double input_start, double input_end, double output_start, double output_end){
+
+  double output;
+  output = output_start + ((output_end - output_start) / (input_end - input_start)) * (input - input_start);
+
+  return output;
+
+}
+
+
+double median(row_type vec) {
+    if(vec.empty()) return 0;
+    else {
+        std::sort(vec.begin(), vec.end());
+        if(vec.size() % 2 == 0)
+                return (vec[vec.size()/2 - 1] + vec[vec.size()/2]) / 2;
+        else
+                return vec[vec.size()/2];
+    }
 }

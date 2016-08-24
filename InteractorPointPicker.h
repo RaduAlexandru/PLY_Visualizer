@@ -36,6 +36,8 @@
 
 #include <QObject>
 
+typedef std::vector<double> row_type;
+typedef std::vector<row_type> matrix_type;
 
 class InteractorPointPicker :  public QObject, public vtkInteractorStyleTrackballCamera
 {
@@ -55,6 +57,7 @@ public:
 
 
 
+    void OnRightButtonDown();
 
     void OnLeftButtonDown();
     void OnMouseMove();
@@ -66,6 +69,9 @@ public:
 
 
 public slots:
+
+signals:
+    void right_click_pressed_signal(row_type point);
 
 
 };

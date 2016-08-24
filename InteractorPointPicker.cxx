@@ -21,6 +21,39 @@ InteractorPointPicker* InteractorPointPicker::New(){
 
 }
 
+void InteractorPointPicker::OnRightButtonDown(){
+  // std::cout << "Right mouse button click" << std::endl;
+
+  vtkIdType point_id=0;
+  int* clickPos = this->GetInteractor()->GetEventPosition();
+  // vtkSmartPointer<vtkPointPicker>  picker = vtkSmartPointer<vtkPointPicker>::New();    //faster, gives only closest point to the ray
+  vtkSmartPointer<vtkCellPicker>  picker = vtkSmartPointer<vtkCellPicker>::New();   //slower but more precise. gives exact point wthin a mesh
+
+  picker->SetTolerance (picker->GetTolerance ()/10);
+
+  // Pick from this location.
+  picker->Pick(clickPos[0], clickPos[1],0,this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
+  double *pos = picker->GetPickPosition();
+  point_id    = picker->GetPointId();
+
+
+  std::cout << "Interactor right click: point is: " << pos[0] << " " << pos[1] << " " << pos[2] << std::endl;
+  row_type point { pos[0],  pos[1], pos[2]};
+  emit right_click_pressed_signal(point);
+  // if (point_id!=-1){
+  //   std::cout << "Interactor right click: Pick_vertex is: " << pos[0] << " " << pos[1] << " " << pos[2] << std::endl;
+  //   row_type point { pos[0],  pos[1], pos[2]};
+  //   emit right_click_pressed_signal(point);
+  // }else{
+  //   std::cout << "no point in mesh selected" << std::endl;
+  //   return;
+  // }
+
+
+  // vtkInteractorStyleTrackballCamera::OnRightButtonDown();
+}
+
+
 
 void InteractorPointPicker::OnLeftButtonDown()
 {

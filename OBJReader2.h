@@ -31,6 +31,8 @@ typedef std::vector<row_type> matrix_type;
 typedef std::vector<int> row_type_i;
 typedef std::vector<row_type_i> matrix_type_i;
 
+
+
 class OBJReader2
 {
 public:

@@ -66,14 +66,32 @@ void OBJReader2::read_mtl_file(){
 }
 
 void OBJReader2::read_textures(){
+  std::cout << "OBJ_READER::read_textures" << std::endl;
+
+  int max_rows=0, max_cols=0;
+
   for (size_t i = 0; i < m_texture_file_names.size(); i++) {
      m_textures.push_back( cv::imread(m_texture_file_names[i]) );
+     if (m_textures[i].rows > max_rows){
+       max_rows=m_textures[i].rows;
+     }
+     if (m_textures[i].cols > max_cols){
+       max_cols=m_textures[i].cols;
+     }
   }
+
+  //Resize the individual textures to be the same size (biggest)
+  cv::Size size(max_cols,max_rows);  //x,y
+  for (size_t i = 0; i < m_textures.size(); i++) {
+    cv::resize(m_textures[i],m_textures[i],size);//resize image
+  }
+
   m_polys.resize(m_texture_file_names.size());  //polys will be clasified in vectors as many as we have materials
 }
 
 
 void OBJReader2::create_full_texture(){
+  std::cout << "OBJ_READER::create_full_texture" << std::endl;
 
    //Calculate how big should the full_texture be
    m_multiplier=ceil(sqrt(m_textures.size()));
@@ -110,6 +128,7 @@ void OBJReader2::create_full_texture(){
 
 
 void OBJReader2::read_obj(){
+  std::cout << "OBJ_READER::read_obj" << std::endl;
    std::ifstream obj_file;
    obj_file.open(m_obj_file_name.data());
    if (!obj_file.is_open()) {
@@ -220,48 +239,49 @@ void OBJReader2::write_to_poly(){
 
 
 
+
   //get through the faces and grab the indeces for the v, vt and vn
 
-  // int gl_idx=0;  //global index that just indicates point in the mesh
-  // for (size_t mat_idx = 0; mat_idx < m_textures.size(); mat_idx++) {
-  //   for (size_t poly_idx = 0; poly_idx < m_polys[mat_idx].size(); poly_idx++) {
-  //     vtk_polys->InsertNextCell(3);
-  //     for (size_t point_idx = 0; point_idx < 3; point_idx++) {
-  //
-  //       int v_idx= m_polys[mat_idx][poly_idx][point_idx][0];
-  //       int vt_idx= m_polys[mat_idx][poly_idx][point_idx][1];
-  //       int vn_idx= m_polys[mat_idx][poly_idx][point_idx][2];
-  //
-  //
-  //
-  //       vtk_points->InsertNextPoint(m_points[v_idx][0],m_points[v_idx][1],m_points[v_idx][2]);
-  //
-  //
-  //       float tuple_n[3];
-  //       tuple_n[0]=m_normals[vn_idx][0];
-  //       tuple_n[1]=m_normals[vn_idx][1];
-  //       tuple_n[2]=m_normals[vn_idx][2];
-  //       // vtk_normals->InsertNextTuple(m_normals[i].data());
-  //       vtk_normals->InsertNextTuple(tuple_n);
-  //
-  //
-  //       float tuple_t[3];
-  //       tuple_t[0]=m_tcoords[vt_idx][0];
-  //       tuple_t[1]=m_tcoords[vt_idx][1];
-  //       tuple_t[2]=m_tcoords[vt_idx][2];
-  //       // vtk_tcoords->InsertNextTuple(m_tcoords[i].data());
-  //       vtk_tcoords->InsertNextTuple(tuple_t);
-  //
-  //
-  //       vtk_polys->InsertCellPoint(gl_idx);   //gl_idx will point to the previous point in the vtk_points
-  //       gl_idx++;
-  //     }
-  //
-  //
-  //
-  //   }
-  //
-  // }
+  int gl_idx=0;  //global index that just indicates point in the mesh
+  for (size_t mat_idx = 0; mat_idx < m_textures.size(); mat_idx++) {
+    for (size_t poly_idx = 0; poly_idx < m_polys[mat_idx].size(); poly_idx++) {
+      vtk_polys->InsertNextCell(3);
+      for (size_t point_idx = 0; point_idx < 3; point_idx++) {
+
+        int v_idx= m_polys[mat_idx][poly_idx][point_idx][0];
+        int vt_idx= m_polys[mat_idx][poly_idx][point_idx][1];
+        int vn_idx= m_polys[mat_idx][poly_idx][point_idx][2];
+
+
+
+        vtk_points->InsertNextPoint(m_points[v_idx][0],m_points[v_idx][1],m_points[v_idx][2]);
+
+
+        float tuple_n[3];
+        tuple_n[0]=m_normals[vn_idx][0];
+        tuple_n[1]=m_normals[vn_idx][1];
+        tuple_n[2]=m_normals[vn_idx][2];
+        // vtk_normals->InsertNextTuple(m_normals[i].data());
+        vtk_normals->InsertNextTuple(tuple_n);
+
+
+        float tuple_t[3];
+        tuple_t[0]=m_tcoords[vt_idx][0];
+        tuple_t[1]=m_tcoords[vt_idx][1];
+        tuple_t[2]=m_tcoords[vt_idx][2];
+        // vtk_tcoords->InsertNextTuple(m_tcoords[i].data());
+        vtk_tcoords->InsertNextTuple(tuple_t);
+
+
+        vtk_polys->InsertCellPoint(gl_idx);   //gl_idx will point to the previous point in the vtk_points
+        gl_idx++;
+      }
+
+
+
+    }
+
+  }
 
 
 
@@ -317,54 +337,62 @@ void OBJReader2::write_to_poly(){
   //Attempt 3. Attempt 2 already workd but it can be made more readable
 
   //Calculate the maximum of v, vt and vn. If one is bigger than the others it indicates that the points might share that parameter in different faces. Eg: If we have more t_coords than points that means that one points will have different texture coordinates for different faces.
-
-  int max_param;
-  int max_size=0;
-  if (m_points.size() > max_size){
-    max_size=m_points.size();
-    max_param=0;
-  }
-  if (m_tcoords.size() > max_size){
-    max_size=m_tcoords.size();
-    max_param=1;
-  }
-  if (m_normals.size() > max_size){
-    max_size=m_normals.size();
-    max_param=2;
-  }
-
-  std::cout << "obj_reader: maximum parameter is " << max_param << std::endl;
-  std::cout << "obj_reader: 0= points, 1= tcoords, 2=normals" << std::endl;
-
-  std::vector <int> point_is_added (max_size, 0);  //Checking on tcoord because the is the biggest size vector.
-
-  for (size_t mat_idx = 0; mat_idx < m_textures.size(); mat_idx++) {
-    for (size_t poly_idx = 0; poly_idx < m_polys[mat_idx].size(); poly_idx++) {
-      vtk_polys->InsertNextCell(3);
-      for (size_t point_idx = 0; point_idx < 3; point_idx++) {
-
-        int v_idx= m_polys[mat_idx][poly_idx][point_idx][0];
-        int vt_idx= m_polys[mat_idx][poly_idx][point_idx][1];
-        int vn_idx= m_polys[mat_idx][poly_idx][point_idx][2];
-
-
-
-        if (!point_is_added[  m_polys[mat_idx][poly_idx][point_idx][max_param]   ]){
-          vtk_points->InsertNextPoint(m_points[v_idx][0],m_points[v_idx][1],m_points[v_idx][2]);
-          vtk_tcoords->InsertNextTuple(m_tcoords[vt_idx].data());
-          vtk_normals->InsertNextTuple(m_normals[vn_idx].data());
-
-          point_is_added[m_polys[mat_idx][poly_idx][point_idx][max_param]]=1;
-        }
-
-
-        vtk_polys->InsertCellPoint( m_polys[mat_idx][poly_idx][point_idx][max_param]  );   //normally it is vt_idx which will be the point in the mesh, Can be repeted and duplicated
-      }
-
-    }
-
-  }
-
+  //
+  // int max_param;
+  // int max_size=0;
+  // if (m_points.size() > max_size){
+  //   max_size=m_points.size();
+  //   max_param=0;
+  // }
+  // if (m_tcoords.size() > max_size){
+  //   max_size=m_tcoords.size();
+  //   max_param=1;
+  // }
+  // if (m_normals.size() > max_size){
+  //   max_size=m_normals.size();
+  //   max_param=2;
+  // }
+  //
+  // std::cout << "obj_reader: maximum parameter is " << max_param << std::endl;
+  // std::cout << "obj_reader: 0= points, 1= tcoords, 2=normals" << std::endl;
+  // std::cout << "v size " << m_points.size() <<  std::endl;
+  // std::cout << "vt size " << m_tcoords.size() <<  std::endl;
+  // std::cout << "vn size " << m_normals.size() <<  std::endl;
+  //
+  // std::vector <int> point_is_added (max_size, 0);  //Checking on tcoord because the is the biggest size vector.
+  //
+  //
+  // int counter=0;
+  // for (size_t mat_idx = 0; mat_idx < m_textures.size(); mat_idx++) {
+  //   for (size_t poly_idx = 0; poly_idx < m_polys[mat_idx].size(); poly_idx++) {
+  //     vtk_polys->InsertNextCell(3);
+  //     for (size_t point_idx = 0; point_idx < 3; point_idx++) {
+  //
+  //       int v_idx= m_polys[mat_idx][poly_idx][point_idx][0];
+  //       int vt_idx= m_polys[mat_idx][poly_idx][point_idx][1];
+  //       int vn_idx= m_polys[mat_idx][poly_idx][point_idx][2];
+  //
+  //
+  //
+  //       if (!point_is_added[  m_polys[mat_idx][poly_idx][point_idx][max_param]   ]){
+  //         // std::cout << "adding points " << counter << std::endl;
+  //         vtk_points->InsertNextPoint(m_points[v_idx][0],m_points[v_idx][1],m_points[v_idx][2]);
+  //         vtk_tcoords->InsertNextTuple(m_tcoords[vt_idx].data());
+  //         vtk_normals->InsertNextTuple(m_normals[vn_idx].data());
+  //
+  //         point_is_added[m_polys[mat_idx][poly_idx][point_idx][max_param]]=1;
+  //         counter++;
+  //       }
+  //
+  //
+  //       vtk_polys->InsertCellPoint( m_polys[mat_idx][poly_idx][point_idx][max_param]  );   //normally it is vt_idx which will be the point in the mesh, Can be repeted and duplicated
+  //     }
+  //
+  //   }
+  //
+  // }
+  //
+  // std::cout << "OBJREADER: added points nr" << counter  << std::endl;
 
 
 
