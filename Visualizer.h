@@ -1,6 +1,7 @@
 #ifndef Visualizer_H
 #define Visualizer_H
 
+#include <vtkVersion.h>
 #include <vtkSmartPointer.h>
 #include <vtkPLYReader.h>
 #include <vtkOBJReader.h>

@@ -134,6 +134,13 @@ Visualizer::Visualizer():
   connect(model.get(), &Model::grid_changed_signal,
           this, &Visualizer::grid_changed_slot );
 
+
+  #if VTK_MAJOR_VERSION <= 5
+      std::cout << "vtk version lower than 5" << std::endl;
+  #else
+      std::cout << "vtk verson higher than 5" << std::endl;
+  #endif
+
 }
 
 
@@ -553,13 +560,48 @@ void Visualizer::on_renderGridCellButton_clicked(){
 
 void Visualizer::on_renderWallsButton_clicked(){
   std::cout << "rendering walls" << std::endl;
+  std::string path= "/home/alex/Pictures/Renders/";
+  std::string file_name = "wall.png";
+  std::string path_img=path+file_name;
 
-  //Put camera in the center
-  //point it at a wall
 
-  renderer->GetActiveCamera()->SetPosition (0.0, 0.0, 0.0);
+  updateView();
+  // renderer->GetActiveCamera()->SetPosition (0.0, 0.0, 0.0);
+  // renderer->GetActiveCamera()->SetFocalPoint(model->m_plane_centers[4][0],
+  //                                            model->m_plane_centers[4][1],
+  //                                            model->m_plane_centers[4][2]);
+  //
+  //
+  // renderer->GetActiveCamera()->SetViewUp(0, 0, 1);
+  // // renderer->ResetCamera();
+  // renderer->GetActiveCamera()->Dolly (0.5);
 
-  this->ui->qvtkWidget->GetRenderWindow()->Render();
+  for (size_t i = 0; i < NUM_WALLS; i++) {
+    renderer->GetActiveCamera()->SetPosition (model->m_plane_centers[i][0],
+                                              model->m_plane_centers[i][1],
+                                              model->m_plane_centers[i][2]);
+
+    renderer->GetActiveCamera()->SetViewUp(0, 0, 1);
+    renderer->ResetCamera();
+    renderer->GetActiveCamera()->Dolly (1.5);
+
+    this->ui->qvtkWidget->GetRenderWindow()->Render();
+
+
+    //Write wall
+    file_name= "wall_" + std::to_string(i) + ".png";
+    path_img= path + file_name;
+
+    vtkSmartPointer<vtkRenderLargeImage> renderLarge = vtkSmartPointer<vtkRenderLargeImage>::New();
+    renderLarge->SetInput(renderer);
+    renderLarge->SetMagnification(MAGNIFICATION);
+    std::cout << "Saving image in " << path_img << std::endl;
+    vtkSmartPointer<vtkPNGWriter> writer =
+      vtkSmartPointer<vtkPNGWriter>::New();
+    writer->SetFileName(path_img.data());
+    writer->SetInputConnection(renderLarge->GetOutputPort());
+    writer->Write();
+  }
 
 
 

@@ -127,16 +127,28 @@ public:
      int m_num_walls;
 
      vtkSmartPointer<vtkPolyData> m_wall;
-     vtkSmartPointer<vtkTexture> m_full_texture;
-     vtkSmartPointer<vtkCellArray> m_cells;
-     vtkSmartPointer<vtkUnsignedCharArray> m_colors_original; //original colors, rgb if present and all white if not
-     vtkSmartPointer<vtkUnsignedCharArray> m_colors_active;
 
-     matrix_type m_normals;
+
+     //Wrapped
+     vtkSmartPointer<vtkCellArray> m_cells_wrapped;
+     matrix_type m_normals_wrapped;
      matrix_type m_points_wrapped;
      pcl::PointCloud<pcl::PointXYZ>::Ptr m_points_wrapped_ds;
+
+     //Unwrapped
      matrix_type m_points_unwrapped;
+
+
+     //Misc
+     vtkSmartPointer<vtkTexture> m_full_texture;
+     vtkSmartPointer<vtkUnsignedCharArray> m_colors_original; //original colors, rgb if present and all white if not
+     vtkSmartPointer<vtkUnsignedCharArray> m_colors_active;
      row_type m_center;
+
+     //May need deleting
+     vtkSmartPointer<vtkCellArray> m_cells;
+     matrix_type m_normals;
+
 
      std::vector<double> m_angles;               //TODO: delete only if you are sure you're not going to use circular
      std::vector<double> m_distances_to_plane;
@@ -159,8 +171,11 @@ public:
 
      //  std::vector<vtkSmartPointer<vtkPolyData>> grid_cells;
      matrix_type m_grid;
+     matrix_type m_grid_wrapped;
      row_type m_grid_cells_active;
 
+
+     matrix_type m_plane_centers; //Used so that the view can get the centers so as to point the camera towards them
 
 
      void clear();
@@ -189,6 +204,8 @@ public:
      void blur_normals();
 
      double dist(row_type vec1, row_type vec2);
+
+     void wrap_grid();
 
 public slots:
     void right_click_pressed_slot(row_type point);

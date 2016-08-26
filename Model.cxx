@@ -581,6 +581,7 @@ void Model::compute_unwrap2(){
 
 
   // go through the planes and calculate the rotation translation matrix to map them
+  m_plane_centers.resize(planes.size());
   #pragma omp parallel for
   for (size_t i = 0; i < planes.size(); i++) {
     //TODO::MAKE ALL this code use to use eigen, clean it
@@ -595,6 +596,7 @@ void Model::compute_unwrap2(){
 
     double center_vtk[3];
     planeSource->GetCenter(center_vtk);
+    m_plane_centers[i]=row_type {center_vtk[0],center_vtk[1],center_vtk[2]};
     // Eigen::Vector3f plane_center = Eigen::Vector3f::Map(center_vtk, 3);
     // plane_center[2]=0.0;
 
@@ -1190,4 +1192,32 @@ void Model::right_click_pressed_slot(row_type point){
     }
   }
   emit grid_changed_signal();
+}
+
+
+
+
+void Model::wrap_grid(){
+  std::cout << "wrapping the grid" << std::endl;
+
+  //Generate 4 points from th cell
+  //Find the nearest point in the unwrapped points with its index
+  //That index will give the point in the wrapped ones
+
+  for (size_t cell_idx = 0; cell_idx < m_grid.size(); cell_idx++) {
+    matrix_type points(4);
+    points[0]=row_type {m_grid[cell_idx][0], m_grid[cell_idx][3] ,  m_grid[cell_idx][5]};
+    points[1]=row_type {m_grid[cell_idx][1], m_grid[cell_idx][3] ,  m_grid[cell_idx][5]};
+    points[2]=row_type {m_grid[cell_idx][0], m_grid[cell_idx][3] ,  m_grid[cell_idx][4]};
+    points[4]=row_type {m_grid[cell_idx][0], m_grid[cell_idx][3] ,  m_grid[cell_idx][5]};
+
+    row_type_i indexes(4);  //Indexes of the points that were the closest
+
+
+
+
+
+  }
+
+
 }
