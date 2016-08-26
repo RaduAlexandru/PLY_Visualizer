@@ -41,6 +41,11 @@
 #include <vtkLine.h>
 #include <vtkOutlineSource.h>
 #include <vtkTextActor.h>
+#include <vtkRenderLargeImage.h>
+#include <vtkPNGWriter.h>
+#include <vtkWorldPointPicker.h>
+#include <vtkInteractorObserver.h>
+
 
 
 #include <opencv2/core/core.hpp>
@@ -132,6 +137,9 @@ public slots:
   void on_selectButton_clicked();
   void on_showGridInactiveCheckBox_clicked();
   void on_showGridActiveCheckBox_clicked();
+  void on_renderToImgButton_clicked();
+  void on_renderGridCellButton_clicked();
+  void on_renderWallsButton_clicked();
 
   void grid_changed_slot();
 

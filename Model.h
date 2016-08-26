@@ -186,6 +186,8 @@ public:
      bool is_contained(row_type , row_type);
      pcl::PointCloud<pcl::PointXYZ>::Ptr compute_decimated(matrix_type);
 
+     void blur_normals();
+
      double dist(row_type vec1, row_type vec2);
 
 public slots:

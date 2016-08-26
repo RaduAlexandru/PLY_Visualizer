@@ -51,20 +51,39 @@ void InteractorPointPicker::OnRightButtonDown(){
 
 
   // vtkInteractorStyleTrackballCamera::OnRightButtonDown();
+
+
+  //TEST to see if it work correctly in screen coordinates
+
+
 }
 
 
 
 void InteractorPointPicker::OnLeftButtonDown()
 {
-  // std::cout << "Picking pixel: " << this->Interactor->GetEventPosition()[0] << " " << this->Interactor->GetEventPosition()[1] << std::endl;
-  // this->Interactor->GetPicker()->Pick(this->Interactor->GetEventPosition()[0],
-  //                    this->Interactor->GetEventPosition()[1],
-  //                    0,  // always zero.
-  //                    this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
-  // double picked[3];
-  // this->Interactor->GetPicker()->GetPickPosition(picked);
-  // std::cout << "Picked value: " << picked[0] << " " << picked[1] << " " << picked[2] << std::endl;
+
+
+  std::cout << "Picking pixel: " << this->Interactor->GetEventPosition()[0] << " " << this->Interactor->GetEventPosition()[1] << std::endl;
+  this->Interactor->GetPicker()->Pick(this->Interactor->GetEventPosition()[0],
+                     this->Interactor->GetEventPosition()[1],
+                     0,  // always zero.
+                     this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
+  double picked[3];
+  this->Interactor->GetPicker()->GetPickPosition(picked);
+  std::cout << "Picked value: " << picked[0] << " " << picked[1] << " " << picked[2] << std::endl;
+
+
+
+  double pos_display[3];
+  vtkInteractorObserver::ComputeWorldToDisplay (
+          this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer(),
+          picked[0],
+          picked[1],
+          picked[2],
+          pos_display );
+  std::cout << " interactor: display: " << pos_display[0] << " " << pos_display[1] << " " << pos_display[2] << std::endl;
+
 
   if (*selecting_defects){
     dragging=true;

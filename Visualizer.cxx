@@ -5,6 +5,7 @@
 #include "ui_Visualizer.h"
 
 #define NUM_WALLS 8
+#define MAGNIFICATION 15
 
 
 // template <typename T>
@@ -234,7 +235,7 @@ void  Visualizer::updateView(int reset_camera){
     renderer->ResetCamera();
   }
 
-  draw_sphere(0,0,0);
+  //draw_sphere(0,0,0);
 
   draw_text_grid();
 
@@ -340,6 +341,232 @@ void Visualizer::on_showGridActiveCheckBox_clicked(){
   }
   update_grid_view();
 }
+
+void Visualizer::on_renderToImgButton_clicked(){
+  std::cout << "rendering to img" << std::endl;
+  std::string path= "/home/alex/Pictures/Renders/";
+  std::string file_name = "render.png";
+
+  path=path+file_name;
+
+
+
+  //TEST:Get position, focal points and direction
+  double* pos;
+  double* focal_point;
+  double* view_up;
+
+  pos=renderer->GetActiveCamera()->GetPosition();
+  focal_point=renderer->GetActiveCamera()->GetFocalPoint();
+  view_up=renderer->GetActiveCamera()->GetViewUp();
+  std::cout << "when starting " << std::endl;
+  std::cout << "positon: " << pos[0] << " " << pos[1] << " " << pos[2] << std::endl;
+  std::cout << "focal point: " << focal_point[0] << " " << focal_point[1] << " " << focal_point[2] << std::endl;
+  std::cout << "view_up: " << view_up[0] << " " << view_up[1] << " " << view_up[2] << std::endl;
+
+
+
+
+  renderer->ResetCamera();
+  renderer->GetActiveCamera()->SetParallelProjection(1);
+  renderer->GetActiveCamera()->Elevation(270);
+  renderer->GetActiveCamera()->Roll(180);
+  renderer->SetBackground(0.0,0.0,0.0);
+  renderer->SetBackground2(0.0,0.0,0.0);
+
+
+
+  this->ui->qvtkWidget->GetRenderWindow()->Render();
+
+
+  // renderer->GetActiveCamera()->SetParallelProjection(0);
+
+
+  vtkSmartPointer<vtkRenderLargeImage> renderLarge = vtkSmartPointer<vtkRenderLargeImage>::New();
+  renderLarge->SetInput(renderer);
+  renderLarge->SetMagnification(MAGNIFICATION);
+
+
+
+  std::cout << "Saving image in " << path << std::endl;
+  vtkSmartPointer<vtkPNGWriter> writer =
+    vtkSmartPointer<vtkPNGWriter>::New();
+  writer->SetFileName(path.data());
+  writer->SetInputConnection(renderLarge->GetOutputPort());
+  writer->Write();
+
+
+
+  pos=renderer->GetActiveCamera()->GetPosition();
+  focal_point=renderer->GetActiveCamera()->GetFocalPoint();
+  view_up=renderer->GetActiveCamera()->GetViewUp();
+  std::cout << "after setting the camera " << std::endl;
+  std::cout << "positon: " << pos[0] << " " << pos[1] << " " << pos[2] << std::endl;
+  std::cout << "focal point: " << focal_point[0] << " " << focal_point[1] << " " << focal_point[2] << std::endl;
+  std::cout << "view_up: " << view_up[0] << " " << view_up[1] << " " << view_up[2] << std::endl;
+
+
+
+  // renderer->ResetCamera();
+  // renderer->GetActiveCamera()->SetParallelProjection(0);
+  renderer->GetActiveCamera()->Elevation(-270);
+  renderer->GetActiveCamera()->Roll(-180);
+  renderer->SetBackground(1.0,1.0,1.0);
+  renderer->SetBackground2(0.1,0.1,0.1);
+  // renderer->ResetCamera();
+  this->ui->qvtkWidget->GetRenderWindow()->Render();
+
+  std::cout << "finished writing full img" << std::endl;
+
+
+}
+
+void Visualizer::on_renderGridCellButton_clicked(){
+  std::cout << "getting grid cell" << std::endl;
+
+  std::string path= "/home/alex/Pictures/Renders/";
+  std::string file_name = "render.png";
+  std::string path_img=path+file_name;
+
+
+  //TODO: Before reseting camera, draw all the grids so that we ensure that they are in the view. Otherwise when cropping opencv will try to crop outside of the boundries of the mat and fail.
+
+  //show grid
+  //ResetCamera
+  //hide grid
+
+  // for (size_t i = 0; i < model->m_grid_cells_active.size(); i++) {
+  //   model->m_grid_cells_active[i]=1;
+  // }
+  // // std::cin.get();
+  // update_grid_view();
+  // // std::cin.get();
+  // renderer->ResetCamera();
+  // // std::cin.get();
+  // for (size_t i = 0; i < model->m_grid_cells_active.size(); i++) {
+  //   model->m_grid_cells_active[i]=0;
+  // }
+  // update_grid_view();
+  // // std::cin.get();
+  // this->ui->qvtkWidget->GetRenderWindow()->Render();
+
+
+  //Set camera
+  renderer->ResetCamera();
+  renderer->GetActiveCamera()->SetParallelProjection(1);
+  renderer->GetActiveCamera()->Elevation(270);
+  // renderer->GetActiveCamera()->Pitch(270);
+  renderer->GetActiveCamera()->Roll(180);
+  renderer->SetBackground(0.0,0.0,0.0);
+  renderer->SetBackground2(0.0,0.0,0.0);
+  this->ui->qvtkWidget->GetRenderWindow()->Render();
+
+
+
+  //Write big image
+  vtkSmartPointer<vtkRenderLargeImage> renderLarge = vtkSmartPointer<vtkRenderLargeImage>::New();
+  renderLarge->SetInput(renderer);
+  renderLarge->SetMagnification(MAGNIFICATION);
+  std::cout << "Saving image in " << path_img << std::endl;
+  vtkSmartPointer<vtkPNGWriter> writer =
+    vtkSmartPointer<vtkPNGWriter>::New();
+  writer->SetFileName(path_img.data());
+  writer->SetInputConnection(renderLarge->GetOutputPort());
+  writer->Write();
+
+
+
+  cv::Mat img =cv::imread(path_img);
+
+
+  for (size_t i = 0; i < model->m_grid.size(); i++) {
+    row_type corner_upper_left(3);
+    row_type corner_lower_right(3);
+    double pos_display_upper_left[3];
+    double pos_display_lower_right[3];
+
+    corner_upper_left[0]=model->m_grid[i][0];
+    corner_upper_left[1]=model->m_grid[i][3];
+    corner_upper_left[2]=model->m_grid[i][5];
+
+    corner_lower_right[0]=model->m_grid[i][1];
+    corner_lower_right[1]=model->m_grid[i][3];
+    corner_lower_right[2]=model->m_grid[i][4];
+
+
+    draw_cell(model->m_grid[i],1,0,0);
+    draw_sphere(corner_upper_left[0],corner_upper_left[1],corner_upper_left[2]);
+    draw_sphere(corner_lower_right[0],corner_lower_right[1],corner_lower_right[2]);
+
+    vtkInteractorObserver::ComputeWorldToDisplay (renderer, corner_upper_left[0],
+                                                            corner_upper_left[1],
+                                                            corner_upper_left[2],
+                                                            pos_display_upper_left);
+
+    vtkInteractorObserver::ComputeWorldToDisplay (renderer, corner_lower_right[0],
+                                                            corner_lower_right[1],
+                                                            corner_lower_right[2],
+                                                            pos_display_lower_right);
+
+
+
+
+
+    //Flip te position in display because Opencv has y origin at the upper left
+    int* w_size;
+    w_size = this->ui->qvtkWidget->GetRenderWindow()->GetSize();
+    pos_display_lower_right[1]=w_size[1]-pos_display_lower_right[1];
+    pos_display_upper_left[1]=w_size[1]-pos_display_upper_left[1];
+
+
+    std::cout << "pos_display_upper_left: " << pos_display_upper_left[0]*MAGNIFICATION << " " << pos_display_upper_left[1]*MAGNIFICATION << " " << pos_display_upper_left[2]*MAGNIFICATION << std::endl;
+
+    std::cout << "pos_display_lower_right: " << pos_display_lower_right[0]*MAGNIFICATION << " " << pos_display_lower_right[1]*MAGNIFICATION << " " << pos_display_lower_right[2]*MAGNIFICATION << std::endl;
+
+    double size=fabs (pos_display_lower_right[0]*MAGNIFICATION - pos_display_upper_left[0]*MAGNIFICATION);
+
+    cv::Mat grid_cell;
+    cv::Rect rect(pos_display_upper_left[0]*MAGNIFICATION,
+                  pos_display_upper_left[1]*MAGNIFICATION,
+                  size,
+                  size);
+    grid_cell=img(rect);
+
+
+    std::string path_cell= path + "grid_cell_" + std::to_string(i) + ".png";
+    cv::imwrite( path_cell, grid_cell );
+
+    // break;
+
+  }
+
+
+
+  // vtkInteractorObserver::ComputeWorldToDisplay (renderer, corner[0], corner[1], corner[2], pos_display);
+
+  // std::cout << "pos_display: " << pos_display[0] << " " << pos_display[1] << " " << pos_display[2] << std::endl;
+
+
+  std::cout << "finished getting grid cells" << std::endl;
+}
+
+
+void Visualizer::on_renderWallsButton_clicked(){
+  std::cout << "rendering walls" << std::endl;
+
+  //Put camera in the center
+  //point it at a wall
+
+  renderer->GetActiveCamera()->SetPosition (0.0, 0.0, 0.0);
+
+  this->ui->qvtkWidget->GetRenderWindow()->Render();
+
+
+
+
+  std::cout << "finished rendering walls" << std::endl;
+}
+
 
 
 void Visualizer::draw_grid(){
