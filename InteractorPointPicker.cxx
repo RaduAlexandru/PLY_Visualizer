@@ -321,17 +321,22 @@ void InteractorPointPicker::add_point(){
     vertices->InsertNextCell(1,pid);
 
     // Create a polydata object
-    vtkSmartPointer<vtkPolyData> point =
-      vtkSmartPointer<vtkPolyData>::New();
+    vtkSmartPointer<vtkPolyData> point = vtkSmartPointer<vtkPolyData>::New();
 
     // Set the points and vertices we created as the geometry and topology of the polydata
     point->SetPoints(points);
     point->SetVerts(vertices);
 
     // Visualize
-    vtkSmartPointer<vtkPolyDataMapper> mapper =
-      vtkSmartPointer<vtkPolyDataMapper>::New();
-    mapper->SetInputData(point);
+    vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+
+
+    #if VTK_MAJOR_VERSION <= 5
+      mapper->SetInputConnection(point->GetProducerPort());
+    #else
+      mapper->SetInputData(point);
+    #endif
+
     mapper->StaticOn();
 
 
@@ -356,8 +361,7 @@ void InteractorPointPicker::add_point(){
     lineSource->SetPoint2(pos);
     lineSource->Update();
 
-    vtkSmartPointer<vtkPolyDataMapper> line_mapper =
-      vtkSmartPointer<vtkPolyDataMapper>::New();
+    vtkSmartPointer<vtkPolyDataMapper> line_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
     line_mapper->SetInputConnection(lineSource->GetOutputPort());
     line_mapper->StaticOn();
     vtkSmartPointer<vtkActor> line_actor =

@@ -129,10 +129,15 @@ Visualizer::Visualizer():
 
   // Set up action signals and slots
   connect(this->ui->actionExit, SIGNAL(triggered()), this, SLOT(slotExit()));
-  connect(interactor, &InteractorPointPicker::right_click_pressed_signal,
-          model.get(), &Model::right_click_pressed_slot );
-  connect(model.get(), &Model::grid_changed_signal,
-          this, &Visualizer::grid_changed_slot );
+  // connect(interactor, &InteractorPointPicker::right_click_pressed_signal,
+  //         model.get(), &Model::right_click_pressed_slot );
+  // connect(model.get(), &Model::grid_changed_signal,
+  //         this, &Visualizer::grid_changed_slot );
+
+  connect(interactor, SIGNAL(right_click_pressed_signal(row_type )  ),
+          model.get(), SLOT(right_click_pressed_slot(row_type)  ));
+  connect(model.get(), SIGNAL(grid_changed_signal()),
+          this, SLOT(grid_changed_slot()) );
 
 
   #if VTK_MAJOR_VERSION <= 5
@@ -194,20 +199,20 @@ void Visualizer::on_loadFileButton_clicked(){
 void  Visualizer::draw_sphere(double x, double y, double z){
 
   // Create a sphere
-    vtkSmartPointer<vtkSphereSource> sphereSource =
-      vtkSmartPointer<vtkSphereSource>::New();
-    sphereSource->SetCenter(x, y, z);
-    sphereSource->SetRadius(0.1);
-
-    vtkSmartPointer<vtkPolyDataMapper> mapper =
-      vtkSmartPointer<vtkPolyDataMapper>::New();
-    mapper->SetInputConnection(sphereSource->GetOutputPort());
-
-    vtkSmartPointer<vtkActor> actor =
-      vtkSmartPointer<vtkActor>::New();
-    actor->SetMapper(mapper);
-
-    renderer->AddActor(actor);
+    // vtkSmartPointer<vtkSphereSource> sphereSource =
+    //   vtkSmartPointer<vtkSphereSource>::New();
+    // sphereSource->SetCenter(x, y, z);
+    // sphereSource->SetRadius(0.1);
+    //
+    // vtkSmartPointer<vtkPolyDataMapper> mapper =
+    //   vtkSmartPointer<vtkPolyDataMapper>::New();
+    // mapper->SetInputConnection(sphereSource->GetOutputPort());
+    //
+    // vtkSmartPointer<vtkActor> actor =
+    //   vtkSmartPointer<vtkActor>::New();
+    // actor->SetMapper(mapper);
+    //
+    // renderer->AddActor(actor);
 
 }
 
@@ -228,7 +233,14 @@ void  Visualizer::updateView(int reset_camera){
 
   // Visualize
   vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-  mapper->SetInputData(wall);
+
+  #if VTK_MAJOR_VERSION <= 5
+      mapper->SetInputConnection(wall->GetProducerPort());
+  #else
+      mapper->SetInputData(wall);
+  #endif
+
+
   mapper->Update();
   vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
   actor->SetMapper(mapper);
@@ -576,33 +588,37 @@ void Visualizer::on_renderWallsButton_clicked(){
   // // renderer->ResetCamera();
   // renderer->GetActiveCamera()->Dolly (0.5);
 
-  for (size_t i = 0; i < NUM_WALLS; i++) {
-    renderer->GetActiveCamera()->SetPosition (model->m_plane_centers[i][0],
-                                              model->m_plane_centers[i][1],
-                                              model->m_plane_centers[i][2]);
+  // for (size_t i = 0; i < NUM_WALLS; i++) {
+  //   renderer->GetActiveCamera()->SetPosition (model->m_plane_centers[i][0],
+  //                                             model->m_plane_centers[i][1],
+  //                                             model->m_plane_centers[i][2]);
+  //
+  //   renderer->GetActiveCamera()->SetFocalPoint(0.0, 0.0, 0.0);
+  //   renderer->GetActiveCamera()->SetViewUp(0, 0, 1);
+  //   renderer->ResetCamera();
+  //   // renderer->GetActiveCamera()->Dolly (1.5);
+  //   renderer->GetActiveCamera()->Zoom (2.5);
+  //
+  //   this->ui->qvtkWidget->GetRenderWindow()->Render();
+  //
+  //
+  //   //Write wall
+  //   file_name= "wall_" + std::to_string(i) + ".png";
+  //   path_img= path + file_name;
+  //
+  //   vtkSmartPointer<vtkRenderLargeImage> renderLarge = vtkSmartPointer<vtkRenderLargeImage>::New();
+  //   renderLarge->SetInput(renderer);
+  //   renderLarge->SetMagnification(MAGNIFICATION);
+  //   std::cout << "Saving image in " << path_img << std::endl;
+  //   vtkSmartPointer<vtkPNGWriter> writer =
+  //     vtkSmartPointer<vtkPNGWriter>::New();
+  //   writer->SetFileName(path_img.data());
+  //   writer->SetInputConnection(renderLarge->GetOutputPort());
+  //   writer->Write();
+  // }
 
-    renderer->GetActiveCamera()->SetViewUp(0, 0, 1);
-    renderer->ResetCamera();
-    renderer->GetActiveCamera()->Dolly (1.5);
 
-    this->ui->qvtkWidget->GetRenderWindow()->Render();
-
-
-    //Write wall
-    file_name= "wall_" + std::to_string(i) + ".png";
-    path_img= path + file_name;
-
-    vtkSmartPointer<vtkRenderLargeImage> renderLarge = vtkSmartPointer<vtkRenderLargeImage>::New();
-    renderLarge->SetInput(renderer);
-    renderLarge->SetMagnification(MAGNIFICATION);
-    std::cout << "Saving image in " << path_img << std::endl;
-    vtkSmartPointer<vtkPNGWriter> writer =
-      vtkSmartPointer<vtkPNGWriter>::New();
-    writer->SetFileName(path_img.data());
-    writer->SetInputConnection(renderLarge->GetOutputPort());
-    writer->Write();
-  }
-
+  model->wrap_grid();
 
 
 
@@ -636,10 +652,19 @@ void Visualizer::draw_cell(row_type bounds, double r, double g, double b){
   vtkPolyData* outline = outlineSource->GetOutput();
 
   // Create a mapper and actor
-  vtkSmartPointer<vtkPolyDataMapper> mapper =
-    vtkSmartPointer<vtkPolyDataMapper>::New();
+  vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 
-  mapper->SetInputData(outline);
+
+
+  #if VTK_MAJOR_VERSION <= 5
+    mapper->SetInputConnection(outline->GetProducerPort());
+  #else
+    mapper->SetInputData(outline);
+  #endif
+
+
+
+
 
   vtkSmartPointer<vtkActor> actor =
     vtkSmartPointer<vtkActor>::New();

@@ -133,10 +133,12 @@ public:
      vtkSmartPointer<vtkCellArray> m_cells_wrapped;
      matrix_type m_normals_wrapped;
      matrix_type m_points_wrapped;
+
      pcl::PointCloud<pcl::PointXYZ>::Ptr m_points_wrapped_ds;
 
      //Unwrapped
      matrix_type m_points_unwrapped;
+     pcl::PointCloud<pcl::PointXYZ>::Ptr m_points_unwrapped_full_cloud;
 
 
      //Misc
@@ -206,6 +208,7 @@ public:
      double dist(row_type vec1, row_type vec2);
 
      void wrap_grid();
+     void create_point_cloud();
 
 public slots:
     void right_click_pressed_slot(row_type point);

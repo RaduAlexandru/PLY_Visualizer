@@ -15,7 +15,8 @@ Model::Model():
   m_colors_active(vtkSmartPointer<vtkUnsignedCharArray>::New()),
   m_deleted_streached_trigs(false),
   m_draw_grid_active(true),
-  m_draw_grid_inactive(false)
+  m_draw_grid_inactive(false),
+  m_points_unwrapped_full_cloud(new pcl::PointCloud<pcl::PointXYZ>)
 {
 
 
@@ -132,9 +133,16 @@ void Model::center_mesh(){
     vtkSmartPointer<vtkTransform>::New();
   translation->Translate(-m_center[0], -m_center[1], -m_center[2]);
 
-  vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter =
-    vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-  transformFilter->SetInputData(m_wall);
+  vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+
+
+
+  #if VTK_MAJOR_VERSION <= 5
+    transformFilter->SetInputConnection(m_wall->GetProducerPort());
+  #else
+    transformFilter->SetInputData(m_wall);
+  #endif
+
   transformFilter->SetTransform(translation);
   transformFilter->Update();
 
@@ -243,7 +251,14 @@ void Model::write_points_to_mesh(){
 
   //TODO: we should recalculate new normals, insted we should have normal_wrapped and normals unwrapped
   vtkSmartPointer<vtkPolyDataNormals> normals_alg = vtkSmartPointer<vtkPolyDataNormals>::New();
-  normals_alg->SetInputData(m_wall);
+
+
+  #if VTK_MAJOR_VERSION <= 5
+    normals_alg->SetInputConnection(m_wall->GetProducerPort());
+  #else
+    normals_alg->SetInputData(m_wall);
+  #endif
+
   normals_alg->Update();
 
   m_wall=normals_alg->GetOutput();
@@ -1204,14 +1219,54 @@ void Model::wrap_grid(){
   //Find the nearest point in the unwrapped points with its index
   //That index will give the point in the wrapped ones
 
+  create_point_cloud();
+  pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+  kdtree.setInputCloud (m_points_unwrapped_full_cloud);
+
+
   for (size_t cell_idx = 0; cell_idx < m_grid.size(); cell_idx++) {
     matrix_type points(4);
     points[0]=row_type {m_grid[cell_idx][0], m_grid[cell_idx][3] ,  m_grid[cell_idx][5]};
     points[1]=row_type {m_grid[cell_idx][1], m_grid[cell_idx][3] ,  m_grid[cell_idx][5]};
-    points[2]=row_type {m_grid[cell_idx][0], m_grid[cell_idx][3] ,  m_grid[cell_idx][4]};
-    points[4]=row_type {m_grid[cell_idx][0], m_grid[cell_idx][3] ,  m_grid[cell_idx][5]};
+    points[2]=row_type {m_grid[cell_idx][1], m_grid[cell_idx][3] ,  m_grid[cell_idx][4]};
+    points[3]=row_type {m_grid[cell_idx][0], m_grid[cell_idx][3] ,  m_grid[cell_idx][4]};
 
-    row_type_i indexes(4);  //Indexes of the points that were the closest
+    row_type_i indexes(4);  //Indexes of the points that were the closest (for all 4 corners)
+
+
+    for (size_t p_idx = 0; p_idx < 4; p_idx++) {
+      //get the closest point in the mesh that coresponds to the corner
+
+      int K = 1;
+      std::vector<int> pointIdxNKNSearch(K);
+      std::vector<float> pointNKNSquaredDistance(K);
+
+      pcl::PointXYZ searchPoint;
+
+      searchPoint.x=points[p_idx][0];
+      searchPoint.y=points[p_idx][1];
+      searchPoint.z=points[p_idx][2];
+
+      // std::cout << "K nearest neighbor search at (" << searchPoint.x
+      //         << " " << searchPoint.y
+      //         << " " << searchPoint.z
+      //         << ") with K=" << K << std::endl;
+
+      if ( kdtree.nearestKSearch (searchPoint, K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
+      {
+        for (size_t i = 0; i < pointIdxNKNSearch.size (); ++i)
+          std::cout << "    "  <<   m_points_unwrapped_full_cloud->points[ pointIdxNKNSearch[i] ].x
+                    << " " << m_points_unwrapped_full_cloud->points[ pointIdxNKNSearch[i] ].y
+                    << " " << m_points_unwrapped_full_cloud->points[ pointIdxNKNSearch[i] ].z
+                    << " (squared distance: " << pointNKNSquaredDistance[i] << ")" << std::endl;
+      }
+
+    }
+
+
+    //Now we have the points (3D) that correspond tot he corners in the wrapped chimneys
+    //Those points in world can be passed to display
+
 
 
 
@@ -1219,5 +1274,26 @@ void Model::wrap_grid(){
 
   }
 
+
+  std::cout << "finished wraping the grid" << std::endl;
+
+}
+
+void Model::create_point_cloud(){
+
+  std::cout << "creating full point cloud" << std::endl;
+
+  m_points_unwrapped_full_cloud->width    = m_points_unwrapped.size();
+  m_points_unwrapped_full_cloud->height   = 1;
+  m_points_unwrapped_full_cloud->is_dense = false;
+  m_points_unwrapped_full_cloud->points.resize (m_points_unwrapped.size());
+
+  for (size_t i = 0; i < m_points_unwrapped.size(); i++){
+    m_points_unwrapped_full_cloud->points[i].x = m_points_unwrapped[i][0];
+    m_points_unwrapped_full_cloud->points[i].y = m_points_unwrapped[i][1];
+    m_points_unwrapped_full_cloud->points[i].z = m_points_unwrapped[i][2];
+  }
+
+  std::cout << "finished full point cloud" << std::endl;
 
 }
