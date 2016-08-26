@@ -21,6 +21,7 @@
 #include <vtkPlaneSource.h>
 #include <vtkTransform.h>
 #include <vtkTransformPolyDataFilter.h>
+#include <vtkInteractorObserver.h>
 #include "Utils.h"
 
 #include <opencv2/core/core.hpp>

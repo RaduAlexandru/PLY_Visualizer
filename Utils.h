@@ -4,6 +4,7 @@
 #include <vtkSmartPointer.h>
 #include <vtkPoints.h>
 #include <vtkDoubleArray.h>
+#include <algorithm>
 
 
 

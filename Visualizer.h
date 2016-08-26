@@ -28,7 +28,7 @@
 #include <vtkCamera.h>
 #include <vtkDelaunay2D.h>
 #include <vtkPolyDataNormals.h>
-#include <vtkOBJImporter.h>
+// #include <vtkOBJImporter.h>
 #include <vtkMapper.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkSphereSource.h>

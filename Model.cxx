@@ -1233,6 +1233,7 @@ void Model::wrap_grid(){
 
     row_type_i indexes(4);  //Indexes of the points that were the closest (for all 4 corners)
 
+    matrix_type corners_world(4);
 
     for (size_t p_idx = 0; p_idx < 4; p_idx++) {
       //get the closest point in the mesh that coresponds to the corner
@@ -1261,16 +1262,18 @@ void Model::wrap_grid(){
                     << " (squared distance: " << pointNKNSquaredDistance[i] << ")" << std::endl;
       }
 
+
+      // double pos_display[3];
+      // vtkInteractorObserver::ComputeWorldToDisplay (renderer, m_points_wrapped[pointIdxNKNSearch[0] ][0],
+      //                                                         m_points_wrapped[pointIdxNKNSearch[0] ][1],
+      //                                                         m_points_wrapped[pointIdxNKNSearch[0] ][2],
+      //                                                         pos_display);
+      // corners_worls[p_idx]=row_type { m_points_wrapped[pointIdxNKNSearch[0][0], pos_display[1], pos_display[2] };
+
+
     }
 
-
-    //Now we have the points (3D) that correspond tot he corners in the wrapped chimneys
-    //Those points in world can be passed to display
-
-
-
-
-
+    //Now we have the 4 points in the display
 
   }
 
