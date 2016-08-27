@@ -22,6 +22,8 @@
 #include <vtkTransform.h>
 #include <vtkTransformPolyDataFilter.h>
 #include <vtkInteractorObserver.h>
+#include <vtkOutlineSource.h>
+#include <vtkTransform.h>
 #include "Utils.h"
 
 #include <opencv2/core/core.hpp>
@@ -47,7 +49,7 @@
 #include <pcl/console/parse.h>
 #include <pcl/common/transforms.h>
 #include <pcl/common/geometry.h>
-#include <pcl/common/geometry.h>
+#include <pcl/common/common.h>
 
 
 #include <Eigen/Dense>
@@ -126,19 +128,20 @@ public:
      Model();
 
      int m_num_walls;
-
      vtkSmartPointer<vtkPolyData> m_wall;
 
 
      //Wrapped
-     vtkSmartPointer<vtkCellArray> m_cells_wrapped;
-     matrix_type m_normals_wrapped;
      matrix_type m_points_wrapped;
-
+     matrix_type m_normals_wrapped;
+     //  matrix_type m_tcoords_wrapped;
+     vtkSmartPointer<vtkCellArray> m_cells_wrapped;
      pcl::PointCloud<pcl::PointXYZ>::Ptr m_points_wrapped_ds;
 
      //Unwrapped
      matrix_type m_points_unwrapped;
+     matrix_type m_normals_unwrapped;
+     vtkSmartPointer<vtkCellArray> m_cells_unwrapped;
      pcl::PointCloud<pcl::PointXYZ>::Ptr m_points_unwrapped_full_cloud;
 
 
@@ -147,20 +150,31 @@ public:
      vtkSmartPointer<vtkUnsignedCharArray> m_colors_original; //original colors, rgb if present and all white if not
      vtkSmartPointer<vtkUnsignedCharArray> m_colors_active;
      row_type m_center;
+     matrix_type m_streched_polys;
+     std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clustered_clouds;
+     std::vector<plane_struct> planes;
+     //  matrix_type m_walls_wrapped_bounds;
+     std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clustered_clouds_original;
+     matrix_type m_ransac_centers;
+
+
+     //Unwrap results
+      std::vector<pcl::PointIndices::Ptr> m_inliers_vec;
+
+
 
      //May need deleting
-     vtkSmartPointer<vtkCellArray> m_cells;
+    //  vtkSmartPointer<vtkCellArray> m_cells;
      matrix_type m_normals;
-
-
      std::vector<double> m_angles;               //TODO: delete only if you are sure you're not going to use circular
      std::vector<double> m_distances_to_plane;
-
      std::vector<double> distances_to_radius;   //TODO: delete only if you are sure you're not going to use circular mesh
      std::vector<double> distances_to_center;   //TODO: delete only if you are sure you're not going to use circular mesh
 
-     int m_num_points;        //num of points in the m_wall
-     int m_point_components;  //components of each point, normally 3 (x,y,z)
+
+
+    //  int m_num_points;        //num of points in the m_wall
+    //  int m_point_components;  //components of each point, normally 3 (x,y,z)
      double m_radius;         //estimated radius of the cylinder
      double m_circumference;
      double* m_bounds;
@@ -174,7 +188,7 @@ public:
 
      //  std::vector<vtkSmartPointer<vtkPolyData>> grid_cells;
      matrix_type m_grid;
-     matrix_type m_grid_wrapped;
+     std::vector<matrix_type> m_grid_wrapped;   //first index is the grid, second is the corner third is coordiante of corner
      row_type m_grid_cells_active;
 
 
@@ -200,6 +214,7 @@ public:
      void scale_mesh();
      void center_mesh();
      void delete_streched_trigs();
+     void add_streched_trigs();
      bool is_contained(pcl::PointXYZ , row_type);
      bool is_contained(row_type , row_type);
      pcl::PointCloud<pcl::PointXYZ>::Ptr compute_decimated(matrix_type);

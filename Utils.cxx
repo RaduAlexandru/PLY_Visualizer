@@ -38,7 +38,7 @@ vtkSmartPointer<vtkPoints> vector_to_vtk(matrix_type points){
 
 
 
-matrix_type vtk_normals_to_vector(vtkSmartPointer<vtkDataArray>  vtk_normals){
+matrix_type vtk_normal_tcoords_to_vector(vtkSmartPointer<vtkDataArray>  vtk_normals){
   std::cout << "vtk_normals to vector" << std::endl;
 
   int num_rows = vtk_normals->GetNumberOfTuples();

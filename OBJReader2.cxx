@@ -121,6 +121,10 @@ void OBJReader2::create_full_texture(){
 
       m_textures[i].copyTo(m_full_texture(cv::Rect(x_idx, y_idx, t_cols, t_rows)));
     }
+
+    //Increase the exposure
+    // m_full_texture = m_full_texture + cv::Scalar(75, 75, 75); //increase the brightness by 75 units
+
     // std::cout << "writing to file-----------" << m_path <<  "full_texture.png" << std::endl;
     cv::imwrite( m_path+ m_full_texture_name, m_full_texture );
 
@@ -334,7 +338,7 @@ void OBJReader2::write_to_poly(){
 
 
 
-  // //Attempt 3. Attempt 2 already workd but it can be made more readable
+  // // //Attempt 3. Attempt 2 already workd but it can be made more readable
   //
   // //Calculate the maximum of v, vt and vn. If one is bigger than the others it indicates that the points might share that parameter in different faces. Eg: If we have more t_coords than points that means that one points will have different texture coordinates for different faces.
   // //

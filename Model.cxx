@@ -2,21 +2,22 @@
 #include <iostream>
 
 Model::Model():
-  m_num_points(0),
-  m_point_components(0),
   m_radius(0.0),
   m_circumference(0.0),
   m_is_unwrapped(false),
   m_selecting_defects(false),
   m_selecting_grid(false),
   m_wall(vtkSmartPointer<vtkPolyData>::New()),
-  m_cells(vtkSmartPointer<vtkCellArray>::New()),
+  // m_cells(vtkSmartPointer<vtkCellArray>::New()),
   m_colors_original(vtkSmartPointer<vtkUnsignedCharArray>::New()),
   m_colors_active(vtkSmartPointer<vtkUnsignedCharArray>::New()),
   m_deleted_streached_trigs(false),
   m_draw_grid_active(true),
   m_draw_grid_inactive(false),
-  m_points_unwrapped_full_cloud(new pcl::PointCloud<pcl::PointXYZ>)
+  m_points_unwrapped_full_cloud(new pcl::PointCloud<pcl::PointXYZ>),
+
+  m_cells_wrapped(vtkSmartPointer<vtkCellArray>::New()),
+  m_cells_unwrapped(vtkSmartPointer<vtkCellArray>::New())
 {
 
 
@@ -25,7 +26,7 @@ Model::Model():
 
 void Model::set_mesh(vtkSmartPointer<vtkPolyData> mesh){
   clear();
-  m_wall=(mesh);
+  m_wall=mesh;
   center_mesh();
   read_info();
   //scale_mesh();  //TODO: REMOVE this one because it was only used so as to better see the fitted planes
@@ -40,8 +41,6 @@ void Model::clear(){
   m_selecting_defects=false;
   m_selecting_grid=false;
   m_deleted_streached_trigs=false;
-  m_num_points=0;
-  m_point_components=0;
   m_radius=0.0;
   m_circumference=0.0;
   m_points_wrapped.clear();
@@ -58,12 +57,12 @@ void Model::read_info(){
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
   points=m_wall->GetPoints();
   m_points_wrapped= vtk_to_vector(points);
+
+
   m_points_wrapped_ds=compute_decimated(m_points_wrapped);
-  m_point_components = points->GetData()->GetNumberOfComponents();
-  m_cells            =this->m_wall->GetPolys();
+  m_cells_wrapped    =this->m_wall->GetPolys();
   m_colors_original  = get_colors();
   m_colors_active  = get_colors();
-  m_num_points       =m_wall->GetNumberOfPoints();
   m_radius           = estimate_radius(m_points_wrapped_ds);
   m_circumference    =2*M_PI*m_radius;   //In the case of a non cylindrical one, the circumference is the perimeter of all the walls
 
@@ -81,15 +80,27 @@ void Model::read_info(){
   }else{
     std::cout << "the polydata does not have normals" << std::endl;
   }
-  m_normals=vtk_normals_to_vector(vtk_normals);
+  m_normals=vtk_normal_tcoords_to_vector(vtk_normals);
 
   m_bounds=m_wall->GetBounds();
 
 
 
+  // //GEt texture coordinates
+  // vtkSmartPointer<vtkDataArray> vtk_tcoords = m_wall->GetPointData()->GetTCoords();
+  // if(vtk_tcoords){
+  //   std::cout << "the polydata has tcoords" << std::endl;
+  // }else{
+  //   std::cout << "the polydata does not have tcoords" << std::endl;
+  // }
+  // m_tcoords_wrapped=vtk_normal_tcoords_to_vector(vtk_tcoords);
 
 
-  std::cout << "model::readinfo: num points= " <<m_num_points << std::endl;
+
+
+
+  std::cout << "model::readinfo: num points= " <<m_points_wrapped.size() << std::endl;
+  std::cout << "model::readinfo: we have nr cells: " <<  m_cells_wrapped->GetSize()  << std::endl;
 }
 
 
@@ -225,7 +236,8 @@ vtkSmartPointer<vtkPolyData> Model::get_mesh(){
 }
 
 void Model::write_points_to_mesh(){
-  if (m_num_points==0){ //m_wall has not been set yet
+  std::cout << "writig to mehs!!!!!!!" << std::endl;
+  if (m_points_wrapped.empty()){ //m_wall has not been set yet
     return;
   }
 
@@ -237,14 +249,29 @@ void Model::write_points_to_mesh(){
     points_active=vector_to_vtk(this->m_points_wrapped);
   }
 
+  std::cout << "setting points" << std::endl;
+
   m_wall->SetPoints(points_active);
-  m_wall->SetPolys(this->m_cells);
+
+  std::cout << "setting colors" << std::endl;
   m_wall->GetPointData()->SetScalars(this->m_colors_active);
 
+  std::cout << "deleting streched" << std::endl;
   if (this->m_is_unwrapped){
     delete_streched_trigs();
   }
 
+
+  std::cout << "setting cells" << std::endl;
+  if (m_is_unwrapped){
+    std::cout << "wiritng unwrapped cels!!!!!!!!!!!!11" << std::endl;
+      std::cout << "nr os cells: " << m_cells_unwrapped->GetSize() << std::endl;
+    m_wall->SetPolys(this->m_cells_unwrapped);
+  }else{
+    std::cout << "wiritng wrapped cels!!!!!!!!!!!!11" << std::endl;
+    std::cout << "nr os cells: " << m_cells_wrapped->GetSize() << std::endl;
+    m_wall->SetPolys(m_cells_wrapped);
+  }
 
 
   this->m_bounds=m_wall->GetBounds();
@@ -279,10 +306,13 @@ void Model::delete_streched_trigs(){
 
   vtkIdType n_pts=-1,*pts;
   m_wall->GetPolys()->InitTraversal();
+
+  // m_streched_polys.resize(m_wall->GetPolys()->GetNumberOfCells());
+
+  int counter=0;
   for (size_t i = 0; i < m_wall->GetPolys()->GetNumberOfCells(); i++) {
     m_wall->GetPolys()->GetNextCell(n_pts,pts);
-
-
+    // m_streched_polys[i]=row_type {pts[0],pts[1],pts[2]};
 
     double p[3];
     matrix_type trig(3);
@@ -296,9 +326,11 @@ void Model::delete_streched_trigs(){
 
     //Now we have a triangle with 3 points
     double thresh=0.1;
+
     if (  dist(trig[0], trig[1])  > thresh || dist(trig[0], trig[2]) >thresh  || dist(trig[2], trig[1]) >thresh ){
       // std::cout << "delete cell" << i << std::endl;
       m_wall->DeleteCell(i);
+      counter++;
     }
 
   }
@@ -316,13 +348,26 @@ void Model::delete_streched_trigs(){
   //Read inf again but now into points unwrapped
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
   points=m_wall->GetPoints();
-  this->m_points_unwrapped= vtk_to_vector(points);
-  this->m_cells            =this->m_wall->GetPolys();
-  this->m_colors_original  = get_colors();
-  this->m_colors_active  = get_colors();
-  this->m_num_points       =m_wall->GetNumberOfPoints();
+  m_points_unwrapped= vtk_to_vector(points);
+  m_cells_unwrapped            =m_wall->GetPolys();
+
+
+  // std::cout << "Deletet nr cells: " << counter << std::endl;
+  // std::cout << "after deleting streched trings we have nr points: " <<  m_points_unwrapped.size()  << std::endl;
+  // std::cout << "after deleting streched trings we have nr cells: " <<  m_cells_unwrapped->GetSize()  << std::endl;
 
 }
+
+
+void Model::add_streched_trigs(){
+
+
+  // for (size_t i = 0; i < m_streched_polys; i++) {
+  //   pointElems->InsertNextCell(3);
+  // }
+
+}
+
 
 
 double Model::dist(row_type vec1, row_type vec2){
@@ -374,7 +419,7 @@ void Model::blur_normals(){
   pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
   kdtree.setInputCloud (cloud_points);
 
-  double radius=0.1;
+  double radius=0.05;
   std::vector<int> pointIdxNKNSearch;
   std::vector<float> pointNKNSquaredDistance;
 
@@ -453,7 +498,7 @@ void Model::compute_unwrap2(){
 
   //Build a vector of cloud points and then fit planes through each cloud
   //vector of clouds
-  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clustered_clouds;
+  clustered_clouds.clear();
   for (size_t clust = 0; clust < cluster_count; clust++) {
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
     // int num_items = std::count(labels_vec.begin(), labels_vec.end(), clust);
@@ -494,18 +539,20 @@ void Model::compute_unwrap2(){
 
 
 
-
   //vector of planes that will be ftted to the clouds
-  std::vector<plane_struct> planes(cluster_count);
+  planes.clear();
+  planes.resize(cluster_count);
   for (size_t i = 0; i < cluster_count; i++) {
      planes[i].coef.values.resize(4);
      planes[i].index_cluster=i;
    }
 
 
+   m_ransac_centers.resize(cluster_count);
    std::cout << "segmenting" << std::endl;
    //segmtn each cloud and gt the coefficients of the planes fitted
-   std::vector<pcl::PointIndices::Ptr> inliers_vec;
+   m_inliers_vec.clear();
+
    #pragma omp parallel for
    for (size_t clust = 0; clust < cluster_count; clust++) {
      pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
@@ -526,7 +573,7 @@ void Model::compute_unwrap2(){
        PCL_ERROR ("Could not estimate a planar model for the given dataset.");
      }
 
-     inliers_vec.push_back(inliers);
+     m_inliers_vec.push_back(inliers);
 
      //Go through all the indices and calculate the min max for that cluster_count  (Watchout is is on the ds)
     //  double min=999999;
@@ -542,6 +589,23 @@ void Model::compute_unwrap2(){
     //  }
     //  std::cout << "cluster " << clust  << std::endl;
     //  std::cout << "min max " <<  min << " " << max << clust  << std::endl;
+
+
+    //Get the centers of the inliers
+    // row_type center(3, 0.0);
+    //
+    // for (size_t i = 0; i < inliers->indices.size (); i++) {
+    //   center[0]+=clustered_clouds[clust]->points[inliers->indices[i]].x;
+    //   center[1]+=clustered_clouds[clust]->points[inliers->indices[i]].y;
+    //   center[2]+=clustered_clouds[clust]->points[inliers->indices[i]].z;
+    // }
+    // center[0]=center[0]/inliers->indices.size ();
+    // center[1]=center[1]/inliers->indices.size ();
+    // center[2]=center[2]/inliers->indices.size ();
+    // m_ransac_centers[clust]=center;
+
+
+
 
 
      std::cerr << "Model coefficients: " << planes[clust].coef.values[0] << " "
@@ -591,6 +655,147 @@ void Model::compute_unwrap2(){
       planes[i].angle=angle;
   }
   std::sort(planes.begin(), planes.end(), by_angle());
+
+
+
+  //Get the walls min and max
+  // m_walls_wrapped_bounds.resize(cluster_count);
+  // for (size_t i = 0; i < cluster_count; i++) {
+  //   //Move rotate the cluster by the angle
+  //   int clust_idx= planes[i].index_cluster;
+  //   Eigen::Affine3f transform = Eigen::Affine3f::Identity();
+  //   double r = (90 * M_PI /180) + interpolate (planes[i].angle, 0.0, 1.0, -M_PI, M_PI);
+  //   transform.rotate (Eigen::AngleAxisf (r, Eigen::Vector3f::UnitZ()));
+  //   pcl::transformPointCloud (*(clustered_clouds[clust_idx]), *(clustered_clouds[clust_idx]), transform);
+  //
+  //   //Get bounding box
+  //   pcl::PointXYZ p_min;
+  //   pcl::PointXYZ p_max;
+  //   pcl::getMinMax3D (*(clustered_clouds[clust_idx]), p_min, p_max);
+  //   row_type bounds(6);
+  //
+  //   bounds[0]=p_min.x;
+  //   bounds[1]=p_max.x;
+  //   bounds[2]=p_min.y;
+  //   bounds[3]=p_max.y;
+  //   bounds[4]=p_min.z;
+  //   bounds[5]=p_max.z;
+  //   m_walls_wrapped_bounds[clust_idx]=bounds;
+  //
+  //   vtkSmartPointer<vtkOutlineSource> outlineSource = vtkSmartPointer<vtkOutlineSource>::New();
+  //   outlineSource->SetBounds(bounds.data());
+  //   outlineSource->Update();
+  //
+  //
+  //   //Rotate it back
+  //   pcl::transformPointCloud (*(clustered_clouds[clust_idx]), *(clustered_clouds[clust_idx]), transform.inverse());
+  //   vtkSmartPointer<vtkTransform> rotate_bb = vtkSmartPointer<vtkTransform>::New();
+  //   rotate_bb->RotateZ(-r*180/M_PI);
+  //
+  //   vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+  //   transformFilter->SetInputConnection(outlineSource->GetOutputPort());
+  //   transformFilter->SetTransform(rotate_bb);
+  //   transformFilter->Update();
+  // }
+
+
+
+  //Attempt 2 at getting min and max //orientated bounding boxes
+  // for (size_t clust = 0; clust < cluster_count; clust++) {
+  //
+  //
+  //   // compute principal direction
+  //   Eigen::Vector4f centroid;
+  //   pcl::compute3DCentroid(*(clustered_clouds_ds[clust]), centroid);
+  //   Eigen::Matrix3f covariance;
+  //   computeCovarianceMatrixNormalized(*(clustered_clouds_ds[clust]), centroid, covariance);
+  //   Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> eigen_solver(covariance, Eigen::ComputeEigenvectors);
+  //   Eigen::Matrix3f eigDx = eigen_solver.eigenvectors();
+  //   eigDx.col(2) = eigDx.col(0).cross(eigDx.col(1));
+  //
+  //   // move the points to the that reference frame
+  //   Eigen::Matrix4f p2w(Eigen::Matrix4f::Identity());
+  //   p2w.block<3,3>(0,0) = eigDx.transpose();
+  //   p2w.block<3,1>(0,3) = -1.f * (p2w.block<3,3>(0,0) * centroid.head<3>());
+  //   pcl::PointCloud<pcl::PointXYZ> cPoints;
+  //   pcl::transformPointCloud(*(clustered_clouds_ds[clust]), cPoints, p2w);
+  //
+  //   pcl::PointXYZ min_pt, max_pt;
+  //   pcl::getMinMax3D(cPoints, min_pt, max_pt);
+  //   const Eigen::Vector3f mean_diag = 0.5f*(max_pt.getVector3fMap() + min_pt.getVector3fMap());
+  //
+  //   // final transform
+  //   const Eigen::Quaternionf qfinal(eigDx);
+  //   const Eigen::Vector3f tfinal = eigDx*mean_diag + centroid.head<3>();
+  //
+  //
+  //   //Apply that ration and translation
+  //   Eigen::Matrix3f R;
+  //   R=qfinal.toRotationMatrix();
+  //   Eigen::Vector3f T;
+  //   T=tfinal;
+  //   Eigen::Matrix4f Trans; // Your Transformation Matrix
+  //   Trans.setIdentity();   // Set to Identity to make bottom row of Matrix 0,0,0,1
+  //   Trans.block<3,3>(0,0) = R;
+  //   // Trans.rightCols<1>() = T;
+  //   Trans.col(3).head<3>()= T;
+  //
+  //
+  //
+  //   Eigen::Affine3f affine(Trans);
+  //
+  //   std::cout << "bb trasnform" << std::endl;
+  //   std::cout << affine.matrix() << std::endl;
+  //   pcl::transformPoint(min_pt,affine);
+  //   pcl::transformPoint(max_pt,affine);
+  //
+  //
+  //   row_type bounds(6);
+  //   bounds[0]=min_pt.x;
+  //   bounds[1]=max_pt.x;
+  //   bounds[2]=min_pt.y;
+  //   bounds[3]=max_pt.y;
+  //   bounds[4]=min_pt.z;
+  //   bounds[5]=max_pt.z;
+  //   m_walls_wrapped_bounds[clust]=bounds;
+  //
+  //   // draw the cloud and the box
+  //   // pcl::visualization::PCLVisualizer viewer;
+  //   // viewer.addPointCloud((clustered_clouds_ds[clust]));
+  //   // viewer.addCube(tfinal, qfinal, max_pt.x - min_pt.x, max_pt.y - min_pt.y, max_pt.z - min_pt.z);
+  //   // viewer.spin();
+  //
+  // }
+
+
+  //Attempt 3. just writing the original walls in the model
+  // std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clustered_clouds_ds;
+  clustered_clouds_original.clear();
+  for (size_t clust = 0; clust < cluster_count; clust++) {
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    clustered_clouds_original.push_back(cloud);
+  }
+  for (size_t clust = 0; clust < cluster_count; clust++) {
+    clustered_clouds_original[clust]->width    = clustered_clouds[clust]->points.size();
+    clustered_clouds_original[clust]->height   = 1;
+    clustered_clouds_original[clust]->is_dense = false;
+    clustered_clouds_original[clust]->points.resize (clustered_clouds[clust]->points.size());
+
+    for (size_t i = 0; i < clustered_clouds[clust]->points.size(); i++){
+      clustered_clouds_original[clust]->points[i].x =  clustered_clouds[clust]->points[i].x;
+      clustered_clouds_original[clust]->points[i].y =  clustered_clouds[clust]->points[i].y;
+      clustered_clouds_original[clust]->points[i].z =  clustered_clouds[clust]->points[i].z;
+    }
+
+  }
+
+
+
+
+
+
+
+
 
 
 
@@ -749,12 +954,12 @@ void Model::compute_unwrap2(){
     //Go through all the indices and calculate the min max for that cluster_count  (Watchout is is on the ds)
     double min_x_cur=999999;
     double max_x_cur=-999999;
-    for (size_t i_idx = 0; i_idx < inliers_vec[clust]->indices.size (); i_idx++) {
-      if ( clustered_clouds[clust]->points[inliers_vec[clust]->indices[i_idx]].x > max_x_cur  ){
-        max_x_cur=clustered_clouds[clust]->points[inliers_vec[clust]->indices[i_idx]].x;
+    for (size_t i_idx = 0; i_idx < m_inliers_vec[clust]->indices.size (); i_idx++) {
+      if ( clustered_clouds[clust]->points[m_inliers_vec[clust]->indices[i_idx]].x > max_x_cur  ){
+        max_x_cur=clustered_clouds[clust]->points[m_inliers_vec[clust]->indices[i_idx]].x;
       }
-      if ( clustered_clouds[clust]->points[inliers_vec[clust]->indices[i_idx]].x < min_x_cur  ){
-        min_x_cur=clustered_clouds[clust]->points[inliers_vec[clust]->indices[i_idx]].x;
+      if ( clustered_clouds[clust]->points[m_inliers_vec[clust]->indices[i_idx]].x < min_x_cur  ){
+        min_x_cur=clustered_clouds[clust]->points[m_inliers_vec[clust]->indices[i_idx]].x;
       }
 
     }
@@ -820,9 +1025,9 @@ void Model::compute_unwrap2(){
 
 
   //write the unwrapped points
-  m_points_unwrapped.resize(m_num_points);
-  for (size_t i = 0; i < m_num_points; i++) {
-    m_points_unwrapped[i].resize(m_point_components);
+  m_points_unwrapped.resize(m_points_wrapped.size());
+  for (size_t i = 0; i < m_points_unwrapped.size(); i++) {
+    m_points_unwrapped[i].resize(3);
   }
 
   for (size_t clust = 0; clust < cluster_count; clust++) {
@@ -898,9 +1103,9 @@ void Model::compute_unwrap(){
 
 
   //assign the new points
-  m_points_unwrapped.resize(m_num_points);
-  for (size_t i = 0; i < m_num_points; i++) {
-    m_points_unwrapped[i].resize(m_point_components);
+  m_points_unwrapped.resize(m_points_wrapped.size());
+  for (size_t i = 0; i < m_points_unwrapped.size(); i++) {
+    m_points_unwrapped[i].resize(3);
     m_points_unwrapped[i][0]=m_angles[i] *m_circumference;
     m_points_unwrapped[i][1]=distances_to_radius[i];
     m_points_unwrapped[i][2]=m_points_wrapped[i][2];
@@ -915,9 +1120,9 @@ std::vector<double> Model::compute_angles(matrix_type points){
 
   //we again suppose that the center is already at 0,0,0
   std::vector<double> angles;
-  angles.resize(m_num_points);
+  angles.resize(points.size());
 
-  for (size_t i = 0; i < m_num_points; i++) {
+  for (size_t i = 0; i < angles.size(); i++) {
     double ax=points[i][0];
     double ay=points[i][1];
     angles[i]=atan2(-ay,-ax);
@@ -933,10 +1138,10 @@ std::vector<double> Model::compute_angles(matrix_type points){
 
 std::vector<double> Model::compute_distances_to_radius(matrix_type points, double radius){
   std::vector<double> dist;
-  dist.resize(m_num_points);
+  dist.resize(points.size());
 
   //Calculate first the distance to center.
-  for (size_t i = 0; i < m_num_points; i++) {
+  for (size_t i = 0; i < dist.size(); i++) {
     dist[i]= sqrt( points[i][0]*points[i][0]  + points[i][1]*points[i][1] );
     dist[i]= dist[i]-radius;
   }
@@ -954,7 +1159,15 @@ void Model::compute_plain_colors(){
   m_colors_active->SetNumberOfComponents(3);
   m_colors_active->SetName("plain");
 
-  for (size_t i = 0; i < m_num_points; i++) {
+  int num_points;
+  if (m_is_unwrapped){
+    num_points=m_points_unwrapped.size();
+  }else{
+    num_points=m_points_wrapped.size();
+  }
+
+
+  for (size_t i = 0; i < num_points; i++) {
     m_colors_active->InsertNextTuple3(255.0 ,255.0 ,255.0);
   }
   std::cout << "finishing creating colors" << std::endl;
@@ -970,7 +1183,15 @@ void Model::compute_rgb_colors(){
   m_colors_active->SetNumberOfComponents(3);
   m_colors_active->SetName("rgb");
 
-  for (vtkIdType i = 0; i < m_num_points; i++) {
+
+  int num_points;
+  if (m_is_unwrapped){
+    num_points=m_points_unwrapped.size();
+  }else{
+    num_points=m_points_wrapped.size();
+  }
+
+  for (vtkIdType i = 0; i < num_points; i++) {
     m_colors_active->InsertNextTuple(m_colors_original->GetTuple(i));
   }
 
@@ -1017,34 +1238,41 @@ void Model::compute_depth_colors(){
     compute_unwrap2(); //Compute unwrap to actually get unwrapped points
   }
 
-
-
-  int column_num = 1;
-  double max_dist = (*std::max_element(this->m_points_unwrapped.begin(), this->m_points_unwrapped.end(), column_comparer(column_num)))[column_num];
-  double min_dist = (*std::min_element(this->m_points_unwrapped.begin(), this->m_points_unwrapped.end(), column_comparer(column_num)))[column_num];
-
-
-  std::cout << "max, min dist is" << max_dist << " " << min_dist << std::endl;
-
-  std::vector<double> depth(m_num_points);
-
-  for (size_t i = 0; i < m_num_points; i++) {
-    depth[i]=interpolate(this->m_points_unwrapped[i][1], min_dist, max_dist, 255.0, 0.0);
+  int num_points;
+  if (m_is_unwrapped){
+    num_points=m_points_unwrapped.size();
+  }else{
+    num_points=m_points_wrapped.size();
   }
 
-  m_colors_active->Reset();
-  m_colors_active = vtkSmartPointer<vtkUnsignedCharArray>::New();
-  m_colors_active->SetNumberOfComponents(3);
-  m_colors_active->SetName("depth");
 
 
-  std::cout << "starting to create colors" << std::endl;
-  for (size_t i = 0; i < m_num_points; i++) {
-    //colors->InsertNextTuple3(angles[i]*255.0,0,0);
-    m_colors_active->InsertNextTuple3(depth[i],depth[i],depth[i]);
-    //m_points_unwrapped.InsertNextPoint( angles[i] *circumference,distances_from_radius[i],point[2])
-  }
-  std::cout << "finishing to create colors" << std::endl;
+  // int column_num = 1;
+  // double max_dist = (*std::max_element(this->m_points_unwrapped.begin(), this->m_points_unwrapped.end(), column_comparer(column_num)))[column_num];
+  // double min_dist = (*std::min_element(this->m_points_unwrapped.begin(), this->m_points_unwrapped.end(), column_comparer(column_num)))[column_num];
+  //
+  //
+  // std::cout << "max, min dist is" << max_dist << " " << min_dist << std::endl;
+  //
+  // std::vector<double> depth(m_points_unwrapped);
+  //
+  // for (size_t i = 0; i < m_num_points; i++) {
+  //   depth[i]=interpolate(this->m_points_unwrapped[i][1], min_dist, max_dist, 255.0, 0.0);
+  // }
+  //
+  // m_colors_active->Reset();
+  // m_colors_active = vtkSmartPointer<vtkUnsignedCharArray>::New();
+  // m_colors_active->SetNumberOfComponents(3);
+  // m_colors_active->SetName("depth");
+  //
+  //
+  // std::cout << "starting to create colors" << std::endl;
+  // for (size_t i = 0; i < m_num_points; i++) {
+  //   //colors->InsertNextTuple3(angles[i]*255.0,0,0);
+  //   m_colors_active->InsertNextTuple3(depth[i],depth[i],depth[i]);
+  //   //m_points_unwrapped.InsertNextPoint( angles[i] *circumference,distances_from_radius[i],point[2])
+  // }
+  // std::cout << "finishing to create colors" << std::endl;
 
 
 }
@@ -1226,14 +1454,14 @@ void Model::wrap_grid(){
 
   for (size_t cell_idx = 0; cell_idx < m_grid.size(); cell_idx++) {
     matrix_type points(4);
-    points[0]=row_type {m_grid[cell_idx][0], m_grid[cell_idx][3] ,  m_grid[cell_idx][5]};
-    points[1]=row_type {m_grid[cell_idx][1], m_grid[cell_idx][3] ,  m_grid[cell_idx][5]};
-    points[2]=row_type {m_grid[cell_idx][1], m_grid[cell_idx][3] ,  m_grid[cell_idx][4]};
-    points[3]=row_type {m_grid[cell_idx][0], m_grid[cell_idx][3] ,  m_grid[cell_idx][4]};
+    points[0]=row_type {m_grid[cell_idx][0], m_grid[cell_idx][2] ,  m_grid[cell_idx][5]};
+    points[1]=row_type {m_grid[cell_idx][1], m_grid[cell_idx][2] ,  m_grid[cell_idx][5]};
+    points[2]=row_type {m_grid[cell_idx][1], m_grid[cell_idx][2] ,  m_grid[cell_idx][4]};
+    points[3]=row_type {m_grid[cell_idx][0], m_grid[cell_idx][2] ,  m_grid[cell_idx][4]};
 
     row_type_i indexes(4);  //Indexes of the points that were the closest (for all 4 corners)
 
-    matrix_type corners_world(4);
+    matrix_type corners_world_unw(4);
 
     for (size_t p_idx = 0; p_idx < 4; p_idx++) {
       //get the closest point in the mesh that coresponds to the corner
@@ -1268,13 +1496,13 @@ void Model::wrap_grid(){
       //                                                         m_points_wrapped[pointIdxNKNSearch[0] ][1],
       //                                                         m_points_wrapped[pointIdxNKNSearch[0] ][2],
       //                                                         pos_display);
-      // corners_worls[p_idx]=row_type { m_points_wrapped[pointIdxNKNSearch[0][0], pos_display[1], pos_display[2] };
+      corners_world_unw[p_idx]=row_type { m_points_wrapped[ pointIdxNKNSearch[0]][0],
+                                          m_points_wrapped[ pointIdxNKNSearch[0]][1],
+                                          m_points_wrapped[ pointIdxNKNSearch[0]][2], };
 
 
     }
-
-    //Now we have the 4 points in the display
-
+    m_grid_wrapped.push_back(corners_world_unw);
   }
 
 

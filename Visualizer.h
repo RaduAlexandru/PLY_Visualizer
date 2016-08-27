@@ -76,6 +76,9 @@
 #include <pcl/filters/extract_indices.h>
 #include <pcl/console/parse.h>
 #include <pcl/common/transforms.h>
+#include <pcl/common/common.h>
+#include <pcl/common/geometry.h>
+
 
 
 #include <QFileDialog>
@@ -119,10 +122,13 @@ public:
 
   void draw_grid();
   void draw_cell(row_type bounds, double r, double g, double b);
+  void render_to_file(std::string path, int magnification=15);
+  void SetCameraPositionOrientation( vtkCamera* cam, double position[3], double orientation[3] );
+  void calculate_bounds( matrix_type corners, double* bounds);
 
 
   //TODO: Remove it, just needed for testing the distance in knn
-  void draw_sphere(double x, double y, double z);
+  void draw_sphere(double x, double y, double z,  double r=1.0, double g=1.0, double b=1.0);
 
   void draw_text_grid();
 
@@ -141,6 +147,7 @@ public slots:
   void on_renderToImgButton_clicked();
   void on_renderGridCellButton_clicked();
   void on_renderWallsButton_clicked();
+  void on_numWallsText_textChanged(const QString & text);
 
   void grid_changed_slot();
 
