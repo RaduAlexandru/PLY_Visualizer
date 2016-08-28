@@ -313,12 +313,13 @@ void Model::write_points_to_mesh(){
     m_wall->GetPointData()->SetTCoords(tcoords_rgb);
   }
 
-
+  std::cout << "gettings bounds" << std::endl;
   this->m_bounds=m_wall->GetBounds();
 
   //TODO: we should recalculate new normals, insted we should have normal_wrapped and normals unwrapped
   vtkSmartPointer<vtkPolyDataNormals> normals_alg = vtkSmartPointer<vtkPolyDataNormals>::New();
 
+  std::cout << "normals1" << std::endl;
 
   #if VTK_MAJOR_VERSION <= 5
     normals_alg->SetInputConnection(m_wall->GetProducerPort());
@@ -326,9 +327,22 @@ void Model::write_points_to_mesh(){
     normals_alg->SetInputData(m_wall);
   #endif
 
+  std::cout << "normals 2" << std::endl;
+
   normals_alg->Update();
 
-  m_wall=normals_alg->GetOutput();
+  std::cout << "normals3" << std::endl;
+
+  //TODO:JUst testin things right now
+  vtkSmartPointer<vtkFloatArray> vtk_normals = vtkSmartPointer<vtkFloatArray>::New();
+  vtk_normals->SetNumberOfComponents(3);
+  vtk_normals->SetName("Normals");
+  normals_alg->GetOutput()->GetPointData()->SetNormals(vtk_normals);
+  m_wall->GetPointData()->SetNormals(vtk_normals);
+
+  // m_wall=normals_alg->GetOutput();
+
+  std::cout << "finished wirint points to mesh" << std::endl;
 
 }
 
@@ -340,6 +354,22 @@ void Model::delete_streched_trigs(){
     return;
 
   m_deleted_streached_trigs=true;
+
+  //TODO: remove this, I jsut did it to see what happens
+  // vtkSmartPointer<vtkPoints> points2 = vtkSmartPointer<vtkPoints>::New();
+  // points2=m_wall->GetPoints();
+  // m_points_unwrapped= vtk_to_vector(points2);
+  // m_cells_unwrapped            =m_wall->GetPolys();
+  // return;
+
+
+  //Attempt to make it good by cleaning the polydata frist
+  // vtkSmartPointer<vtkCleanPolyData> clean = vtkSmartPointer<vtkCleanPolyData>::New();
+  // clean->SetInputData(m_wall);
+  // clean->Update();
+  //
+  // this->m_wall=clean->GetOutput();
+  // read_info();
 
   // std::cout << "delete streached trigs" << std::endl;
   m_wall->BuildLinks();
@@ -464,10 +494,10 @@ void Model::blur_normals(){
   std::vector<float> pointNKNSquaredDistance;
 
 
+  row_type normal(3, 0.0);
   for (size_t i = 0; i < cloud_points->points.size(); i++) {
     if (  kdtree.radiusSearch (cloud_points->points[i], radius, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
     {
-     row_type normal(3, 0.0);
      normal[0]=cloud_normals->points[i].x;
      normal[1]=cloud_normals->points[i].y;
      normal[2]=cloud_normals->points[i].z;

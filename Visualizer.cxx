@@ -156,16 +156,16 @@ Visualizer::Visualizer():
 
 
 void Visualizer::on_loadFileButton_clicked(){
-  // QString file_name;
-  // QString selfilter = tr("Mesh (*.obj *.ply)");
-  // file_name = QFileDialog::getOpenFileName(this,
-  // 	         tr("Open File"), "./", selfilter);
-  //
-  // if (file_name.isEmpty()){
-  //   return;
-  // }
+  QString file_name;
+  QString selfilter = tr("Mesh (*.obj *.ply)");
+  file_name = QFileDialog::getOpenFileName(this,
+  	         tr("Open File"), "./", selfilter);
 
-  QString file_name="/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/researchDenslyTexturedMesh.obj";
+  if (file_name.isEmpty()){
+    return;
+  }
+
+  // QString file_name="/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/researchDenslyTexturedMesh.obj";
 
   std::cout << "filename: " << file_name.toStdString() << std::endl;
 

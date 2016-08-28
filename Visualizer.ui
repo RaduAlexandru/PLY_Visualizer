@@ -76,7 +76,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>540</y>
+       <y>360</y>
        <width>75</width>
        <height>23</height>
       </rect>
@@ -112,9 +112,9 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>570</y>
+       <y>410</y>
        <width>171</width>
-       <height>61</height>
+       <height>221</height>
       </rect>
      </property>
      <property name="html">
@@ -193,64 +193,12 @@ p, li { white-space: pre-wrap; }
       <bool>true</bool>
      </property>
     </widget>
-    <widget class="QPushButton" name="renderToImgButton">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>420</y>
-       <width>91</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>renderToImg</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="renderGridCellButton">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>450</y>
-       <width>111</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>renderGridCell</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="renderWallsButton">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>480</y>
-       <width>111</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>renderWalls</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="renderGridWrappedButton">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>510</y>
-       <width>111</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>renderGridw</string>
-     </property>
-    </widget>
     <widget class="QPushButton" name="loadFileConfigButton">
      <property name="geometry">
       <rect>
        <x>110</x>
        <y>10</y>
-       <width>21</width>
+       <width>23</width>
        <height>23</height>
       </rect>
      </property>
@@ -262,8 +210,8 @@ p, li { white-space: pre-wrap; }
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>120</y>
-       <width>111</width>
+       <y>130</y>
+       <width>91</width>
        <height>23</height>
       </rect>
      </property>
