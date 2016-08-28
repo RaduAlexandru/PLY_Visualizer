@@ -665,10 +665,10 @@ void OBJReader2::write_to_poly(){
 
 
 
-  // std::cout << "after" << std::endl;
-  // std::cout << "obj reader:: points total that will be written: " << vtk_points->GetNumberOfPoints()<< std::endl;
-  // std::cout << "obj reader:: tcoords total that will be written: " << vtk_tcoords->GetNumberOfTuples()<< std::endl;
-  // std::cout << "obj reader:: normals total that will be written: " << vtk_normals->GetNumberOfTuples()<< std::endl;
+  std::cout << "after" << std::endl;
+  std::cout << "obj reader:: points total that will be written: " << vtk_points->GetNumberOfPoints()<< std::endl;
+  std::cout << "obj reader:: tcoords total that will be written: " << vtk_tcoords->GetNumberOfTuples()<< std::endl;
+  std::cout << "obj reader:: normals total that will be written: " << vtk_normals->GetNumberOfTuples()<< std::endl;
 
 
 
