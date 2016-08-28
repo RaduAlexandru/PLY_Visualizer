@@ -760,6 +760,12 @@ void OBJReader2::fix_orientation(){
 
 }
 
+void OBJReader2::auto_fix_orientation(){
+  std::cout << "auto fixing orientation of mesh" << std::endl;
+
+  //look at the normals coordinates. The coorindate with the least variance will indicate how we should rotoate
+}
+
 
 vtkSmartPointer<vtkPolyData> OBJReader2::GetOutput(){
   return m_polyData;

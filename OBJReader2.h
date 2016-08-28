@@ -61,6 +61,7 @@ private:
 
      void fix_exposure();
      void fix_orientation();
+     void auto_fix_orientation();
 
 
 

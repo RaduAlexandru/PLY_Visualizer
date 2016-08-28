@@ -173,7 +173,16 @@ void Visualizer::on_loadFileButton_clicked(){
   if (boost::ends_with(file_name.toStdString(), ".ply")) {
     std::cout << "reading .ply file" << std::endl;
     std::cout << "not implemented yet" << std::endl;
-    return;
+
+    vtkSmartPointer<vtkPLYReader> reader = vtkSmartPointer<vtkPLYReader>::New();
+    reader->SetFileName ( file_name.toStdString().data() );
+    reader->Update();
+
+    model->set_mesh(reader->GetOutput());
+
+
+
+
   }else if (boost::ends_with(file_name.toStdString(), ".obj")){
     std::cout << "reading .obj file" << std::endl;
 
@@ -277,16 +286,20 @@ void  Visualizer::updateView(int reset_camera){
   // Visualize
   vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 
+  std::cout << "creating mapper" << std::endl;
   #if VTK_MAJOR_VERSION <= 5
       mapper->SetInputConnection(wall->GetProducerPort());
   #else
       mapper->SetInputData(wall);
   #endif
+  std::cout << "updating mapper" << std::endl;
 
 
   mapper->Update();
   vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
   actor->SetMapper(mapper);
+
+  std::cout << "adding texture" << std::endl;
 
   if (this->ui->colorComboBox->currentText()=="RGB")
     actor->SetTexture(model->m_full_texture);
@@ -296,6 +309,8 @@ void  Visualizer::updateView(int reset_camera){
 
   actor->GetProperty()->BackfaceCullingOn();
 
+
+  std::cout << "adding actor" << std::endl;
   renderer->AddActor(actor);
   if (reset_camera==1){
     set_camera_default_pos();
@@ -304,11 +319,14 @@ void  Visualizer::updateView(int reset_camera){
     renderer->ResetCamera();
   }
 
-  draw_sphere(0,0,0);
+  // draw_sphere(0,0,0);
 
   // draw_text_grid();
 
+  std::cout << "updateing grid view" << std::endl;
+
   update_grid_view();
+  std::cout << "rendering" << std::endl;
   this->ui->qvtkWidget->GetRenderWindow()->Render();
 
 }

@@ -140,10 +140,11 @@ void Model::read_info(){
   vtkSmartPointer<vtkDataArray> vtk_normals = m_wall->GetPointData()->GetNormals();
   if(vtk_normals){
     std::cout << "the polydata has normals" << std::endl;
+    m_normals=vtk_normal_tcoords_to_vector(vtk_normals);
   }else{
     std::cout << "the polydata does not have normals" << std::endl;
   }
-  m_normals=vtk_normal_tcoords_to_vector(vtk_normals);
+
 
 
   m_bounds=m_wall->GetBounds();
@@ -179,6 +180,7 @@ void Model::scale_mesh(){
 
 
 void Model::center_mesh(){
+
   // m_center.resize(m_point_components);
   //
   // m_center[0]=(m_bounds[1]+m_bounds[0])/2.0;
@@ -195,7 +197,7 @@ void Model::center_mesh(){
   // std::cout << "center is " <<   m_center[0] << " " << m_center[1] << " " << m_center [2] << std::endl;
   //
   // this->m_bounds=m_wall->GetBounds();
-
+  std::cout << "centering mesh" << std::endl;
 
   m_bounds=m_wall->GetBounds();
 
@@ -351,30 +353,44 @@ void Model::write_points_to_mesh(){
   this->m_bounds=m_wall->GetBounds();
 
   //TODO: we should recalculate new normals, insted we should have normal_wrapped and normals unwrapped
-  vtkSmartPointer<vtkPolyDataNormals> normals_alg = vtkSmartPointer<vtkPolyDataNormals>::New();
+  if (m_normals.empty()) {
+    std::cout << "write points to mesh: NO NORMALS!!!!!" << std::endl;
+  }else{
 
-  std::cout << "normals1" << std::endl;
+    vtkSmartPointer<vtkPolyDataNormals> normals_alg = vtkSmartPointer<vtkPolyDataNormals>::New();
 
-  #if VTK_MAJOR_VERSION <= 5
-    normals_alg->SetInputConnection(m_wall->GetProducerPort());
-  #else
-    normals_alg->SetInputData(m_wall);
-  #endif
+    std::cout << "normals1" << std::endl;
 
-  std::cout << "normals 2" << std::endl;
+    #if VTK_MAJOR_VERSION <= 5
+      normals_alg->SetInputConnection(m_wall->GetProducerPort());
+    #else
+      normals_alg->SetInputData(m_wall);
+    #endif
 
-  normals_alg->Update();
+    std::cout << "normals 2" << std::endl;
 
-  std::cout << "normals3" << std::endl;
+    normals_alg->Update();
 
-  //TODO:JUst testin things right now
-  vtkSmartPointer<vtkFloatArray> vtk_normals = vtkSmartPointer<vtkFloatArray>::New();
-  vtk_normals->SetNumberOfComponents(3);
-  vtk_normals->SetName("Normals");
-  normals_alg->GetOutput()->GetPointData()->SetNormals(vtk_normals);
-  m_wall->GetPointData()->SetNormals(vtk_normals);
+    std::cout << "normals3" << std::endl;
+
+    //TODO:JUst testin things right now
+    vtkSmartPointer<vtkFloatArray> vtk_normals = vtkSmartPointer<vtkFloatArray>::New();
+    vtk_normals->SetNumberOfComponents(3);
+    vtk_normals->SetName("Normals");
+    normals_alg->GetOutput()->GetPointData()->SetNormals(vtk_normals);
+    m_wall->GetPointData()->SetNormals(vtk_normals);
+
+  }
+
 
   // m_wall=normals_alg->GetOutput();
+
+  std::cout << "DEBUG------------------------" << std::endl;
+  std::cout << "wrote nr points: " << points_active->GetNumberOfPoints()<< std::endl;
+  std::cout << "wrote nr cells wrapped: " << m_cells_wrapped->GetNumberOfCells() << std::endl;
+  std::cout << "wrote nr tcoords rgb: " << tcoords_rgb->GetNumberOfTuples() << std::endl;
+  std::cout << "DEBUG------------------------" << std::endl;
+
 
   std::cout << "finished wiriting points to mesh" << std::endl;
 
