@@ -3,7 +3,9 @@
 
 OBJReader2::OBJReader2():
 m_polyData(vtkSmartPointer<vtkPolyData>::New()),
-m_full_texture_name("full_texture.png")
+m_full_texture_name("full_texture.png"),
+experimental_loading(true),
+should_fix_orientation(true)
 {
 
 }
@@ -409,107 +411,258 @@ void OBJReader2::write_to_poly(){
 
 
 
-  // //Attempt 4
-  //we cannot rely on calculting the max of the points or the normals because there are some points that are not references by any face.
+  // // //Attempt 4
+  // //we cannot rely on calculting the max of the points or the normals because there are some points that are not references by any face.
+  //
+  // //Actual sizes of the points is done by looping through all the faces and storing the index for each paramenter
+  // //the in thore 3 arrays of indices, calculate the numbers of 1s for each one of them. That is the number of points, t coords etc that is actually being used.
+  //
+  // // std::cout << "num_faces: " << num_faces_total << std::endl;
+  //
+  // //Get the paramenter that has the most points/values. Even though some of them might not be referenced in any face
+  // int max=0;
+  // if (m_points.size() > max){
+  //   max=m_points.size();
+  // }
+  // if (m_tcoords.size() > max){
+  //   max=m_tcoords.size();
+  // }
+  // if (m_normals.size() > max){
+  //   max=m_normals.size();
+  // }
+  //
+  // matrix_type_i indices(3);
+  // indices[0].resize(max); //Make it big, just in case
+  // indices[1].resize(max);
+  // indices[2].resize(max);
+  //
+  //
+  // for (size_t mat_idx = 0; mat_idx < m_textures.size(); mat_idx++) {
+  //   for (size_t poly_idx = 0; poly_idx < m_polys[mat_idx].size(); poly_idx++) {
+  //     for (size_t point_idx = 0; point_idx < 3; point_idx++) {
+  //
+  //       int v_idx= m_polys[mat_idx][poly_idx][point_idx][0];
+  //       int vt_idx= m_polys[mat_idx][poly_idx][point_idx][1];
+  //       int vn_idx= m_polys[mat_idx][poly_idx][point_idx][2];
+  //
+  //       indices[0][v_idx]=1;
+  //       indices[1][vt_idx]=1;
+  //       indices[2][vn_idx]=1;
+  //     }
+  //
+  //   }
+  //
+  // }
+  //
+  // int num_points=std::count(indices[0].begin(), indices[0].end(), 1);
+  // int num_tcoords=std::count(indices[1].begin(), indices[1].end(), 1);
+  // int num_normals=std::count(indices[2].begin(), indices[2].end(), 1);
+  //
+  // // std::cout << "actual references to params are: " << num_points << " " << num_tcoords << " " << num_normals << std::endl;
+  //
+  //
+  // int max_param;
+  // int max_size=0;
+  // if (num_points > max_size){
+  //   max_size=num_points;
+  //   max_param=0;
+  // }
+  // if (num_tcoords > max_size){
+  //   max_size=num_tcoords;
+  //   max_param=1;
+  // }
+  // if (num_normals > max_size){
+  //   max_size=num_tcoords;
+  //   max_param=2;
+  // }
+  //
+  //
+  // std::vector <int> point_is_added (max_size, 0);
+  // std::vector <int> point_index(max_size, 0);
+  //
+  // int index=0;
+  // for (size_t mat_idx = 0; mat_idx < m_textures.size(); mat_idx++) {
+  //   for (size_t poly_idx = 0; poly_idx < m_polys[mat_idx].size(); poly_idx++) {
+  //     vtk_polys->InsertNextCell(3);
+  //     for (size_t point_idx = 0; point_idx < 3; point_idx++) {
+  //
+  //       int v_idx= m_polys[mat_idx][poly_idx][point_idx][0];
+  //       int vt_idx= m_polys[mat_idx][poly_idx][point_idx][1];
+  //       int vn_idx= m_polys[mat_idx][poly_idx][point_idx][2];
+  //
+  //       if (!point_is_added[  m_polys[mat_idx][poly_idx][point_idx][max_param]   ]){
+  //
+  //
+  //         vtk_points->InsertNextPoint(m_points[v_idx].data());
+  //         vtk_tcoords->InsertNextTuple(m_tcoords[vt_idx].data());
+  //         vtk_normals->InsertNextTuple(m_normals[vn_idx].data());
+  //
+  //         point_is_added[m_polys[mat_idx][poly_idx][point_idx][max_param]]=1;
+  //         point_index[m_polys[mat_idx][poly_idx][point_idx][max_param]]=index;
+  //         vtk_polys->InsertCellPoint( index  );  //Keep increasing the index of the point when that points want added
+  //         index ++;
+  //
+  //       }else{
+  //         int stored_index=point_index[m_polys[mat_idx][poly_idx][point_idx][max_param]];
+  //         vtk_polys->InsertCellPoint( stored_index  );  //If the point was already added then just point to it
+  //       }
+  //
+  //     }
+  //
+  //   }
+  //
+  // }
 
-  //Actual sizes of the points is done by looping through all the faces and storing the index for each paramenter
-  //the in thore 3 arrays of indices, calculate the numbers of 1s for each one of them. That is the number of points, t coords etc that is actually being used.
-
-  // std::cout << "num_faces: " << num_faces_total << std::endl;
-
-  //Get the paramenter that has the most points/values. Even though some of them might not be referenced in any face
-  int max=0;
-  if (m_points.size() > max){
-    max=m_points.size();
-  }
-  if (m_tcoords.size() > max){
-    max=m_tcoords.size();
-  }
-  if (m_normals.size() > max){
-    max=m_normals.size();
-  }
-
-  matrix_type_i indices(3);
-  indices[0].resize(max); //Make it big, just in case
-  indices[1].resize(max);
-  indices[2].resize(max);
 
 
-  for (size_t mat_idx = 0; mat_idx < m_textures.size(); mat_idx++) {
-    for (size_t poly_idx = 0; poly_idx < m_polys[mat_idx].size(); poly_idx++) {
-      for (size_t point_idx = 0; point_idx < 3; point_idx++) {
 
-        int v_idx= m_polys[mat_idx][poly_idx][point_idx][0];
-        int vt_idx= m_polys[mat_idx][poly_idx][point_idx][1];
-        int vn_idx= m_polys[mat_idx][poly_idx][point_idx][2];
 
-        indices[0][v_idx]=1;
-        indices[1][vt_idx]=1;
-        indices[2][vn_idx]=1;
-      }
 
+  //Condition on both
+
+  if (experimental_loading){
+    int max=0;
+    if (m_points.size() > max){
+      max=m_points.size();
+    }
+    if (m_tcoords.size() > max){
+      max=m_tcoords.size();
+    }
+    if (m_normals.size() > max){
+      max=m_normals.size();
     }
 
-  }
-
-  int num_points=std::count(indices[0].begin(), indices[0].end(), 1);
-  int num_tcoords=std::count(indices[1].begin(), indices[1].end(), 1);
-  int num_normals=std::count(indices[2].begin(), indices[2].end(), 1);
-
-  // std::cout << "actual references to params are: " << num_points << " " << num_tcoords << " " << num_normals << std::endl;
+    matrix_type_i indices(3);
+    indices[0].resize(max); //Make it big, just in case
+    indices[1].resize(max);
+    indices[2].resize(max);
 
 
-  int max_param;
-  int max_size=0;
-  if (num_points > max_size){
-    max_size=num_points;
-    max_param=0;
-  }
-  if (num_tcoords > max_size){
-    max_size=num_tcoords;
-    max_param=1;
-  }
-  if (num_normals > max_size){
-    max_size=num_tcoords;
-    max_param=2;
-  }
+    for (size_t mat_idx = 0; mat_idx < m_textures.size(); mat_idx++) {
+      for (size_t poly_idx = 0; poly_idx < m_polys[mat_idx].size(); poly_idx++) {
+        for (size_t point_idx = 0; point_idx < 3; point_idx++) {
 
+          int v_idx= m_polys[mat_idx][poly_idx][point_idx][0];
+          int vt_idx= m_polys[mat_idx][poly_idx][point_idx][1];
+          int vn_idx= m_polys[mat_idx][poly_idx][point_idx][2];
 
-  std::vector <int> point_is_added (max_size, 0);
-  std::vector <int> point_index(max_size, 0);
-
-  int index=0;
-  for (size_t mat_idx = 0; mat_idx < m_textures.size(); mat_idx++) {
-    for (size_t poly_idx = 0; poly_idx < m_polys[mat_idx].size(); poly_idx++) {
-      vtk_polys->InsertNextCell(3);
-      for (size_t point_idx = 0; point_idx < 3; point_idx++) {
-
-        int v_idx= m_polys[mat_idx][poly_idx][point_idx][0];
-        int vt_idx= m_polys[mat_idx][poly_idx][point_idx][1];
-        int vn_idx= m_polys[mat_idx][poly_idx][point_idx][2];
-
-        if (!point_is_added[  m_polys[mat_idx][poly_idx][point_idx][max_param]   ]){
-
-
-          vtk_points->InsertNextPoint(m_points[v_idx].data());
-          vtk_tcoords->InsertNextTuple(m_tcoords[vt_idx].data());
-          vtk_normals->InsertNextTuple(m_normals[vn_idx].data());
-
-          point_is_added[m_polys[mat_idx][poly_idx][point_idx][max_param]]=1;
-          point_index[m_polys[mat_idx][poly_idx][point_idx][max_param]]=index;
-          vtk_polys->InsertCellPoint( index  );  //Keep increasing the index of the point when that points want added
-          index ++;
-
-        }else{
-          int stored_index=point_index[m_polys[mat_idx][poly_idx][point_idx][max_param]];
-          vtk_polys->InsertCellPoint( stored_index  );  //If the point was already added then just point to it
+          indices[0][v_idx]=1;
+          indices[1][vt_idx]=1;
+          indices[2][vn_idx]=1;
         }
 
       }
 
     }
 
+    int num_points=std::count(indices[0].begin(), indices[0].end(), 1);
+    int num_tcoords=std::count(indices[1].begin(), indices[1].end(), 1);
+    int num_normals=std::count(indices[2].begin(), indices[2].end(), 1);
+
+    // std::cout << "actual references to params are: " << num_points << " " << num_tcoords << " " << num_normals << std::endl;
+
+
+    int max_param;
+    int max_size=0;
+    if (num_points > max_size){
+      max_size=num_points;
+      max_param=0;
+    }
+    if (num_tcoords > max_size){
+      max_size=num_tcoords;
+      max_param=1;
+    }
+    if (num_normals > max_size){
+      max_size=num_tcoords;
+      max_param=2;
+    }
+
+
+    std::vector <int> point_is_added (max_size, 0);
+    std::vector <int> point_index(max_size, 0);
+
+    int index=0;
+    for (size_t mat_idx = 0; mat_idx < m_textures.size(); mat_idx++) {
+      for (size_t poly_idx = 0; poly_idx < m_polys[mat_idx].size(); poly_idx++) {
+        vtk_polys->InsertNextCell(3);
+        for (size_t point_idx = 0; point_idx < 3; point_idx++) {
+
+          int v_idx= m_polys[mat_idx][poly_idx][point_idx][0];
+          int vt_idx= m_polys[mat_idx][poly_idx][point_idx][1];
+          int vn_idx= m_polys[mat_idx][poly_idx][point_idx][2];
+
+          if (!point_is_added[  m_polys[mat_idx][poly_idx][point_idx][max_param]   ]){
+
+
+            vtk_points->InsertNextPoint(m_points[v_idx].data());
+            vtk_tcoords->InsertNextTuple(m_tcoords[vt_idx].data());
+            vtk_normals->InsertNextTuple(m_normals[vn_idx].data());
+
+            point_is_added[m_polys[mat_idx][poly_idx][point_idx][max_param]]=1;
+            point_index[m_polys[mat_idx][poly_idx][point_idx][max_param]]=index;
+            vtk_polys->InsertCellPoint( index  );  //Keep increasing the index of the point when that points want added
+            index ++;
+
+          }else{
+            int stored_index=point_index[m_polys[mat_idx][poly_idx][point_idx][max_param]];
+            vtk_polys->InsertCellPoint( stored_index  );  //If the point was already added then just point to it
+          }
+
+        }
+
+      }
+
+    }
+  }else{
+
+
+
+    int gl_idx=0;  //global index that just indicates point in the mesh
+    for (size_t mat_idx = 0; mat_idx < m_textures.size(); mat_idx++) {
+      for (size_t poly_idx = 0; poly_idx < m_polys[mat_idx].size(); poly_idx++) {
+        vtk_polys->InsertNextCell(3);
+        for (size_t point_idx = 0; point_idx < 3; point_idx++) {
+
+          int v_idx= m_polys[mat_idx][poly_idx][point_idx][0];
+          int vt_idx= m_polys[mat_idx][poly_idx][point_idx][1];
+          int vn_idx= m_polys[mat_idx][poly_idx][point_idx][2];
+
+
+
+          vtk_points->InsertNextPoint(m_points[v_idx][0],m_points[v_idx][1],m_points[v_idx][2]);
+
+
+          float tuple_n[3];
+          tuple_n[0]=m_normals[vn_idx][0];
+          tuple_n[1]=m_normals[vn_idx][1];
+          tuple_n[2]=m_normals[vn_idx][2];
+          // vtk_normals->InsertNextTuple(m_normals[i].data());
+          vtk_normals->InsertNextTuple(tuple_n);
+
+
+          float tuple_t[3];
+          tuple_t[0]=m_tcoords[vt_idx][0];
+          tuple_t[1]=m_tcoords[vt_idx][1];
+          tuple_t[2]=m_tcoords[vt_idx][2];
+          // vtk_tcoords->InsertNextTuple(m_tcoords[i].data());
+          vtk_tcoords->InsertNextTuple(tuple_t);
+
+
+          vtk_polys->InsertCellPoint(gl_idx);   //gl_idx will point to the previous point in the vtk_points
+          gl_idx++;
+        }
+
+
+
+      }
+
+    }
+
   }
+
+
+
+
 
 
   // std::cout << "after" << std::endl;
@@ -528,31 +681,85 @@ void OBJReader2::write_to_poly(){
 
   m_polyData->Squeeze();
 
+  if (should_fix_orientation){
+    std::cout << "OBJReader2::fixing orientation" << std::endl;
+    fix_orientation();
+  }
+
 }
 
 void OBJReader2::fix_exposure(){
 
 
-    if(m_full_texture.channels() >= 3)
-    {
+    // if(m_full_texture.channels() >= 3)
+    // {
+    //
+    //     cv::Mat ycrcb;
+    //     cv::cvtColor(m_full_texture,ycrcb,CV_BGR2YCrCb);
+    //
+    //     std::vector<cv::Mat> channels;
+    //     cv::split(ycrcb,channels);
+    //
+    //     cv::equalizeHist(channels[0], channels[0]);
+    //
+    //     cv::Mat result;
+    //     cv::merge(channels,ycrcb);
+    //     cv::cvtColor(ycrcb,result,CV_YCrCb2BGR);
+    //
+    //     result.copyTo(m_full_texture);
+    // }
 
-        cv::Mat ycrcb;
-        cv::cvtColor(m_full_texture,ycrcb,CV_BGR2YCrCb);
 
-        std::vector<cv::Mat> channels;
-        cv::split(ycrcb,channels);
+    //attempt 2
 
-        cv::equalizeHist(channels[0], channels[0]);
+    cv::Mat lab_image;
+    cv::cvtColor(m_full_texture, lab_image, CV_BGR2Lab);
 
-        cv::Mat result;
-        cv::merge(channels,ycrcb);
-        cv::cvtColor(ycrcb,result,CV_YCrCb2BGR);
+    // Extract the L channel
+    std::vector<cv::Mat> lab_planes(3);
+    cv::split(lab_image, lab_planes);  // now we have the L image in lab_planes[0]
 
-        result.copyTo(m_full_texture);
-    }
+    // apply the CLAHE algorithm to the L channel
+    cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
+    clahe->setClipLimit(4);
+    cv::Mat dst;
+    clahe->apply(lab_planes[0], dst);
+
+    // Merge the the color planes back into an Lab image
+    dst.copyTo(lab_planes[0]);
+    cv::merge(lab_planes, lab_image);
+
+   // convert back to RGB
+   cv::Mat image_clahe;
+   cv::cvtColor(lab_image, image_clahe, CV_Lab2BGR);
+
+   image_clahe.copyTo(m_full_texture);
 
 
 }
+
+
+void OBJReader2::fix_orientation(){
+  //some dataset are not centeres as we expected so rotate the mesh on the x axis
+
+  vtkSmartPointer<vtkTransform> trans = vtkSmartPointer<vtkTransform>::New();
+  trans->RotateX(90);
+
+  vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+
+  #if VTK_MAJOR_VERSION <= 5
+      transformFilter->SetInputConnection(m_polyData->GetProducerPort());
+  #else
+      transformFilter->SetInputData(m_polyData);
+  #endif
+
+
+  transformFilter->SetTransform(trans);
+  transformFilter->Update();
+  m_polyData=transformFilter->GetOutput();
+
+}
+
 
 vtkSmartPointer<vtkPolyData> OBJReader2::GetOutput(){
   return m_polyData;

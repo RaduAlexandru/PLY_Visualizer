@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>267</width>
-    <height>475</height>
+    <height>508</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>170</x>
-     <y>430</y>
+     <y>460</y>
      <width>80</width>
      <height>23</height>
     </rect>
@@ -30,7 +30,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>90</y>
+     <y>120</y>
      <width>231</width>
      <height>131</height>
     </rect>
@@ -88,7 +88,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>230</y>
+     <y>260</y>
      <width>231</width>
      <height>181</height>
     </rect>
@@ -193,7 +193,7 @@
      <x>20</x>
      <y>20</y>
      <width>221</width>
-     <height>61</height>
+     <height>91</height>
     </rect>
    </property>
    <property name="toolTip">
@@ -225,6 +225,25 @@
     </property>
     <property name="tristate">
      <bool>false</bool>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="fixOrientationcheckBox">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>60</y>
+      <width>141</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>Some meshes are not orientated corectly. If you have problems with unwrapping, uncheck this and reload your data</string>
+    </property>
+    <property name="text">
+     <string>Fix orientation</string>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
     </property>
    </widget>
   </widget>

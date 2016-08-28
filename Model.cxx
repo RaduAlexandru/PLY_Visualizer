@@ -27,6 +27,7 @@ Model::Model():
 
   //Options
   m_experiemental_loading(true),
+  m_fix_orientation(true),
   m_num_walls(8),
   m_deform_walls(true),
   m_path_global(""),  //Will be set afterwards
@@ -270,7 +271,10 @@ double Model::estimate_radius(pcl::PointCloud<pcl::PointXYZ>::Ptr points ){
   //Get the points that are further away
   std::sort(m_points_wrapped_ds->points.begin(), m_points_wrapped_ds->points.end(), by_distance_center());
 
-  int further_num=50;
+  int further_num;
+  further_num=50;
+  //A proportion is more robust
+  further_num=4*m_points_wrapped_ds->points.size()/100.0;
   std::vector< pcl::PointXYZ > further_points(m_points_wrapped_ds->points.begin(), m_points_wrapped_ds->points.begin() + further_num);
 
 
@@ -372,7 +376,7 @@ void Model::write_points_to_mesh(){
 
   // m_wall=normals_alg->GetOutput();
 
-  std::cout << "finished wirint points to mesh" << std::endl;
+  std::cout << "finished wiriting points to mesh" << std::endl;
 
 }
 
@@ -555,12 +559,119 @@ void Model::blur_normals(){
 }
 
 
+void Model::compute_unwrap3(){
+
+  //Show normals
+  // pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  //
+  //   cloud->width    = m_normals.size();
+  //   cloud->height   = 1;
+  //   cloud->is_dense = false;
+  //   cloud->points.resize (m_normals.size());
+  //
+  //   for (size_t i = 0; i < cloud->points.size(); i++){
+  //     cloud->points[i].x =  m_normals[i][0];
+  //     cloud->points[i].y =  m_normals[i][1];
+  //     cloud->points[i].z =  m_normals[i][2];
+  //   }
+  //
+  //
+  //    pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer2");
+  //    viewer.showCloud (cloud);
+  //    while (!viewer.wasStopped ())
+  //    {
+  //    }
+
+  //Create cloud
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_f(new pcl::PointCloud<pcl::PointXYZ>);
+
+  cloud->width    = m_points_wrapped.size();
+  cloud->height   = 1;
+  cloud->is_dense = false;
+  cloud->points.resize (m_points_wrapped.size());
+
+  for (size_t i = 0; i < cloud->points.size(); i++){
+    cloud->points[i].x =  m_points_wrapped[i][0];
+    cloud->points[i].y =  m_points_wrapped[i][1];
+    cloud->points[i].z =  m_points_wrapped[i][2];
+  }
+
+  // pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer2");
+  // viewer.showCloud (cloud);
+  // while (!viewer.wasStopped ())
+  // {
+  // }
+
+
+
+  // Create the segmentation object for the planar model and set all the parameters
+  pcl::SACSegmentation<pcl::PointXYZ> seg;
+  pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+  pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_plane (new pcl::PointCloud<pcl::PointXYZ> ());
+  seg.setOptimizeCoefficients (true);
+  seg.setModelType (pcl::SACMODEL_PLANE);
+  seg.setMethodType (pcl::SAC_RANSAC);
+  seg.setMaxIterations (100);
+  seg.setDistanceThreshold (0.04);
+
+  int i=0, nr_points = (int) cloud->points.size ();
+
+  while (i<m_num_walls)
+  {
+    // Segment the largest planar component from the remaining cloud
+    seg.setInputCloud (cloud);
+    seg.segment (*inliers, *coefficients);
+    if (inliers->indices.size () == 0)
+    {
+      std::cout << "Could not estimate a planar model for the given dataset." << std::endl;
+      break;
+    }
+
+    // Extract the planar inliers from the input cloud
+    pcl::ExtractIndices<pcl::PointXYZ> extract;
+    extract.setInputCloud (cloud);
+    extract.setIndices (inliers);
+    extract.setNegative (false);
+
+    // Get the points associated with the planar surface
+    extract.filter (*cloud_plane);
+    std::cout << "PointCloud representing the planar component: " << cloud_plane->points.size () << " data points." << std::endl;
+
+    // pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer2");
+    // viewer.showCloud (cloud_plane);
+    // while (!viewer.wasStopped ())
+    // {
+    // }
+
+    // Remove the planar inliers, extract the rest
+    extract.setNegative (true);
+    extract.filter (*cloud_f);
+    *cloud = *cloud_f;
+
+    i++;
+  }
+
+
+
+  std::cout << "remaining points " << cloud->points.size() << std::endl;
+
+  pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer2");
+  viewer.showCloud (cloud);
+  while (!viewer.wasStopped ())
+  {
+  }
+
+
+}
+
+
 void Model::compute_unwrap2(){
   std::cout << "computing unwrap 2" << std::endl;
 
   //Blur the normals so as to better detect the walls
   blur_normals();
-
 
   //Cluster the normals of the points.
   cv::Mat samples(m_normals.size(), 3, CV_32F);

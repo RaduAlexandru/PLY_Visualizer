@@ -23,6 +23,9 @@
 #include <vtkCellArray.h>
 #include <vtkCleanPolyData.h>
 
+#include <vtkTransform.h>
+#include <vtkTransformPolyDataFilter.h>
+
 
 
 typedef std::vector<double> row_type;
@@ -42,7 +45,8 @@ public:
      std::string GetTexturePath();
      vtkSmartPointer<vtkPolyData> GetOutput();
 
-
+     bool experimental_loading;
+     bool should_fix_orientation;
 
 private:
 
@@ -56,6 +60,9 @@ private:
      void write_to_poly();
 
      void fix_exposure();
+     void fix_orientation();
+
+
 
 
 

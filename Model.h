@@ -207,6 +207,7 @@ public:
 
      //Options
      bool m_experiemental_loading;
+     bool m_fix_orientation;
      bool m_deform_walls;
      std::string m_path_global;
      bool m_render_full_img;
@@ -230,6 +231,7 @@ public:
      void write_points_to_mesh();
      void compute_unwrap();
      void compute_unwrap2();
+     void compute_unwrap3();
      std::vector<double> compute_angles(matrix_type points);
      std::vector<double> compute_distances_to_radius(matrix_type points, double radius);
      void compute_plain_colors();

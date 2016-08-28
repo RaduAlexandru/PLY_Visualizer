@@ -133,6 +133,7 @@ public:
   void SetCameraPositionOrientation( vtkCamera* cam, double position[3], double orientation[3] );
   void calculate_bounds( matrix_type corners, double* bounds);
   void world_to_display(double* point_world, double* point_display);
+  void set_camera_default_pos();
 
 
   //TODO: Remove it, just needed for testing the distance in knn
@@ -168,6 +169,7 @@ public slots:
 
 
   void on_experimentalLoadingcheckBox_clicked();
+  void on_fixOrientationcheckBox_clicked();
   void on_numWallsText_textChanged(const QString & text);
   void on_deformWallscheckBox_clicked();
   void on_clearUnwrapButton_clicked();

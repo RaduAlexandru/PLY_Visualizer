@@ -116,8 +116,8 @@ Visualizer::Visualizer():
 
 
   // Changing interactor to a custom one to handle different mouse events
-  //vtkSmartPointer<vtkPointPicker> pointPicker = vtkSmartPointer<vtkPointPicker>::New();
-  vtkSmartPointer<vtkCellPicker> pointPicker = vtkSmartPointer<vtkCellPicker>::New();
+  vtkSmartPointer<vtkPointPicker> pointPicker = vtkSmartPointer<vtkPointPicker>::New();
+  // vtkSmartPointer<vtkCellPicker> pointPicker = vtkSmartPointer<vtkCellPicker>::New();
   this->ui->qvtkWidget->GetRenderWindow()->GetInteractor()->SetInteractorStyle( interactor );
   this->ui->qvtkWidget->GetRenderWindow()->GetInteractor()->SetPicker(pointPicker);
   interactor->selecting_defects=&(model->m_selecting_defects);
@@ -173,10 +173,13 @@ void Visualizer::on_loadFileButton_clicked(){
   if (boost::ends_with(file_name.toStdString(), ".ply")) {
     std::cout << "reading .ply file" << std::endl;
     std::cout << "not implemented yet" << std::endl;
+    return;
   }else if (boost::ends_with(file_name.toStdString(), ".obj")){
     std::cout << "reading .obj file" << std::endl;
 
     std::unique_ptr<OBJReader2> obj_reader(new OBJReader2());
+    obj_reader->experimental_loading=model->m_experiemental_loading;
+    obj_reader->should_fix_orientation=model->m_fix_orientation;
     obj_reader->SetFileName(file_name.toStdString());
     obj_reader->Update();
 
@@ -295,16 +298,9 @@ void  Visualizer::updateView(int reset_camera){
 
   renderer->AddActor(actor);
   if (reset_camera==1){
-    renderer->GetActiveCamera()->SetPosition (0,0,1);
-    renderer->GetActiveCamera()->SetFocalPoint(0, 0, 0);
-    renderer->GetActiveCamera()->SetViewUp(0, 1, 0);
-    renderer->ResetCamera();
-    renderer->GetActiveCamera()->Elevation(270);
-    // renderer->GetActiveCamera()->Pitch(270);
-    renderer->GetActiveCamera()->Roll(180);
-    // renderer->SetBackground(0.0,0.0,0.0);
-    // renderer->SetBackground2(0.0,0.0,0.0);
+    set_camera_default_pos();
     this->ui->qvtkWidget->GetRenderWindow()->Render();
+
     renderer->ResetCamera();
   }
 
@@ -315,6 +311,25 @@ void  Visualizer::updateView(int reset_camera){
   update_grid_view();
   this->ui->qvtkWidget->GetRenderWindow()->Render();
 
+}
+
+void Visualizer::set_camera_default_pos(){
+  std::cout << "camera to default" << std::endl;
+
+  // renderer->GetActiveCamera()->SetPosition (0,0,1);
+  // renderer->GetActiveCamera()->SetFocalPoint(0, 0, 0);
+  // // renderer->GetActiveCamera()->SetViewUp(0, 1, 0);
+  // // renderer->GetActiveCamera()->Elevation(270);
+  // renderer->GetActiveCamera()->OrthogonalizeViewUp();
+  // renderer->ResetCamera();
+
+
+  renderer->GetActiveCamera()->SetPosition (0,-5,0);
+  renderer->GetActiveCamera()->SetFocalPoint(0, 0, 0);
+  renderer->GetActiveCamera()->SetViewUp(0, 0, 1);
+  // renderer->GetActiveCamera()->Elevation(270);
+  // renderer->GetActiveCamera()->OrthogonalizeViewUp();
+  renderer->ResetCamera();
 }
 
 
@@ -401,6 +416,8 @@ void Visualizer::select_ir_mesh(){
     std::cout << "reading .obj file" << std::endl;
 
     std::unique_ptr<OBJReader2> obj_reader(new OBJReader2());
+    obj_reader->experimental_loading=model->m_experiemental_loading;
+    obj_reader->should_fix_orientation=model->m_fix_orientation;
     obj_reader->SetFileName(file_name.toStdString());
     obj_reader->Update();
 
@@ -784,7 +801,15 @@ void Visualizer::on_renderWallsButton_clicked(){
 
     std::cout << "---------rotating angle: " << angle << std::endl;
     vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-    transformFilter->SetInputData(model->m_wall);
+
+    #if VTK_MAJOR_VERSION <= 5
+      transformFilter->SetInputConnection(model->m_wall->GetProducerPort());
+    #else
+      transformFilter->SetInputData(model->m_wall);
+    #endif
+
+
+
     transformFilter->SetTransform(trans);
     transformFilter->Update();
     //Get the new points and the new normals
@@ -852,28 +877,13 @@ void Visualizer::on_renderWallsButton_clicked(){
     renderer->GetActiveCamera()->SetFocalPoint (focal_point[0],focal_point[1], focal_point[2]);
     renderer->ResetCamera(bounds);
 
+
+    //Render
     std::string path_wall= path + "wall_" + std::to_string(i) + ".png";
     render_to_file(path_wall,1);
 
 
-    //WTF is happening
-    // if (i==0){
-    //   // renderer->ResetCamera();
-    //   this->ui->qvtkWidget->GetRenderWindow()->Render();
-    //
-    //   // pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer2");
-    //   // viewer.showCloud (model->clustered_clouds_original[clust_idx]);
-    //   // while (!viewer.wasStopped ())
-    //   // {
-    //   // }
-    //   // break;
-    // }
 
-
-
-    // this->ui->qvtkWidget->GetRenderWindow()->Render();
-    // if (i==0)
-    //   return;
 
 
     //Rotate them back
@@ -884,7 +894,11 @@ void Visualizer::on_renderWallsButton_clicked(){
 
     std::cout << "+rotating angle: back " << -angle << std::endl;
     vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter_back = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-    transformFilter_back->SetInputData(model->m_wall);
+    #if VTK_MAJOR_VERSION <= 5
+      transformFilter->SetInputConnection(model->m_wall->GetProducerPort());
+    #else
+      transformFilter->SetInputData(model->m_wall);
+    #endif
     transformFilter_back->SetTransform(trans_back);
     transformFilter_back->Update();
     //Get the new points and the new normals
@@ -899,6 +913,18 @@ void Visualizer::on_renderWallsButton_clicked(){
     trans_cloud_back.rotate (Eigen::AngleAxisf (-r_back, Eigen::Vector3f::UnitZ()));
     pcl::transformPointCloud (*(model->clustered_clouds_original[clust_idx]),
                               *(model->clustered_clouds_original[clust_idx]), trans_cloud_back);
+
+
+
+    //Put the camera back
+    renderer->GetActiveCamera()->SetPosition (0,0,1);
+    renderer->GetActiveCamera()->SetFocalPoint(0, 0, 0);
+    // renderer->GetActiveCamera()->SetViewUp(0, 1, 0);
+    renderer->GetActiveCamera()->Elevation(270);
+    renderer->GetActiveCamera()->OrthogonalizeViewUp();
+    renderer->ResetCamera();
+    this->ui->qvtkWidget->GetRenderWindow()->Render();
+
 
   }
 
@@ -1511,7 +1537,7 @@ void Visualizer::render_full_img(){
   for (size_t i = 0; i < model->m_grid.size(); i++) {
     model->m_grid_cells_active[i]=1;
   }
-  draw_grid();
+  update_grid_view();
 
   file_name= "/full_img_grid.png";
   path=model->m_path_global+ path_sufix + file_name;
@@ -1520,8 +1546,7 @@ void Visualizer::render_full_img(){
   for (size_t i = 0; i < model->m_grid.size(); i++) {
     model->m_grid_cells_active[i]=0;
   }
-  draw_grid();
-
+  update_grid_view();
 
 
   //Set the background and camera back to default
@@ -1903,7 +1928,13 @@ void Visualizer::render_walls(){
 
     // std::cout << "+rotating angle: back " << -angle << std::endl;
     vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter_back = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-    transformFilter_back->SetInputData(model->m_wall);
+
+    #if VTK_MAJOR_VERSION <= 5
+      transformFilter_back->SetInputConnection(model->m_wall->GetProducerPort());
+    #else
+      transformFilter_back->SetInputData(model->m_wall);
+    #endif
+
     transformFilter_back->SetTransform(trans_back);
     transformFilter_back->Update();
     //Get the new points and the new normals
@@ -1986,6 +2017,20 @@ void Visualizer::on_experimentalLoadingcheckBox_clicked(){
   }
 
 }
+
+void Visualizer::on_fixOrientationcheckBox_clicked(){
+  std::cout << "setting fix orientation" << std::endl;
+
+  if (m_config->fixOrientationcheckBox->isChecked()){
+    std::cout << "fixing orientation fo mesh" << std::endl;
+    model->m_fix_orientation=true;
+  }else{
+    std::cout << "not fixing orientation fo mesh" << std::endl;
+    model->m_fix_orientation=false;
+  }
+
+}
+
 
 void Visualizer::on_deformWallscheckBox_clicked(){
 
