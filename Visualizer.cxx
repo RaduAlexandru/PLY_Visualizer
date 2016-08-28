@@ -44,6 +44,7 @@ Visualizer::Visualizer():
   this->ui->loadFileConfigButton->setIcon(QIcon("../cog_1.png"));
   this->ui->loadFileConfigButton->setIconSize(QSize(26,26));
 
+  m_grid_actors.clear();
 
   // //NEW UI
   // QGridLayout *layout = new QGridLayout;
@@ -314,8 +315,6 @@ void  Visualizer::updateView(int reset_camera){
   renderer->AddActor(actor);
   if (reset_camera==1){
     set_camera_default_pos();
-    this->ui->qvtkWidget->GetRenderWindow()->Render();
-
     renderer->ResetCamera();
   }
 
@@ -1375,12 +1374,14 @@ void Visualizer::draw_grid(){
   //Need to do it by iterating twice so that the active ones are drawn on top (after) the inactive cells
   for (size_t i = 0; i < model->m_grid.size(); i++) {
     if(model->m_grid_cells_active[i]==0 && model->m_draw_grid_inactive){
+      std::cout << "draw_grid::drawing inactive grid" << std::endl;
       draw_cell(model->m_grid[i], 0.5, 0.5, 0.5);
     }
   }
 
   for (size_t i = 0; i < model->m_grid.size(); i++) {
     if(model->m_grid_cells_active[i]==1 && model->m_draw_grid_active){
+      std::cout << "draw_grid::drawing active grid" << std::endl;
       draw_cell(model->m_grid[i], 1.0, 0.0, 0.0);
     }
   }
@@ -1388,17 +1389,23 @@ void Visualizer::draw_grid(){
 }
 
 void Visualizer::draw_cell(row_type bounds, double r, double g, double b){
+  std::cout << "vis::draw cell" << std::endl;
   vtkSmartPointer<vtkOutlineSource> outlineSource = vtkSmartPointer<vtkOutlineSource>::New();
 
+  std::cout << "vis::draw cell: setting bounds" << std::endl;
   outlineSource->SetBounds(bounds.data());
+  std::cout << "vis::draw cell: updating" << std::endl;
   outlineSource->Update();
 
-  vtkPolyData* outline = outlineSource->GetOutput();
+  std::cout << "vis::draw cell: creating outline" << std::endl;
+  vtkSmartPointer<vtkPolyData> outline = outlineSource->GetOutput();
 
   // Create a mapper and actor
+  std::cout << "vis::draw cell: create mapper" << std::endl;
   vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 
 
+  std::cout << "vis::draw cell: setting connections" << std::endl;
 
   #if VTK_MAJOR_VERSION <= 5
     mapper->SetInputConnection(outline->GetProducerPort());
@@ -1408,15 +1415,18 @@ void Visualizer::draw_cell(row_type bounds, double r, double g, double b){
 
 
 
+  std::cout << "vis::draw cell: creating actor" << std::endl;
 
-
-  vtkSmartPointer<vtkActor> actor =
-    vtkSmartPointer<vtkActor>::New();
+  vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
   actor->SetMapper(mapper);
   actor->GetProperty()->SetColor(r, g, b); //(R,G,B)
   // actor->GetProperty()->BackfaceCullingOn();
 
+  std::cout << "vis::draw cell: adding actor to vector" << std::endl;
+
   m_grid_actors.push_back(actor);
+
+  std::cout << "vis::draw cell: adding actor to renderer" << std::endl;
 
   renderer->AddActor(actor);
 
@@ -1458,14 +1468,18 @@ void Visualizer::grid_changed_slot(){
 }
 
 void Visualizer::update_grid_view(){
+  std::cout << "vis::update_grid_view" << std::endl;
   for (size_t i = 0; i < m_grid_actors.size(); i++) {
+    std::cout << "remove actor" << std::endl;
     renderer->RemoveActor(m_grid_actors[i]);
   }
   m_grid_actors.clear();
 
+  std::cout << "Visualizer::update_grid_view:: drawing grid" << std::endl;
   draw_grid();
   // draw_text_grid();
-  this->ui->qvtkWidget->GetRenderWindow()->Render();
+
+  std::cout << "Visualizer::update_grid_view: RENDER" << std::endl;
 }
 
 

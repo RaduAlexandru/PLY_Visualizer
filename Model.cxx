@@ -81,7 +81,6 @@ void Model::clear(){
   distances_to_radius.clear();
   distances_to_center.clear();
   m_angles.clear();
-  m_grid.clear();
   m_grid_cells_active.clear();
 
   //-Options

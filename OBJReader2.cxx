@@ -763,7 +763,7 @@ void OBJReader2::fix_orientation(){
 void OBJReader2::auto_fix_orientation(){
   std::cout << "auto fixing orientation of mesh" << std::endl;
 
-  //look at the normals coordinates. The coorindate with the least variance will indicate how we should rotoate
+  //look at the normals coordinates. The coorindate which mean is the lowest is probably the one that we should rotate by
 }
 
 
