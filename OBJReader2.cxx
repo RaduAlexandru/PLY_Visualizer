@@ -124,6 +124,7 @@ void OBJReader2::create_full_texture(){
 
     //Increase the exposure
     // m_full_texture = m_full_texture + cv::Scalar(75, 75, 75); //increase the brightness by 75 units
+    fix_exposure();
 
     // std::cout << "writing to file-----------" << m_path <<  "full_texture.png" << std::endl;
     cv::imwrite( m_path+ m_full_texture_name, m_full_texture );
@@ -408,6 +409,30 @@ void OBJReader2::write_to_poly(){
   m_polyData->SetPolys(vtk_polys);
 
   m_polyData->Squeeze();
+
+}
+
+void OBJReader2::fix_exposure(){
+
+
+    if(m_full_texture.channels() >= 3)
+    {
+
+        cv::Mat ycrcb;
+        cv::cvtColor(m_full_texture,ycrcb,CV_BGR2YCrCb);
+
+        std::vector<cv::Mat> channels;
+        cv::split(ycrcb,channels);
+
+        cv::equalizeHist(channels[0], channels[0]);
+
+        cv::Mat result;
+        cv::merge(channels,ycrcb);
+        cv::cvtColor(ycrcb,result,CV_YCrCb2BGR);
+
+        result.copyTo(m_full_texture);
+    }
+
 
 }
 

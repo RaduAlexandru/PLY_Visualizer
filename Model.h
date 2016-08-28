@@ -52,6 +52,10 @@
 #include <pcl/common/common.h>
 
 
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
+
 #include <Eigen/Dense>
 
 #include <QObject>
@@ -147,6 +151,7 @@ public:
 
      //Misc
      vtkSmartPointer<vtkTexture> m_full_texture;
+     vtkSmartPointer<vtkTexture> m_full_ir_texture;
      vtkSmartPointer<vtkUnsignedCharArray> m_colors_original; //original colors, rgb if present and all white if not
      vtkSmartPointer<vtkUnsignedCharArray> m_colors_active;
      row_type m_center;
@@ -160,6 +165,10 @@ public:
 
      //Unwrap results
       std::vector<pcl::PointIndices::Ptr> m_inliers_vec;
+
+      //IR
+      vtkSmartPointer<vtkDataArray> tcoords_ir;
+      vtkSmartPointer<vtkDataArray> tcoords_rgb;
 
 
 
@@ -185,6 +194,8 @@ public:
      bool m_deleted_streached_trigs;
      bool m_draw_grid_active;
      bool m_draw_grid_inactive;
+     bool m_has_ir;
+     bool m_selected_ir;
 
      //  std::vector<vtkSmartPointer<vtkPolyData>> grid_cells;
      matrix_type m_grid;
@@ -195,9 +206,24 @@ public:
      matrix_type m_plane_centers; //Used so that the view can get the centers so as to point the camera towards them
 
 
+     //Options
+     bool m_experiemental_loading;
+     bool m_deform_walls;
+     std::string m_path_global;
+     bool m_render_full_img;
+     bool m_render_grid_unwrapped;
+     bool m_render_grid_wrapped;
+     bool m_render_walls;
+     int m_magnification_full_img;
+     int m_magnification_grid_unwrapped;
+     int m_magnification_grid_wrapped;
+     int m_magnification_walls;
+
+
      void clear();
      void set_mesh(vtkSmartPointer<vtkPolyData>);
      void set_texture(vtkSmartPointer<vtkTexture>);
+     void set_ir_texture(vtkSmartPointer<vtkTexture>);
      void read_info();
      vtkSmartPointer<vtkUnsignedCharArray> get_colors();
      double estimate_radius (pcl::PointCloud<pcl::PointXYZ>::Ptr points );

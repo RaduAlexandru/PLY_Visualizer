@@ -62,7 +62,7 @@
     <widget class="QPushButton" name="loadFileButton">
      <property name="geometry">
       <rect>
-       <x>30</x>
+       <x>10</x>
        <y>10</y>
        <width>91</width>
        <height>23</height>
@@ -75,8 +75,8 @@
     <widget class="QPushButton" name="clearButton">
      <property name="geometry">
       <rect>
-       <x>40</x>
-       <y>570</y>
+       <x>10</x>
+       <y>540</y>
        <width>75</width>
        <height>23</height>
       </rect>
@@ -88,7 +88,7 @@
     <widget class="QPushButton" name="unwrapButton">
      <property name="geometry">
       <rect>
-       <x>30</x>
+       <x>10</x>
        <y>50</y>
        <width>91</width>
        <height>23</height>
@@ -101,7 +101,7 @@
     <widget class="QComboBox" name="colorComboBox">
      <property name="geometry">
       <rect>
-       <x>30</x>
+       <x>10</x>
        <y>90</y>
        <width>91</width>
        <height>22</height>
@@ -111,10 +111,10 @@
     <widget class="QTextBrowser" name="textBrowser">
      <property name="geometry">
       <rect>
-       <x>20</x>
-       <y>220</y>
+       <x>10</x>
+       <y>570</y>
        <width>171</width>
-       <height>192</height>
+       <height>61</height>
       </rect>
      </property>
      <property name="html">
@@ -138,8 +138,8 @@ p, li { white-space: pre-wrap; }
     <widget class="QCheckBox" name="perspectiveCheckBox">
      <property name="geometry">
       <rect>
-       <x>30</x>
-       <y>180</y>
+       <x>10</x>
+       <y>220</y>
        <width>101</width>
        <height>18</height>
       </rect>
@@ -154,8 +154,8 @@ p, li { white-space: pre-wrap; }
     <widget class="QPushButton" name="selectButton">
      <property name="geometry">
       <rect>
-       <x>40</x>
-       <y>440</y>
+       <x>10</x>
+       <y>180</y>
        <width>91</width>
        <height>23</height>
       </rect>
@@ -167,8 +167,8 @@ p, li { white-space: pre-wrap; }
     <widget class="QCheckBox" name="showGridInactiveCheckBox">
      <property name="geometry">
       <rect>
-       <x>30</x>
-       <y>600</y>
+       <x>10</x>
+       <y>240</y>
        <width>141</width>
        <height>18</height>
       </rect>
@@ -180,8 +180,8 @@ p, li { white-space: pre-wrap; }
     <widget class="QCheckBox" name="showGridActiveCheckBox">
      <property name="geometry">
       <rect>
-       <x>30</x>
-       <y>620</y>
+       <x>10</x>
+       <y>260</y>
        <width>141</width>
        <height>20</height>
       </rect>
@@ -196,8 +196,8 @@ p, li { white-space: pre-wrap; }
     <widget class="QPushButton" name="renderToImgButton">
      <property name="geometry">
       <rect>
-       <x>40</x>
-       <y>480</y>
+       <x>10</x>
+       <y>420</y>
        <width>91</width>
        <height>23</height>
       </rect>
@@ -209,8 +209,8 @@ p, li { white-space: pre-wrap; }
     <widget class="QPushButton" name="renderGridCellButton">
      <property name="geometry">
       <rect>
-       <x>40</x>
-       <y>510</y>
+       <x>10</x>
+       <y>450</y>
        <width>111</width>
        <height>23</height>
       </rect>
@@ -222,8 +222,8 @@ p, li { white-space: pre-wrap; }
     <widget class="QPushButton" name="renderWallsButton">
      <property name="geometry">
       <rect>
-       <x>40</x>
-       <y>540</y>
+       <x>10</x>
+       <y>480</y>
        <width>111</width>
        <height>23</height>
       </rect>
@@ -232,27 +232,43 @@ p, li { white-space: pre-wrap; }
       <string>renderWalls</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="numWallsText">
+    <widget class="QPushButton" name="renderGridWrappedButton">
      <property name="geometry">
       <rect>
-       <x>100</x>
-       <y>130</y>
-       <width>81</width>
+       <x>10</x>
+       <y>510</y>
+       <width>111</width>
        <height>23</height>
       </rect>
      </property>
+     <property name="text">
+      <string>renderGridw</string>
+     </property>
     </widget>
-    <widget class="QLabel" name="label">
+    <widget class="QPushButton" name="loadFileConfigButton">
      <property name="geometry">
       <rect>
-       <x>20</x>
-       <y>130</y>
-       <width>71</width>
-       <height>16</height>
+       <x>110</x>
+       <y>10</y>
+       <width>21</width>
+       <height>23</height>
       </rect>
      </property>
      <property name="text">
-      <string>num walls</string>
+      <string/>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="renderToFileButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>120</y>
+       <width>111</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Render to File</string>
      </property>
     </widget>
    </widget>

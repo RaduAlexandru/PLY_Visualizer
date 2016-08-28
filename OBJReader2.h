@@ -55,6 +55,7 @@ private:
      void transform_tcoords();
      void write_to_poly();
 
+     void fix_exposure();
 
 
      std::string m_obj_file_name;

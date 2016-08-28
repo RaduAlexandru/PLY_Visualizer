@@ -14,11 +14,35 @@ Model::Model():
   m_deleted_streached_trigs(false),
   m_draw_grid_active(true),
   m_draw_grid_inactive(false),
+  m_has_ir(false),
+  m_selected_ir(false),
   m_points_unwrapped_full_cloud(new pcl::PointCloud<pcl::PointXYZ>),
 
   m_cells_wrapped(vtkSmartPointer<vtkCellArray>::New()),
-  m_cells_unwrapped(vtkSmartPointer<vtkCellArray>::New())
+  m_cells_unwrapped(vtkSmartPointer<vtkCellArray>::New()),
+
+  //Options
+  m_experiemental_loading(false),
+  m_num_walls(8),
+  m_deform_walls(true),
+  m_path_global(""),  //Will be set afterwards
+  m_render_full_img(true),
+  m_render_grid_unwrapped(true),
+  m_render_grid_wrapped(true),
+  m_render_walls(true),
+  m_magnification_full_img(15),
+  m_magnification_grid_unwrapped(3),
+  m_magnification_grid_wrapped(3),
+  m_magnification_walls(5)
+
 {
+
+  struct passwd *pw = getpwuid(getuid());
+  const char *homedir = pw->pw_dir;
+  m_path_global=homedir;
+  m_path_global+="/Pictures/Renders2/";
+  std::cout << "home dir is " << m_path_global << std::endl;
+
 
 
 }
@@ -36,6 +60,10 @@ void Model::set_texture(vtkSmartPointer<vtkTexture> texture){
   m_full_texture=texture;
 }
 
+void Model::set_ir_texture(vtkSmartPointer<vtkTexture> texture){
+  m_full_ir_texture=texture;
+}
+
 void Model::clear(){
   m_is_unwrapped=false;
   m_selecting_defects=false;
@@ -50,6 +78,9 @@ void Model::clear(){
   m_angles.clear();
   m_grid.clear();
   m_grid_cells_active.clear();
+
+  //-Options
+
 }
 
 
@@ -271,6 +302,15 @@ void Model::write_points_to_mesh(){
     std::cout << "wiritng wrapped cels!!!!!!!!!!!!11" << std::endl;
     std::cout << "nr os cells: " << m_cells_wrapped->GetSize() << std::endl;
     m_wall->SetPolys(m_cells_wrapped);
+  }
+
+  //Set the tcoords depending if ir is selected or not
+  if (m_selected_ir){
+    std::cout << "writing ir tcoords" << std::endl;
+    m_wall->GetPointData()->SetTCoords(tcoords_ir);
+  }else{
+    std::cout << "writing rgb tcoords" << std::endl;
+    m_wall->GetPointData()->SetTCoords(tcoords_rgb);
   }
 
 
@@ -1247,32 +1287,32 @@ void Model::compute_depth_colors(){
 
 
 
-  // int column_num = 1;
-  // double max_dist = (*std::max_element(this->m_points_unwrapped.begin(), this->m_points_unwrapped.end(), column_comparer(column_num)))[column_num];
-  // double min_dist = (*std::min_element(this->m_points_unwrapped.begin(), this->m_points_unwrapped.end(), column_comparer(column_num)))[column_num];
-  //
-  //
-  // std::cout << "max, min dist is" << max_dist << " " << min_dist << std::endl;
-  //
-  // std::vector<double> depth(m_points_unwrapped);
-  //
-  // for (size_t i = 0; i < m_num_points; i++) {
-  //   depth[i]=interpolate(this->m_points_unwrapped[i][1], min_dist, max_dist, 255.0, 0.0);
-  // }
-  //
-  // m_colors_active->Reset();
-  // m_colors_active = vtkSmartPointer<vtkUnsignedCharArray>::New();
-  // m_colors_active->SetNumberOfComponents(3);
-  // m_colors_active->SetName("depth");
-  //
-  //
-  // std::cout << "starting to create colors" << std::endl;
-  // for (size_t i = 0; i < m_num_points; i++) {
-  //   //colors->InsertNextTuple3(angles[i]*255.0,0,0);
-  //   m_colors_active->InsertNextTuple3(depth[i],depth[i],depth[i]);
-  //   //m_points_unwrapped.InsertNextPoint( angles[i] *circumference,distances_from_radius[i],point[2])
-  // }
-  // std::cout << "finishing to create colors" << std::endl;
+  int column_num = 1;
+  double max_dist = (*std::max_element(this->m_points_unwrapped.begin(), this->m_points_unwrapped.end(), column_comparer(column_num)))[column_num];
+  double min_dist = (*std::min_element(this->m_points_unwrapped.begin(), this->m_points_unwrapped.end(), column_comparer(column_num)))[column_num];
+
+
+  std::cout << "max, min dist is" << max_dist << " " << min_dist << std::endl;
+
+  std::vector<double> depth(num_points);
+
+  for (size_t i = 0; i < num_points; i++) {
+    depth[i]=interpolate(this->m_points_unwrapped[i][1], min_dist, max_dist, 255.0, 0.0);
+  }
+
+  m_colors_active->Reset();
+  m_colors_active = vtkSmartPointer<vtkUnsignedCharArray>::New();
+  m_colors_active->SetNumberOfComponents(3);
+  m_colors_active->SetName("depth");
+
+
+  std::cout << "starting to create colors" << std::endl;
+  for (size_t i = 0; i < num_points; i++) {
+    //colors->InsertNextTuple3(angles[i]*255.0,0,0);
+    m_colors_active->InsertNextTuple3(depth[i],depth[i],depth[i]);
+    //m_points_unwrapped.InsertNextPoint( angles[i] *circumference,distances_from_radius[i],point[2])
+  }
+  std::cout << "finishing to create colors" << std::endl;
 
 
 }
