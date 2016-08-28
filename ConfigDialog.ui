@@ -211,11 +211,17 @@
       <height>21</height>
      </rect>
     </property>
+    <property name="toolTip">
+     <string>Can lead to great increase in performance in the case of some obj files.</string>
+    </property>
     <property name="layoutDirection">
      <enum>Qt::LeftToRight</enum>
     </property>
     <property name="text">
-     <string>Use experimental loading</string>
+     <string>Use fast OBJ reader</string>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
     </property>
     <property name="tristate">
      <bool>false</bool>

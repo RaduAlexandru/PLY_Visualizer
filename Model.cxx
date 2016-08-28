@@ -17,12 +17,16 @@ Model::Model():
   m_has_ir(false),
   m_selected_ir(false),
   m_points_unwrapped_full_cloud(new pcl::PointCloud<pcl::PointXYZ>),
+  m_points_wrapped_ds(new pcl::PointCloud<pcl::PointXYZ>),
+
 
   m_cells_wrapped(vtkSmartPointer<vtkCellArray>::New()),
   m_cells_unwrapped(vtkSmartPointer<vtkCellArray>::New()),
+  tcoords_ir(vtkSmartPointer<vtkFloatArray>::New()),
+  tcoords_rgb(vtkSmartPointer<vtkFloatArray>::New()),
 
   //Options
-  m_experiemental_loading(false),
+  m_experiemental_loading(true),
   m_num_walls(8),
   m_deform_walls(true),
   m_path_global(""),  //Will be set afterwards
@@ -80,6 +84,35 @@ void Model::clear(){
   m_grid_cells_active.clear();
 
   //-Options
+  //Leave them as they are
+
+  m_cells_wrapped->Initialize	();
+  m_points_wrapped_ds->clear();
+  m_cells_unwrapped->Initialize();
+  m_points_unwrapped_full_cloud->clear();
+  m_colors_original->Initialize();
+  m_colors_active->Initialize();
+  m_center.clear();
+  clustered_clouds.clear();
+  planes.clear();
+  clustered_clouds_original.clear();
+  m_ransac_centers.clear();
+  m_inliers_vec.clear();
+  tcoords_ir->Initialize();
+  tcoords_rgb->Initialize();
+  m_normals.clear();
+  m_angles.clear();
+  m_distances_to_plane.clear();
+  distances_to_radius.clear();
+  distances_to_center.clear();
+  m_has_ir=false;
+  m_selected_ir=false;
+  m_grid.clear();
+  m_grid_wrapped.clear();
+  m_grid_cells_active.clear();
+  m_plane_centers.clear();
+
+  std::cout << "finished clearing" << std::endl;
 
 }
 
@@ -169,6 +202,7 @@ void Model::center_mesh(){
   m_center[0]=(m_bounds[1]+m_bounds[0])/2.0;
   m_center[1]=(m_bounds[3]+m_bounds[2])/2.0;
   m_center[2]=(m_bounds[5]+m_bounds[4])/2.0;
+
 
   vtkSmartPointer<vtkTransform> translation =
     vtkSmartPointer<vtkTransform>::New();
@@ -266,7 +300,6 @@ vtkSmartPointer<vtkPolyData> Model::get_mesh(){
 }
 
 void Model::write_points_to_mesh(){
-  std::cout << "writig to mehs!!!!!!!" << std::endl;
   if (m_points_wrapped.empty()){ //m_wall has not been set yet
     return;
   }
@@ -294,11 +327,9 @@ void Model::write_points_to_mesh(){
 
   std::cout << "setting cells" << std::endl;
   if (m_is_unwrapped){
-    std::cout << "wiritng unwrapped cels!!!!!!!!!!!!11" << std::endl;
       std::cout << "nr os cells: " << m_cells_unwrapped->GetSize() << std::endl;
     m_wall->SetPolys(this->m_cells_unwrapped);
   }else{
-    std::cout << "wiritng wrapped cels!!!!!!!!!!!!11" << std::endl;
     std::cout << "nr os cells: " << m_cells_wrapped->GetSize() << std::endl;
     m_wall->SetPolys(m_cells_wrapped);
   }
@@ -1121,26 +1152,30 @@ void Model::compute_unwrap2(){
       pcl::PointXYZ searchPoint;
       searchPoint=clustered_clouds[clust]->points[i];
 
-      // int K = 50;
-      // // double radius=0.1;
-      // double radius=0.05;
-      // //  double radius=0.16;
-      //
-      // std::vector<int> pointIdxNKNSearch(K);
-      // std::vector<float> pointNKNSquaredDistance(K);
-      //
-      // double avg_dist=0.0;
-      //
-      // if (  kdtree.radiusSearch (searchPoint, radius, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
-      // {
-      //  for (size_t p = 0; p < pointIdxNKNSearch.size (); ++p){
-      //     // //average the dist of the K nearest neghbours
-      //     avg_dist+=clustered_clouds[clust]->points[ pointIdxNKNSearch[p] ].y;
-      //   }
-      // }
-      //
-      // avg_dist=avg_dist/pointIdxNKNSearch.size ();
-      // m_points_unwrapped[idx][1]=m_points_unwrapped[idx][1]-avg_dist;
+
+      if (m_deform_walls){
+        int K = 50;
+        // double radius=0.1;
+        double radius=0.05;
+        //  double radius=0.16;
+
+        std::vector<int> pointIdxNKNSearch(K);
+        std::vector<float> pointNKNSquaredDistance(K);
+
+        double avg_dist=0.0;
+
+        if (  kdtree.radiusSearch (searchPoint, radius, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
+        {
+         for (size_t p = 0; p < pointIdxNKNSearch.size (); ++p){
+            // //average the dist of the K nearest neghbours
+            avg_dist+=clustered_clouds[clust]->points[ pointIdxNKNSearch[p] ].y;
+          }
+        }
+
+        avg_dist=avg_dist/pointIdxNKNSearch.size ();
+        m_points_unwrapped[idx][1]=m_points_unwrapped[idx][1]-avg_dist;
+      }
+
 
 
 
@@ -1503,6 +1538,7 @@ void Model::right_click_pressed_slot(row_type point){
       }
     }
   }
+  std::cout << "emited that the grid changed" << std::endl;
   emit grid_changed_signal();
 }
 

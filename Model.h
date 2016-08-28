@@ -155,7 +155,6 @@ public:
      vtkSmartPointer<vtkUnsignedCharArray> m_colors_original; //original colors, rgb if present and all white if not
      vtkSmartPointer<vtkUnsignedCharArray> m_colors_active;
      row_type m_center;
-     matrix_type m_streched_polys;
      std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clustered_clouds;
      std::vector<plane_struct> planes;
      //  matrix_type m_walls_wrapped_bounds;

@@ -238,22 +238,22 @@ void  Visualizer::draw_sphere(double x, double y, double z, double r, double g, 
 
 
 void Visualizer::draw_line (double* pos1, double* pos2){
-  vtkSmartPointer<vtkLineSource> lineSource = vtkSmartPointer<vtkLineSource>::New();
-  lineSource->SetPoint1(pos1);
-  lineSource->SetPoint2(pos2);
-  lineSource->Update();
-
-  vtkSmartPointer<vtkPolyDataMapper> line_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-  line_mapper->SetInputConnection(lineSource->GetOutputPort());
-  // line_mapper->StaticOn();
-  vtkSmartPointer<vtkActor> line_actor = vtkSmartPointer<vtkActor>::New();
-  line_actor->SetMapper(line_mapper);
-  line_actor->GetProperty()->SetLineWidth(8);
-  //line_actor->GetProperty()->SetColor(0.0, 0.0, 1.0); //(R,G,B)
-  //line_actor->GetProperty()->SetColor(0.6, 0.1, 0.1); //(R,G,B)
-  line_actor->GetProperty()->SetColor(0.66, 0.23, 0.22); //(R,G,B)
-
-  renderer->AddActor(line_actor);
+  // vtkSmartPointer<vtkLineSource> lineSource = vtkSmartPointer<vtkLineSource>::New();
+  // lineSource->SetPoint1(pos1);
+  // lineSource->SetPoint2(pos2);
+  // lineSource->Update();
+  //
+  // vtkSmartPointer<vtkPolyDataMapper> line_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+  // line_mapper->SetInputConnection(lineSource->GetOutputPort());
+  // // line_mapper->StaticOn();
+  // vtkSmartPointer<vtkActor> line_actor = vtkSmartPointer<vtkActor>::New();
+  // line_actor->SetMapper(line_mapper);
+  // line_actor->GetProperty()->SetLineWidth(8);
+  // //line_actor->GetProperty()->SetColor(0.0, 0.0, 1.0); //(R,G,B)
+  // //line_actor->GetProperty()->SetColor(0.6, 0.1, 0.1); //(R,G,B)
+  // line_actor->GetProperty()->SetColor(0.66, 0.23, 0.22); //(R,G,B)
+  //
+  // renderer->AddActor(line_actor);
 }
 
 
@@ -295,12 +295,22 @@ void  Visualizer::updateView(int reset_camera){
 
   renderer->AddActor(actor);
   if (reset_camera==1){
+    renderer->GetActiveCamera()->SetPosition (0,0,1);
+    renderer->GetActiveCamera()->SetFocalPoint(0, 0, 0);
+    renderer->GetActiveCamera()->SetViewUp(0, 1, 0);
+    renderer->ResetCamera();
+    renderer->GetActiveCamera()->Elevation(270);
+    // renderer->GetActiveCamera()->Pitch(270);
+    renderer->GetActiveCamera()->Roll(180);
+    // renderer->SetBackground(0.0,0.0,0.0);
+    // renderer->SetBackground2(0.0,0.0,0.0);
+    this->ui->qvtkWidget->GetRenderWindow()->Render();
     renderer->ResetCamera();
   }
 
   draw_sphere(0,0,0);
 
-  draw_text_grid();
+  // draw_text_grid();
 
   update_grid_view();
   this->ui->qvtkWidget->GetRenderWindow()->Render();
@@ -369,9 +379,17 @@ void Visualizer::on_colorComboBox_currentIndexChanged(const QString & text){
 void Visualizer::select_ir_mesh(){
   std::cout << "selecting ir mesh" << std::endl;
 
-  //Read that mesh like an obj normally- get the texture and the texture coordinates for it.
+  QString file_name;
+  QString selfilter = tr("Mesh (*.obj *.ply)");
+  file_name = QFileDialog::getOpenFileName(this,
+             tr("Open File"), "./", selfilter);
 
-  QString file_name="/media/alex/Data/Master/SHK/Data/Chimney/ir_test_1/researchDenslyTexturedMesh.obj";
+  if (file_name.isEmpty()){
+    return;
+  }
+
+  //Read that mesh like an obj normally- get the texture and the texture coordinates for it.
+  // QString file_name="/media/alex/Data/Master/SHK/Data/Chimney/ir_test_1/researchDenslyTexturedMesh.obj";
 
   std::cout << "filename: " << file_name.toStdString() << std::endl;
 
@@ -1362,50 +1380,30 @@ void Visualizer::draw_cell(row_type bounds, double r, double g, double b){
 
 void Visualizer::draw_text_grid(){
 
-  if (model->m_grid.size()==0)
-    return;
-
-  renderer->RemoveActor(m_grid_metric_actor);
-
-  int* w_size;
-  w_size = this->ui->qvtkWidget->GetRenderWindow()->GetSize();
-
-  int active = std::count(model->m_grid_cells_active.begin(), model->m_grid_cells_active.end(), 1);
-  int total = model->m_grid.size();
-  std::string grid_metric = std::to_string (active) + "/" + std::to_string(total);
-  m_grid_metric_actor->SetInput ( grid_metric.data() );
-
-  m_grid_metric_actor->GetPositionCoordinate()->SetCoordinateSystemToNormalizedViewport();
-  m_grid_metric_actor->GetPosition2Coordinate()->SetCoordinateSystemToNormalizedViewport();
-  m_grid_metric_actor->SetPosition(0.9,0.0);
-
-  // m_grid_metric_actor->GetTextProperty()->SetJustificationToRight ();
-  // m_grid_metric_actor->GetTextProperty()->SetVerticalJustificationToBottom();
+  // if (model->m_grid.size()==0)
+  //   return;
   //
-  // m_grid_metric_actor->SetPosition ( 50, 50 );
-
-  // m_grid_metric_actor->SetPosition ( w_size[0]-50, 30 );
-
-  // m_grid_metric_actor->SetPosition ( w_size[0]-30, 20 );
-  // m_grid_metric_actor->SetPosition2 ( 200, -100.5 );
-  m_grid_metric_actor->GetTextProperty()->SetFontSize ( 24 );
-  m_grid_metric_actor->GetTextProperty()->SetColor ( 0.1, 0.1, 0.1 );
-  m_grid_metric_actor->GetTextProperty()->ShadowOn ();
-  // textActor->GetTextProperty()->SetShadowOffset (int, int);
-  renderer->AddActor2D ( m_grid_metric_actor );
-
-
-  //  vtkSmartPointer<vtkCornerAnnotation> cornerAnnotation =  vtkSmartPointer<vtkCornerAnnotation>::New();
-  //  cornerAnnotation->SetLinearFontScaleFactor( 2 );
-  //  cornerAnnotation->SetNonlinearFontScaleFactor( 1 );
-  //  cornerAnnotation->SetMaximumFontSize( 20 );
-  //  cornerAnnotation->SetText( 0, "lower left" );
-  //  cornerAnnotation->SetText( 1, "lower right" );
-  //  cornerAnnotation->SetText( 2, "upper left" );
-  //  cornerAnnotation->SetText( 3, "upper right" );
-  //  cornerAnnotation->GetTextProperty()->SetColor( 1, 0, 0 );
-   //
-  //  renderer->AddViewProp( cornerAnnotation );
+  // renderer->RemoveActor(m_grid_metric_actor);
+  //
+  // int* w_size;
+  // w_size = this->ui->qvtkWidget->GetRenderWindow()->GetSize();
+  //
+  // int active = std::count(model->m_grid_cells_active.begin(), model->m_grid_cells_active.end(), 1);
+  // int total = model->m_grid.size();
+  // std::string grid_metric = std::to_string (active) + "/" + std::to_string(total);
+  // m_grid_metric_actor->SetInput ( grid_metric.data() );
+  //
+  // m_grid_metric_actor->GetPositionCoordinate()->SetCoordinateSystemToNormalizedViewport();
+  // m_grid_metric_actor->GetPosition2Coordinate()->SetCoordinateSystemToNormalizedViewport();
+  // m_grid_metric_actor->SetPosition(0.9,0.0);
+  //
+  //
+  // m_grid_metric_actor->GetTextProperty()->SetFontSize ( 24 );
+  // m_grid_metric_actor->GetTextProperty()->SetColor ( 0.1, 0.1, 0.1 );
+  // m_grid_metric_actor->GetTextProperty()->ShadowOn ();
+  // // textActor->GetTextProperty()->SetShadowOffset (int, int);
+  // renderer->AddActor2D ( m_grid_metric_actor );
+  //
 
 }
 
@@ -1422,7 +1420,7 @@ void Visualizer::update_grid_view(){
   m_grid_actors.clear();
 
   draw_grid();
-  draw_text_grid();
+  // draw_text_grid();
   this->ui->qvtkWidget->GetRenderWindow()->Render();
 }
 
@@ -1507,6 +1505,24 @@ void Visualizer::render_full_img(){
 
   //render
   render_to_file(path,model->m_magnification_full_img);
+
+  //also render the grid
+  model->m_draw_grid_active=true;
+  for (size_t i = 0; i < model->m_grid.size(); i++) {
+    model->m_grid_cells_active[i]=1;
+  }
+  draw_grid();
+
+  file_name= "/full_img_grid.png";
+  path=model->m_path_global+ path_sufix + file_name;
+  render_to_file(path,model->m_magnification_full_img);
+
+  for (size_t i = 0; i < model->m_grid.size(); i++) {
+    model->m_grid_cells_active[i]=0;
+  }
+  draw_grid();
+
+
 
   //Set the background and camera back to default
   renderer->SetBackground(1.0,1.0,1.0);
@@ -1740,7 +1756,7 @@ void Visualizer::render_grid_wrapped(){
 
     cv::Rect rect= cv::boundingRect(corners_cv);
 
-    cv::rectangle(img, rect, cv::Scalar(0,0,255),4);
+    cv::rectangle(img, rect, cv::Scalar(0,0,255),1*model->m_magnification_grid_wrapped);
     cv::imwrite( path, img );
 
   }
@@ -1796,7 +1812,14 @@ void Visualizer::render_walls(){
     trans->RotateZ(angle);
 
     vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-    transformFilter->SetInputData(model->m_wall);
+
+    #if VTK_MAJOR_VERSION <= 5
+        transformFilter->SetInputConnection(model->m_wall->GetProducerPort());
+    #else
+        transformFilter->SetInputData(model->m_wall);
+    #endif
+
+
     transformFilter->SetTransform(trans);
     transformFilter->Update();
     //Get the new points and the new normals
@@ -1977,8 +2000,10 @@ void Visualizer::on_deformWallscheckBox_clicked(){
 
 void Visualizer::on_clearUnwrapButton_clicked(){
   std::cout << "clearing unwrap" << std::endl;
-
   model->m_points_unwrapped.clear();
+  model->m_is_unwrapped=false;
+  // model->m_deleted_streached_trigs=false;  //TODO: If you put it to false it segments faults
+  updateView();
 }
 
 void Visualizer::on_pathText_textChanged(const QString & text){
@@ -2031,21 +2056,29 @@ void Visualizer::on_renderWallscheckBox_clicked(){
 
 void Visualizer::on_fullImgMagText_textChanged(const QString & text){
   int num= atoi (text.toStdString().data());
+  if (num>20)
+    num=20;
   std::cout << "setting the full img magnification to to " << num << std::endl;
   model->m_magnification_full_img = num;
 }
 void Visualizer::on_gridUnwrappedMagText_textChanged(const QString & text){
   int num= atoi (text.toStdString().data());
+  if (num>20)
+    num=20;
   std::cout << "setting the grid unwrapped magnification to to " << num << std::endl;
   model->m_magnification_grid_unwrapped = num;
 }
 void Visualizer::on_gridWrappedMagText_textChanged(const QString & text){
   int num= atoi (text.toStdString().data());
+  if (num>20)
+    num=20;
   std::cout << "setting the grid wrapped magnification to to " << num << std::endl;
   model->m_magnification_grid_wrapped = num;
 }
 void Visualizer::on_wallsMagText_textChanged(const QString & text){
   int num= atoi (text.toStdString().data());
+  if (num>20)
+    num=20;
   std::cout << "setting the walls magnification to to " << num << std::endl;
   model->m_magnification_walls = num;
 }

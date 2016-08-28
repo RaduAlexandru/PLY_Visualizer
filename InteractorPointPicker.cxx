@@ -26,13 +26,16 @@ void InteractorPointPicker::OnRightButtonDown(){
 
   vtkIdType point_id=0;
   int* clickPos = this->GetInteractor()->GetEventPosition();
-  // vtkSmartPointer<vtkPointPicker>  picker = vtkSmartPointer<vtkPointPicker>::New();    //faster, gives only closest point to the ray
-  vtkSmartPointer<vtkCellPicker>  picker = vtkSmartPointer<vtkCellPicker>::New();   //slower but more precise. gives exact point wthin a mesh
+  vtkSmartPointer<vtkPointPicker>  picker = vtkSmartPointer<vtkPointPicker>::New();    //faster, gives only closest point to the ray
+  // vtkSmartPointer<vtkCellPicker>  picker = vtkSmartPointer<vtkCellPicker>::New();   //slower but more precise. gives exact point wthin a mesh
 
   picker->SetTolerance (picker->GetTolerance ()/10);
 
+  // std::cout << "mouse click is " << clickPos[0] << " " << clickPos[1] << std::endl;
+
   // Pick from this location.
   picker->Pick(clickPos[0], clickPos[1],0,this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
+  // std::cout << "performed pick" << std::endl;
   double *pos = picker->GetPickPosition();
   point_id    = picker->GetPointId();
 
