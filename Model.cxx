@@ -88,8 +88,6 @@ void Model::read_info(){
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
   points=m_wall->GetPoints();
   m_points_wrapped= vtk_to_vector(points);
-
-
   m_points_wrapped_ds=compute_decimated(m_points_wrapped);
   m_cells_wrapped    =this->m_wall->GetPolys();
   m_colors_original  = get_colors();
@@ -112,6 +110,7 @@ void Model::read_info(){
     std::cout << "the polydata does not have normals" << std::endl;
   }
   m_normals=vtk_normal_tcoords_to_vector(vtk_normals);
+
 
   m_bounds=m_wall->GetBounds();
 
@@ -1122,26 +1121,26 @@ void Model::compute_unwrap2(){
       pcl::PointXYZ searchPoint;
       searchPoint=clustered_clouds[clust]->points[i];
 
-      int K = 50;
-      // double radius=0.1;
-      double radius=0.05;
-      //  double radius=0.16;
-
-      std::vector<int> pointIdxNKNSearch(K);
-      std::vector<float> pointNKNSquaredDistance(K);
-
-      double avg_dist=0.0;
-
-      if (  kdtree.radiusSearch (searchPoint, radius, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
-      {
-       for (size_t p = 0; p < pointIdxNKNSearch.size (); ++p){
-          // //average the dist of the K nearest neghbours
-          avg_dist+=clustered_clouds[clust]->points[ pointIdxNKNSearch[p] ].y;
-        }
-      }
-
-      avg_dist=avg_dist/pointIdxNKNSearch.size ();
-      m_points_unwrapped[idx][1]=m_points_unwrapped[idx][1]-avg_dist;
+      // int K = 50;
+      // // double radius=0.1;
+      // double radius=0.05;
+      // //  double radius=0.16;
+      //
+      // std::vector<int> pointIdxNKNSearch(K);
+      // std::vector<float> pointNKNSquaredDistance(K);
+      //
+      // double avg_dist=0.0;
+      //
+      // if (  kdtree.radiusSearch (searchPoint, radius, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
+      // {
+      //  for (size_t p = 0; p < pointIdxNKNSearch.size (); ++p){
+      //     // //average the dist of the K nearest neghbours
+      //     avg_dist+=clustered_clouds[clust]->points[ pointIdxNKNSearch[p] ].y;
+      //   }
+      // }
+      //
+      // avg_dist=avg_dist/pointIdxNKNSearch.size ();
+      // m_points_unwrapped[idx][1]=m_points_unwrapped[idx][1]-avg_dist;
 
 
 

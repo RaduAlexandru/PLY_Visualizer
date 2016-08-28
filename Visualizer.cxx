@@ -198,6 +198,8 @@ void Visualizer::on_loadFileButton_clicked(){
     }
     model->tcoords_rgb=tcoords;
 
+    std::cout << "visualizer:: rgb toocrds numer: "  << model->tcoords_rgb->GetSize()<< std::endl;
+
   }else{
     std::cout << "NOT VALID FORMAT" << std::endl;
     return;

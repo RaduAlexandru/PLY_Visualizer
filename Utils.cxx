@@ -59,6 +59,22 @@ matrix_type vtk_normal_tcoords_to_vector(vtkSmartPointer<vtkDataArray>  vtk_norm
 }
 
 
+
+vtkSmartPointer<vtkFloatArray> vector_to_vtk_normal_tcoords( matrix_type normals){
+
+
+  vtkSmartPointer<vtkFloatArray> vtk_array = vtkSmartPointer<vtkFloatArray>::New();
+  vtk_array->SetNumberOfComponents(3);
+  // vtk_array->SetName("Normals");
+
+  for (size_t i = 0; i < normals.size(); i++) {
+    vtk_array->InsertNextTuple( normals[i].data());
+  }
+
+  return vtk_array;
+
+}
+
 double interpolate ( double input , double input_start, double input_end, double output_start, double output_end){
 
   double output;

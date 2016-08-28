@@ -58,6 +58,7 @@ private:
      void fix_exposure();
 
 
+
      std::string m_obj_file_name;
      std::string m_path;
      std::vector<std::string> m_texture_file_names;

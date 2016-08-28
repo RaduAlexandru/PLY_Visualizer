@@ -137,14 +137,14 @@ public:
 
      //Wrapped
      matrix_type m_points_wrapped;
-     matrix_type m_normals_wrapped;
+    //  matrix_type m_normals_wrapped;
      //  matrix_type m_tcoords_wrapped;
      vtkSmartPointer<vtkCellArray> m_cells_wrapped;
      pcl::PointCloud<pcl::PointXYZ>::Ptr m_points_wrapped_ds;
 
      //Unwrapped
      matrix_type m_points_unwrapped;
-     matrix_type m_normals_unwrapped;
+    //  matrix_type m_normals_unwrapped;
      vtkSmartPointer<vtkCellArray> m_cells_unwrapped;
      pcl::PointCloud<pcl::PointXYZ>::Ptr m_points_unwrapped_full_cloud;
 
