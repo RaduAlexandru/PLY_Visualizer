@@ -137,14 +137,14 @@ public:
 
      //Wrapped
      matrix_type m_points_wrapped;
-    //  matrix_type m_normals_wrapped;
+     matrix_type m_normals_wrapped;
      //  matrix_type m_tcoords_wrapped;
      vtkSmartPointer<vtkCellArray> m_cells_wrapped;
      pcl::PointCloud<pcl::PointXYZ>::Ptr m_points_wrapped_ds;
 
      //Unwrapped
      matrix_type m_points_unwrapped;
-    //  matrix_type m_normals_unwrapped;
+     matrix_type m_normals_unwrapped;
      vtkSmartPointer<vtkCellArray> m_cells_unwrapped;
      pcl::PointCloud<pcl::PointXYZ>::Ptr m_points_unwrapped_full_cloud;
 
@@ -164,6 +164,8 @@ public:
 
      //Unwrap results
       std::vector<pcl::PointIndices::Ptr> m_inliers_vec;
+      matrix_type m_normals_blured;
+
 
       //IR
       vtkSmartPointer<vtkDataArray> tcoords_ir;
@@ -173,7 +175,7 @@ public:
 
      //May need deleting
     //  vtkSmartPointer<vtkCellArray> m_cells;
-     matrix_type m_normals;
+    //  matrix_type m_normals;
      std::vector<double> m_angles;               //TODO: delete only if you are sure you're not going to use circular
      std::vector<double> m_distances_to_plane;
      std::vector<double> distances_to_radius;   //TODO: delete only if you are sure you're not going to use circular mesh
@@ -195,6 +197,11 @@ public:
      bool m_draw_grid_inactive;
      bool m_has_ir;
      bool m_selected_ir;
+
+     bool m_has_tcoords;
+     bool m_has_normals;
+     bool m_is_obj;
+     bool m_is_ply;
 
      //  std::vector<vtkSmartPointer<vtkPolyData>> grid_cells;
      matrix_type m_grid;
@@ -241,14 +248,13 @@ public:
      void scale_mesh();
      void center_mesh();
      void delete_streched_trigs();
-     void add_streched_trigs();
      bool is_contained(pcl::PointXYZ , row_type);
      bool is_contained(row_type , row_type);
      pcl::PointCloud<pcl::PointXYZ>::Ptr compute_decimated(matrix_type);
+     double dist(row_type vec1, row_type vec2);
 
      void blur_normals();
 
-     double dist(row_type vec1, row_type vec2);
 
      void wrap_grid();
      void create_point_cloud();

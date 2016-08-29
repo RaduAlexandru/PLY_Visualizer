@@ -134,6 +134,7 @@ public:
   void calculate_bounds( matrix_type corners, double* bounds);
   void world_to_display(double* point_world, double* point_display);
   void set_camera_default_pos();
+  vtkSmartPointer<vtkPolyData> auto_fix_orientation( vtkSmartPointer<vtkPolyData>);
 
 
   //TODO: Remove it, just needed for testing the distance in knn

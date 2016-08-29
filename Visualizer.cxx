@@ -132,18 +132,11 @@ Visualizer::Visualizer():
 
   // Set up action signals and slots
   connect(this->ui->actionExit, SIGNAL(triggered()), this, SLOT(slotExit()));
-  // connect(interactor, &InteractorPointPicker::right_click_pressed_signal,
-  //         model.get(), &Model::right_click_pressed_slot );
-  // connect(model.get(), &Model::grid_changed_signal,
-  //         this, &Visualizer::grid_changed_slot );
 
   connect(interactor, SIGNAL(right_click_pressed_signal(row_type )  ),
           model.get(), SLOT(right_click_pressed_slot(row_type)  ));
   connect(model.get(), SIGNAL(grid_changed_signal()),
           this, SLOT(grid_changed_slot()) );
-
-  // connect(m_config->numWallsText, SIGNAL (textChanged(QString)),
-  //         this, SLOT (on_numWallsText_textChanged(QString) ) );
 
 
   #if VTK_MAJOR_VERSION <= 5
@@ -173,13 +166,33 @@ void Visualizer::on_loadFileButton_clicked(){
 
   if (boost::ends_with(file_name.toStdString(), ".ply")) {
     std::cout << "reading .ply file" << std::endl;
-    std::cout << "not implemented yet" << std::endl;
+    model->m_is_ply=true;
+    model->m_is_obj=false;
+
 
     vtkSmartPointer<vtkPLYReader> reader = vtkSmartPointer<vtkPLYReader>::New();
     reader->SetFileName ( file_name.toStdString().data() );
     reader->Update();
 
-    model->set_mesh(reader->GetOutput());
+    vtkSmartPointer<vtkPolyData> mesh_orientated= auto_fix_orientation(reader->GetOutput());
+
+    //TODO:rotate it to fix orientation ( )
+    //Make a function that takes a mesh and orientates it correcty. It will need to have normals, if it doesn't they will be estimated
+
+    vtkSmartPointer<vtkTransform> trans = vtkSmartPointer<vtkTransform>::New();
+    trans->RotateX(90);
+    vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+    #if VTK_MAJOR_VERSION <= 5
+        transformFilter->SetInputConnection(reader->GetProducerPort());
+    #else
+        transformFilter->SetInputData(reader->GetOutput());
+    #endif
+    transformFilter->SetTransform(trans);
+    transformFilter->Update();
+
+
+    // model->set_mesh(reader->GetOutput());
+    model->set_mesh(transformFilter->GetOutput());
 
 
     //Not really needed in the case of ply but it may solve the issue of assigning a null coords
@@ -207,6 +220,8 @@ void Visualizer::on_loadFileButton_clicked(){
 
   }else if (boost::ends_with(file_name.toStdString(), ".obj")){
     std::cout << "reading .obj file" << std::endl;
+    model->m_is_obj=true;
+    model->m_is_ply=false;
 
     std::unique_ptr<OBJReader2> obj_reader(new OBJReader2());
     obj_reader->experimental_loading=model->m_experiemental_loading;
@@ -221,7 +236,10 @@ void Visualizer::on_loadFileButton_clicked(){
     vtkSmartPointer<vtkTexture> texture = vtkSmartPointer<vtkTexture>::New();
     texture->SetInputConnection(pngReader->GetOutputPort());
 
-    model->set_mesh(obj_reader->GetOutput());
+    //Fix orientation
+    vtkSmartPointer<vtkPolyData> mesh_orientated= auto_fix_orientation(obj_reader->GetOutput());
+
+    model->set_mesh(mesh_orientated);
     model->set_texture(texture);
 
     vtkSmartPointer<vtkDataArray> tcoords = obj_reader->GetOutput()->GetPointData()->GetTCoords();
@@ -246,6 +264,62 @@ void Visualizer::on_loadFileButton_clicked(){
 
 }
 
+
+vtkSmartPointer<vtkPolyData> Visualizer::auto_fix_orientation( vtkSmartPointer<vtkPolyData> polydata){
+  std::cout << "fixing orientation" << std::endl;
+
+  matrix_type normals_for_orientation;
+
+  double angle=0.0;
+
+  vtkSmartPointer<vtkFloatArray> vtk_normals = vtkSmartPointer<vtkFloatArray>::New();
+  vtk_normals->SetNumberOfComponents(3);
+  vtk_normals->SetName("Normals");
+  vtk_normals = vtkFloatArray::SafeDownCast(polydata->GetPointData()->GetNormals());
+
+  if (vtk_normals){
+    std::cout << "autofix:: yes it has normals" << std::endl;
+  }else{
+    std::cout << "autofix: it doesnt have normals" << std::endl;
+  }
+
+
+
+
+
+
+
+
+  //Read the normals, grab one cluster of them
+
+  //Cluster the normals of the points.
+  // cv::Mat samples(m_normals_blured.size(), 3, CV_32F);
+  // for( int y = 0; y < samples.rows; y++ ){
+  //   for( int x = 0; x < samples.cols; x++ ){
+  //     samples.at<float>(y,x)=m_normals_blured[y][x];
+  //   }
+  // }
+
+
+
+  vtkSmartPointer<vtkTransform> trans = vtkSmartPointer<vtkTransform>::New();
+  trans->RotateX(angle);
+
+  vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+
+  #if VTK_MAJOR_VERSION <= 5
+      transformFilter->SetInputConnection(polydata->GetProducerPort());
+  #else
+      transformFilter->SetInputData(polydata);
+  #endif
+
+
+  transformFilter->SetTransform(trans);
+  transformFilter->Update();
+  return transformFilter->GetOutput();
+
+
+}
 
 
 void  Visualizer::draw_sphere(double x, double y, double z, double r, double g, double b ){
@@ -343,19 +417,19 @@ void  Visualizer::updateView(int reset_camera){
 
   // draw_text_grid();
   std::cout << "START UPDATE VIEW- wall" << std::endl;
-  wall->Print(std::cout);
+  // wall->Print(std::cout);
   std::cout << "FIN: UPDATE VIEW- wall" << std::endl;
 
 
   std::cout << "START UPDATE VIEW- actor" << std::endl;
-  actor->Print(std::cout);
+  // actor->Print(std::cout);
   std::cout << "FIN: UPDATE VIEW- actor" << std::endl;
 
   std::cout << "updateing grid view" << std::endl;
 
   update_grid_view();
   std::cout << "--------------rendering" << std::endl;
-  renderer->Print(std::cout);
+  // renderer->Print(std::cout);
   this->ui->qvtkWidget->GetRenderWindow()->Render();
   std::cout << "--------------finished updateview" << std::endl;
 
