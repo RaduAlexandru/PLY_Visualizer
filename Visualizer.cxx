@@ -40,6 +40,8 @@ Visualizer::Visualizer():
   this->ui->colorComboBox->addItem("Depth");
   this->ui->colorComboBox->addItem("Curvature");
 
+  this->ui->numWallsText->setText(QString::number(model->m_num_walls));
+
 
   this->ui->loadFileConfigButton->setIcon(QIcon("../cog_1.png"));
   this->ui->loadFileConfigButton->setIconSize(QSize(26,26));
@@ -178,7 +180,7 @@ void Visualizer::on_loadFileButton_clicked(){
 
     model->set_mesh(mesh_orientated);
 
-  
+
 
     //copy the ply to a temp_ply
     //decimate the temp
@@ -1623,6 +1625,7 @@ void Visualizer::update_grid_view(){
   // draw_text_grid();
 
   std::cout << "Visualizer::update_grid_view: RENDER" << std::endl;
+  this->ui->qvtkWidget->GetRenderWindow()->Render();
 }
 
 
@@ -2134,7 +2137,7 @@ void Visualizer::render_walls(){
 void Visualizer::on_loadFileConfigButton_clicked(){
   std::cout << "loadfileconfig" << std::endl;
 
-  m_config->numWallsText->setText(QString::number(model->m_num_walls));
+  //m_config->numWallsText->setText(QString::number(model->m_num_walls));
   m_config->pathText->setText( QString::fromUtf8(model->m_path_global.data()) );
 
   m_config->fullImgMagText->setText(QString::number(model->m_magnification_full_img));
