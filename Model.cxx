@@ -384,16 +384,16 @@ void Model::write_points_to_mesh(){
       normals_alg->SetInputData(m_wall);
     #endif
 
-    normals_alg->ComputeCellNormalsOn();
+    normals_alg->ComputePointNormalsOn();
     normals_alg->SplittingOff();
     normals_alg->ConsistencyOff();
 
     normals_alg->Update();
 
-    vtkSmartPointer<vtkDoubleArray> vtk_normals = vtkSmartPointer<vtkDoubleArray>::New();
+    vtkSmartPointer<vtkFloatArray> vtk_normals = vtkSmartPointer<vtkFloatArray>::New();
     vtk_normals->SetNumberOfComponents(3);
     vtk_normals->SetName("Normals");
-    vtk_normals = vtkDoubleArray::SafeDownCast(normals_alg->GetOutput()->GetPointData()->GetNormals());
+    vtk_normals = vtkFloatArray::SafeDownCast(normals_alg->GetOutput()->GetPointData()->GetNormals());
     // vtk_normals=normals_alg->GetOutput()->GetPointData()->GetNormals();
     m_wall->GetPointData()->SetNormals(vtk_normals);
 
@@ -407,7 +407,7 @@ void Model::write_points_to_mesh(){
       normals_alg->SetInputData(m_wall);
     #endif
 
-    normals_alg->ComputeCellNormalsOn();
+    normals_alg->ComputePointNormalsOn();
     normals_alg->SplittingOff();
     normals_alg->ConsistencyOff();
 

@@ -682,10 +682,10 @@ void OBJReader2::write_to_poly(){
 
   m_polyData->Squeeze();
 
-  if (should_fix_orientation){
-    std::cout << "OBJReader2::fixing orientation" << std::endl;
-    fix_orientation();
-  }
+  // if (should_fix_orientation){
+  //   std::cout << "OBJReader2::fixing orientation" << std::endl;
+  //   fix_orientation();
+  // }
 
   // decimate_mesh();
 

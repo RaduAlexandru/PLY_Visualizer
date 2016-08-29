@@ -176,38 +176,9 @@ void Visualizer::on_loadFileButton_clicked(){
 
     vtkSmartPointer<vtkPolyData> mesh_orientated= auto_fix_orientation(reader->GetOutput());
 
-    //TODO:rotate it to fix orientation ( )
-    //Make a function that takes a mesh and orientates it correcty. It will need to have normals, if it doesn't they will be estimated
+    model->set_mesh(mesh_orientated);
 
-    vtkSmartPointer<vtkTransform> trans = vtkSmartPointer<vtkTransform>::New();
-    trans->RotateX(90);
-    vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-    #if VTK_MAJOR_VERSION <= 5
-        transformFilter->SetInputConnection(reader->GetProducerPort());
-    #else
-        transformFilter->SetInputData(reader->GetOutput());
-    #endif
-    transformFilter->SetTransform(trans);
-    transformFilter->Update();
-
-
-    // model->set_mesh(reader->GetOutput());
-    model->set_mesh(transformFilter->GetOutput());
-
-
-    //Not really needed in the case of ply but it may solve the issue of assigning a null coords
-    // vtkSmartPointer<vtkDataArray> tcoords = reader->GetOutput()->GetPointData()->GetTCoords();
-    // if(tcoords){
-    //   std::cout << "RGB:the polydata has tcoords" << std::endl;
-    // }else{
-    //   std::cout << "RGB:the polydata does not have tcoords" << std::endl;
-    // }
-    // model->tcoords_rgb=tcoords;
-
-    //now the mesh doesnt have any normals so it will fail when trying to blur them
-    //pass it through polydata normals to get the normals and then use set mesh on that
-    //If the normals are still to stiff and they don't blur accordingly, look at the next section of comments
-
+  
 
     //copy the ply to a temp_ply
     //decimate the temp
@@ -279,31 +250,95 @@ vtkSmartPointer<vtkPolyData> Visualizer::auto_fix_orientation( vtkSmartPointer<v
 
   if (vtk_normals){
     std::cout << "autofix:: yes it has normals" << std::endl;
+    std::cout << "autofix nr of normals" << vtk_normals->GetNumberOfTuples() << std::endl;
+    normals_for_orientation=vtk_normal_tcoords_to_vector(vtk_normals);
   }else{
     std::cout << "autofix: it doesnt have normals" << std::endl;
+
+    //We will estmate them
+
+    vtkSmartPointer<vtkPolyDataNormals> normals_alg = vtkSmartPointer<vtkPolyDataNormals>::New();
+    #if VTK_MAJOR_VERSION <= 5
+      normals_alg->SetInputConnection(polydata->GetProducerPort());
+    #else
+      normals_alg->SetInputData(polydata);
+    #endif
+
+    normals_alg->ComputePointNormalsOn();
+    normals_alg->SplittingOff();
+    normals_alg->ConsistencyOff();
+
+    normals_alg->Update();
+
+    vtkSmartPointer<vtkFloatArray> vtk_normals_estimated = vtkSmartPointer<vtkFloatArray>::New();
+    vtk_normals_estimated->SetNumberOfComponents(3);
+    vtk_normals_estimated->SetName("Normals");
+    vtk_normals_estimated = vtkFloatArray::SafeDownCast(normals_alg->GetOutput()->GetPointData()->GetNormals());
+
+    normals_for_orientation=vtk_normal_tcoords_to_vector(vtk_normals_estimated);
   }
 
 
 
-
-
-
-
-
-  //Read the normals, grab one cluster of them
-
   //Cluster the normals of the points.
-  // cv::Mat samples(m_normals_blured.size(), 3, CV_32F);
-  // for( int y = 0; y < samples.rows; y++ ){
-  //   for( int x = 0; x < samples.cols; x++ ){
-  //     samples.at<float>(y,x)=m_normals_blured[y][x];
-  //   }
+  cv::Mat samples(normals_for_orientation.size(), 3, CV_32F);
+  for( int y = 0; y < samples.rows; y++ ){
+    for( int x = 0; x < samples.cols; x++ ){
+      samples.at<float>(y,x)=normals_for_orientation[y][x];
+    }
+  }
+
+
+
+  int cluster_count = model->m_num_walls;
+  cv::Mat labels;
+  int attempts = 10;
+  cv::Mat centers;
+  cv::kmeans(samples, cluster_count, labels, cv::TermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 10000, 0.001), attempts, cv::KMEANS_PP_CENTERS, centers );
+
+  // //Get number of elements in each cluster
+  // std::vector<int> labels_vec;
+  // for (size_t i = 0; i < labels.rows; i++) {
+  //   labels_vec.push_back(labels.at<int>(i,0));
   // }
 
 
+  //Get the center,
+  row_type selected_center(3);
+
+  for (size_t i = 0; i < model->m_num_walls; i++) {
+    selected_center[0]+= fabs(centers.at<float>(i,0));
+    selected_center[1]+= fabs(centers.at<float>(i,1));
+    selected_center[2]+= fabs(centers.at<float>(i,2));
+  }
+
+  // std::cout << "----------------selected center is "<< selected_center[0] << " "  <<selected_center[1] << " " <<selected_center[2]<< std::endl;
+
+
+  //If 2 is smallest -> its ok (the central axis is through the z axis)
+  //if 1 is the smallest then rotate 90 in x axis
+  //if 0 is the smallest rotate 90 degreen in y axis
+
 
   vtkSmartPointer<vtkTransform> trans = vtkSmartPointer<vtkTransform>::New();
-  trans->RotateX(angle);
+
+  std::vector<double>::iterator result = std::min_element(std::begin(selected_center), std::end(selected_center));
+  int index=std::distance(std::begin(selected_center), result);
+  // std::cout << "min element at: " << std::distance(std::begin(selected_center), result);
+
+  if (index==0){
+    std::cout << "ORIENT: Rotatin 90 in Y" << std::endl;
+    trans->RotateY(90);
+  }else if(index==1){
+    std::cout << "ORIENT: Rotatin 90 in X" << std::endl;
+    trans->RotateX(90);
+  }else if(index==2){
+    std::cout << "ORIENT: Orientation si corrct" << std::endl;
+    //I'ts in the correct orientation so don't do anything
+    trans->RotateX(0);
+  }
+
+
 
   vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
 
@@ -317,6 +352,9 @@ vtkSmartPointer<vtkPolyData> Visualizer::auto_fix_orientation( vtkSmartPointer<v
   transformFilter->SetTransform(trans);
   transformFilter->Update();
   return transformFilter->GetOutput();
+
+
+  std::cout << "finished autofixing the orientation" << std::endl;
 
 
 }
