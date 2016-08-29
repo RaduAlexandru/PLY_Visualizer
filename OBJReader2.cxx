@@ -59,6 +59,7 @@ void OBJReader2::read_mtl_file(){
      ss >> word >> tex_file_name;
 
      if (word=="map_Kd"){
+      //  std::cout << "OBJreader: reading texture file: " << m_path << tex_file_name  << std::endl;
        m_texture_file_names.push_back(m_path + tex_file_name);
      }
 
@@ -686,6 +687,9 @@ void OBJReader2::write_to_poly(){
     fix_orientation();
   }
 
+  // decimate_mesh();
+
+
 }
 
 void OBJReader2::fix_exposure(){
@@ -764,6 +768,44 @@ void OBJReader2::auto_fix_orientation(){
   std::cout << "auto fixing orientation of mesh" << std::endl;
 
   //look at the normals coordinates. The coorindate which mean is the lowest is probably the one that we should rotate by
+}
+
+void OBJReader2::decimate_mesh(){
+  std::cout << "decimating mesh" << std::endl;
+
+
+  vtkSmartPointer<vtkDataArray> tcoords = m_polyData->GetPointData()->GetTCoords();
+  if(tcoords){
+    std::cout << "decimate before:the polydata has tcoords" << std::endl;
+  }else{
+    std::cout << "decimate before:the polydata does not have tcoords" << std::endl;
+  }
+
+
+  vtkSmartPointer<vtkQuadricDecimation> decimate = vtkSmartPointer<vtkQuadricDecimation>::New();
+  #if VTK_MAJOR_VERSION <= 5
+   decimate->SetInputConnection(m_polyData->GetProducerPort());
+  #else
+   decimate->SetInputData(m_polyData);
+  #endif
+
+  decimate->TCoordsAttributeOn();
+  decimate->Update();
+
+  m_polyData=decimate->GetOutput();
+
+  m_polyData->GetPointData()->SetTCoords(tcoords);
+
+  vtkSmartPointer<vtkDataArray> tcoords_after = m_polyData->GetPointData()->GetTCoords();
+  if(tcoords_after){
+    std::cout << "decimate after:the polydata has tcoords" << std::endl;
+  }else{
+    std::cout << "decimate after:the polydata does not have tcoords" << std::endl;
+  }
+
+  decimate->Print(std::cout);
+
+
 }
 
 

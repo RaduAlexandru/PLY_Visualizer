@@ -373,10 +373,11 @@ void Model::write_points_to_mesh(){
     std::cout << "normals3" << std::endl;
 
     //TODO:JUst testin things right now
-    vtkSmartPointer<vtkFloatArray> vtk_normals = vtkSmartPointer<vtkFloatArray>::New();
+    vtkSmartPointer<vtkDoubleArray> vtk_normals = vtkSmartPointer<vtkDoubleArray>::New();
     vtk_normals->SetNumberOfComponents(3);
     vtk_normals->SetName("Normals");
-    normals_alg->GetOutput()->GetPointData()->SetNormals(vtk_normals);
+    vtk_normals = vtkDoubleArray::SafeDownCast(normals_alg->GetOutput()->GetPointData()->GetNormals());
+    // vtk_normals=normals_alg->GetOutput()->GetPointData()->GetNormals();
     m_wall->GetPointData()->SetNormals(vtk_normals);
 
   }
@@ -539,6 +540,7 @@ void Model::blur_normals(){
   kdtree.setInputCloud (cloud_points);
 
   double radius=0.05;
+  // double radius=0.15;
   std::vector<int> pointIdxNKNSearch;
   std::vector<float> pointNKNSquaredDistance;
 
@@ -685,6 +687,29 @@ void Model::compute_unwrap3(){
 void Model::compute_unwrap2(){
   std::cout << "computing unwrap 2" << std::endl;
 
+  // //Show normals
+  // pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  //
+  //   cloud->width    = m_normals.size();
+  //   cloud->height   = 1;
+  //   cloud->is_dense = false;
+  //   cloud->points.resize (m_normals.size());
+  //
+  //   for (size_t i = 0; i < cloud->points.size(); i++){
+  //     cloud->points[i].x =  m_normals[i][0];
+  //     cloud->points[i].y =  m_normals[i][1];
+  //     cloud->points[i].z =  m_normals[i][2];
+  //   }
+  //
+  //
+  //    pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer2");
+  //    viewer.showCloud (cloud);
+  //    while (!viewer.wasStopped ())
+  //    {
+  //    }
+
+
+
   //Blur the normals so as to better detect the walls
   blur_normals();
 
@@ -789,7 +814,8 @@ void Model::compute_unwrap2(){
      seg.setModelType (pcl::SACMODEL_PLANE);
      seg.setMethodType (pcl::SAC_RANSAC);
      //  seg.setDistanceThreshold (0.02);
-     seg.setDistanceThreshold (0.011);
+    //  seg.setDistanceThreshold (0.011);
+    seg.setDistanceThreshold (0.007);
 
      seg.setInputCloud (clustered_clouds[clust]);
      seg.segment (*inliers, (planes[clust].coef));

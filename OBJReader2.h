@@ -22,7 +22,7 @@
 #include <vtkFloatArray.h>
 #include <vtkCellArray.h>
 #include <vtkCleanPolyData.h>
-
+#include <vtkQuadricDecimation.h>
 #include <vtkTransform.h>
 #include <vtkTransformPolyDataFilter.h>
 
@@ -62,6 +62,7 @@ private:
      void fix_exposure();
      void fix_orientation();
      void auto_fix_orientation();
+     void decimate_mesh();
 
 
 

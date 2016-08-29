@@ -181,6 +181,17 @@ void Visualizer::on_loadFileButton_clicked(){
 
     model->set_mesh(reader->GetOutput());
 
+    //now the mesh doesnt have any normals so it will fail when trying to blur them
+    //pass it through polydata normals to get the normals and then use set mesh on that
+    //If the normals are still to stiff and they don't blur accordingly, look at the next section of comments
+
+
+    //copy the ply to a temp_ply
+    //decimate the temp
+    //Get normals for it (polydata normals)
+    // For each point in the original ply grab the neares K poin in the temp one
+    //Normals of the original ply will be a weigther average (wight=distance) of the normals of the neightbours
+    //then it would be no need to to blur normals in the case that we read a ply file
 
 
 
@@ -321,12 +332,22 @@ void  Visualizer::updateView(int reset_camera){
   // draw_sphere(0,0,0);
 
   // draw_text_grid();
+  std::cout << "START UPDATE VIEW- wall" << std::endl;
+  wall->Print(std::cout);
+  std::cout << "FIN: UPDATE VIEW- wall" << std::endl;
+
+
+  std::cout << "START UPDATE VIEW- actor" << std::endl;
+  actor->Print(std::cout);
+  std::cout << "FIN: UPDATE VIEW- actor" << std::endl;
 
   std::cout << "updateing grid view" << std::endl;
 
   update_grid_view();
-  std::cout << "rendering" << std::endl;
+  std::cout << "--------------rendering" << std::endl;
+  renderer->Print(std::cout);
   this->ui->qvtkWidget->GetRenderWindow()->Render();
+  std::cout << "--------------finished updateview" << std::endl;
 
 }
 
