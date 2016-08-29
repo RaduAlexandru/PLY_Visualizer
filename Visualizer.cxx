@@ -181,6 +181,16 @@ void Visualizer::on_loadFileButton_clicked(){
 
     model->set_mesh(reader->GetOutput());
 
+
+    //Not really needed in the case of ply but it may solve the issue of assigning a null coords
+    // vtkSmartPointer<vtkDataArray> tcoords = reader->GetOutput()->GetPointData()->GetTCoords();
+    // if(tcoords){
+    //   std::cout << "RGB:the polydata has tcoords" << std::endl;
+    // }else{
+    //   std::cout << "RGB:the polydata does not have tcoords" << std::endl;
+    // }
+    // model->tcoords_rgb=tcoords;
+
     //now the mesh doesnt have any normals so it will fail when trying to blur them
     //pass it through polydata normals to get the normals and then use set mesh on that
     //If the normals are still to stiff and they don't blur accordingly, look at the next section of comments

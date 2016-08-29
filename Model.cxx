@@ -324,7 +324,7 @@ void Model::write_points_to_mesh(){
   std::cout << "setting colors" << std::endl;
   m_wall->GetPointData()->SetScalars(this->m_colors_active);
 
-  std::cout << "deleting streched" << std::endl;
+  std::cout << "Model::write_points_to_mesh: deleting streched if its unwrapped" << std::endl;
   if (this->m_is_unwrapped){
     delete_streched_trigs();
   }
@@ -345,7 +345,7 @@ void Model::write_points_to_mesh(){
     m_wall->GetPointData()->SetTCoords(tcoords_ir);
   }else{
     std::cout << "writing rgb tcoords" << std::endl;
-    m_wall->GetPointData()->SetTCoords(tcoords_rgb);
+    // m_wall->GetPointData()->SetTCoords(tcoords_rgb);
   }
 
   std::cout << "gettings bounds" << std::endl;
@@ -354,6 +354,23 @@ void Model::write_points_to_mesh(){
   //TODO: we should recalculate new normals, insted we should have normal_wrapped and normals unwrapped
   if (m_normals.empty()) {
     std::cout << "write points to mesh: NO NORMALS!!!!!" << std::endl;
+    //Even if it doesnt have, estimate them
+    vtkSmartPointer<vtkPolyDataNormals> normals_alg = vtkSmartPointer<vtkPolyDataNormals>::New();
+    #if VTK_MAJOR_VERSION <= 5
+      normals_alg->SetInputConnection(m_wall->GetProducerPort());
+    #else
+      normals_alg->SetInputData(m_wall);
+    #endif
+    normals_alg->Update();
+
+    vtkSmartPointer<vtkDoubleArray> vtk_normals = vtkSmartPointer<vtkDoubleArray>::New();
+    vtk_normals->SetNumberOfComponents(3);
+    vtk_normals->SetName("Normals");
+    vtk_normals = vtkDoubleArray::SafeDownCast(normals_alg->GetOutput()->GetPointData()->GetNormals());
+    // vtk_normals=normals_alg->GetOutput()->GetPointData()->GetNormals();
+    m_wall->GetPointData()->SetNormals(vtk_normals);
+
+
   }else{
 
     vtkSmartPointer<vtkPolyDataNormals> normals_alg = vtkSmartPointer<vtkPolyDataNormals>::New();
