@@ -64,8 +64,7 @@ private:
      void auto_fix_orientation();
      void decimate_mesh();
 
-
-
+     void for_each_pixel(cv::Mat &image, std::function<void(uchar * const pixel, int channels)> fn);
 
 
      std::string m_obj_file_name;

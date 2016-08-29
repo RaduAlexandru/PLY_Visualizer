@@ -716,30 +716,94 @@ void OBJReader2::fix_exposure(){
 
     //attempt 2
 
-    cv::Mat lab_image;
-    cv::cvtColor(m_full_texture, lab_image, CV_BGR2Lab);
+  //   cv::Mat lab_image;
+  //   cv::cvtColor(m_full_texture, lab_image, CV_BGR2Lab);
+   //
+  //   // Extract the L channel
+  //   std::vector<cv::Mat> lab_planes(3);
+  //   cv::split(lab_image, lab_planes);  // now we have the L image in lab_planes[0]
+   //
+  //   // apply the CLAHE algorithm to the L channel
+  //   cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
+  //   clahe->setClipLimit(4);
+  //   cv::Mat dst;
+  //   // clahe->apply(lab_planes[0], dst);
+   //
+  //   cv::equalizeHist(lab_planes[0], lab_planes[0]);
+   //
+  //   // Merge the the color planes back into an Lab image
+  //   // dst.copyTo(lab_planes[0]);
+  //   cv::merge(lab_planes, lab_image);
+   //
+  //  // convert back to RGB
+  //  cv::Mat image_clahe;
+  //  cv::cvtColor(lab_image, image_clahe, CV_Lab2BGR);
+   //
+  //  image_clahe.copyTo(m_full_texture);
 
-    // Extract the L channel
-    std::vector<cv::Mat> lab_planes(3);
-    cv::split(lab_image, lab_planes);  // now we have the L image in lab_planes[0]
 
-    // apply the CLAHE algorithm to the L channel
-    cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
-    clahe->setClipLimit(4);
-    cv::Mat dst;
-    clahe->apply(lab_planes[0], dst);
-
-    // Merge the the color planes back into an Lab image
-    dst.copyTo(lab_planes[0]);
-    cv::merge(lab_planes, lab_image);
-
-   // convert back to RGB
-   cv::Mat image_clahe;
-   cv::cvtColor(lab_image, image_clahe, CV_Lab2BGR);
-
-   image_clahe.copyTo(m_full_texture);
+  //Attempt 3 hardcode
+  //  m_full_texture = m_full_texture + cv::Scalar(35, 35, 35);
+  //  int inc=10;
+   //
+  //  cv::Mat hsv;
+  //  cvtColor(m_full_texture, hsv, CV_BGR2HSV);
+   //
+  //  for_each_pixel(hsv, [&inc](uchar * const pixel, int /*channels*/) {
+  //      if (pixel[1] <= 255-inc)
+  //          pixel[1] += inc;
+  //      else
+  //          pixel[1] = 255;
+  //  });
+   //
+  //  cvtColor(hsv, m_full_texture, CV_HSV2BGR);
 
 
+
+
+  //attempt 4 gimp strecth hsv
+   if(m_full_texture.channels() >= 3)
+   {
+
+       cv::Mat hsv;
+       cv::cvtColor(m_full_texture,hsv,CV_BGR2HSV);
+
+       std::vector<cv::Mat> channels;
+       cv::split(hsv,channels);
+
+       //  cv::normalize(channels[0], channels[0], 0, 255, cv::NORM_MINMAX);
+       cv::normalize(channels[1], channels[1], 0, 255, cv::NORM_MINMAX);
+       cv::normalize(channels[2], channels[2], 0, 255, cv::NORM_MINMAX);
+
+
+       cv::Mat result;
+       cv::merge(channels,hsv);
+       cv::cvtColor(hsv,result,CV_HSV2BGR);
+
+       result.copyTo(m_full_texture);
+   }
+
+}
+
+
+void OBJReader2::for_each_pixel(cv::Mat &image, std::function<void(uchar * const pixel, int channels)> fn)
+{
+    int rows     = image.rows;
+    int cols     = image.cols;
+    int channels = image.channels();
+
+    if (image.isContinuous())
+    {
+        cols = cols * rows;
+        rows = 1;
+    }
+
+    for (int j=0; j<rows; ++j)
+    {
+        auto pixel = image.ptr(j);
+        for (int i=0; i<cols; ++i, pixel += channels)
+            fn(pixel, channels);
+    }
 }
 
 
