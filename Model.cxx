@@ -189,7 +189,7 @@ void Model::read_info(){
     m_has_tcoords=true;
   }else{
       std::cout << "Model::read_info: mesh does not have tcoords" << std::endl;
-      m_has_tcoords=true;
+      m_has_tcoords=false;
   }
 
 
