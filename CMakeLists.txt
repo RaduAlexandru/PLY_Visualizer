@@ -7,7 +7,7 @@ endif()
 
 PROJECT(Visualizer)
 
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
 
 

@@ -35,10 +35,11 @@ Visualizer::Visualizer():
   this->ui->setupUi(this);
 
   this->ui->colorComboBox->addItem("Plain");
-  this->ui->colorComboBox->addItem("RGB");
+  this->ui->colorComboBox->addItem("RGB (bright)");
+  this->ui->colorComboBox->addItem("RGB (original)");
   this->ui->colorComboBox->addItem("IR");
   this->ui->colorComboBox->addItem("Depth");
-  this->ui->colorComboBox->addItem("Curvature");
+  // this->ui->colorComboBox->addItem("Curvature");
 
   this->ui->numWallsText->setText(QString::number(model->m_num_walls));
 
@@ -168,8 +169,7 @@ void Visualizer::on_loadFileButton_clicked(){
 
   if (boost::ends_with(file_name.toStdString(), ".ply")) {
     std::cout << "reading .ply file" << std::endl;
-    model->m_is_ply=true;
-    model->m_is_obj=false;
+
 
 
     vtkSmartPointer<vtkPLYReader> reader = vtkSmartPointer<vtkPLYReader>::New();
@@ -178,9 +178,72 @@ void Visualizer::on_loadFileButton_clicked(){
 
     vtkSmartPointer<vtkPolyData> mesh_orientated= auto_fix_orientation(reader->GetOutput());
 
+
+    //Get the colors
+    //Brighten them
+    //write them in the mesh orientated, they will atuometically get read by the set mesh
+
+    //The original one, brutce forcefully set them inside the model
+
+
+    auto rgb_unaltered  =mesh_orientated->GetPointData()->GetScalars();
+    vtkSmartPointer<vtkUnsignedCharArray> rgb_bright= vtkSmartPointer<vtkUnsignedCharArray>::New();
+    rgb_bright->SetNumberOfComponents(3);
+
+    int num_colors=rgb_unaltered->GetNumberOfTuples();
+
+    cv::Mat colors_bright(num_colors, 1,  CV_8UC3);
+
+    for (size_t i = 0; i < num_colors; i++) {
+      cv::Vec3b &intensity = colors_bright.at<cv::Vec3b>(i, 0);
+
+      double* color_pixel;
+      color_pixel=rgb_unaltered->GetTuple(i);
+
+      intensity.val[0] = color_pixel[0];
+      intensity.val[1] = color_pixel[1];
+      intensity.val[2] = color_pixel[2];
+    }
+
+
+
+
+    //brithen colors bright
+    cv::Mat hsv;
+    cv::cvtColor(colors_bright,hsv,CV_BGR2HSV);
+    std::vector<cv::Mat> channels;
+    cv::split(hsv,channels);
+    cv::normalize(channels[1], channels[1], 0, 255, cv::NORM_MINMAX);
+    cv::normalize(channels[2], channels[2], 0, 255, cv::NORM_MINMAX);
+    cv::Mat result;
+    cv::merge(channels,hsv);
+    cv::cvtColor(hsv,result,CV_HSV2BGR);
+    result.copyTo(colors_bright);
+
+    //Copy colors bright back into a unsigned char arrays
+    for (int i = 0; i < colors_bright.cols; i++) {
+      for (int j = 0; j < colors_bright.rows; j++) {
+          cv::Vec3b intensity = colors_bright.at<cv::Vec3b>(j, i);
+
+          double color_pixel[3];
+          color_pixel[0]= intensity.val[0];
+          color_pixel[1]= intensity.val[1];
+          color_pixel[2]= intensity.val[2];
+
+          rgb_bright->InsertNextTuple(color_pixel);
+      }
+    }
+
+
+      mesh_orientated->GetPointData()->SetScalars(rgb_bright);
+
+//-----------
+
     model->set_mesh(mesh_orientated);
+    model->m_colors_unaltered=vtkUnsignedCharArray::SafeDownCast(rgb_unaltered);
 
-
+    model->m_is_ply=true;  //Need to add this at the finale because set mesh reset everything to defualts
+    model->m_is_obj=false;
 
     //copy the ply to a temp_ply
     //decimate the temp
@@ -193,8 +256,6 @@ void Visualizer::on_loadFileButton_clicked(){
 
   }else if (boost::ends_with(file_name.toStdString(), ".obj")){
     std::cout << "reading .obj file" << std::endl;
-    model->m_is_obj=true;
-    model->m_is_ply=false;
 
     std::unique_ptr<OBJReader2> obj_reader(new OBJReader2());
     obj_reader->experimental_loading=model->m_experiemental_loading;
@@ -202,18 +263,26 @@ void Visualizer::on_loadFileButton_clicked(){
     obj_reader->SetFileName(file_name.toStdString());
     obj_reader->Update();
 
+    //brightned texture
     vtkSmartPointer<vtkPNGReader> pngReader = vtkSmartPointer<vtkPNGReader>::New();
     pngReader->SetFileName (obj_reader->GetTexturePath().data() );
     pngReader->Update();
-
     vtkSmartPointer<vtkTexture> texture = vtkSmartPointer<vtkTexture>::New();
     texture->SetInputConnection(pngReader->GetOutputPort());
+
+    //original texture
+    vtkSmartPointer<vtkPNGReader> pngReader_orig = vtkSmartPointer<vtkPNGReader>::New();
+    pngReader_orig->SetFileName (obj_reader->GetTextureOriginalPath().data() );
+    pngReader_orig->Update();
+    vtkSmartPointer<vtkTexture> texture_orig = vtkSmartPointer<vtkTexture>::New();
+    texture_orig->SetInputConnection(pngReader_orig->GetOutputPort());
 
     //Fix orientation
     vtkSmartPointer<vtkPolyData> mesh_orientated= auto_fix_orientation(obj_reader->GetOutput());
 
     model->set_mesh(mesh_orientated);
     model->set_texture(texture);
+    model->set_texture_original(texture_orig);
 
     vtkSmartPointer<vtkDataArray> tcoords = obj_reader->GetOutput()->GetPointData()->GetTCoords();
     if(tcoords){
@@ -225,6 +294,8 @@ void Visualizer::on_loadFileButton_clicked(){
 
     std::cout << "visualizer:: rgb toocrds numer: "  << model->tcoords_rgb->GetSize()<< std::endl;
 
+    model->m_is_obj=true;
+    model->m_is_ply=false;
   }else{
     std::cout << "NOT VALID FORMAT" << std::endl;
     return;
@@ -232,7 +303,7 @@ void Visualizer::on_loadFileButton_clicked(){
 
 
 
-  ui->colorComboBox->setCurrentIndex(ui->colorComboBox->findText("RGB"));
+  ui->colorComboBox->setCurrentIndex(ui->colorComboBox->findText("RGB (bright)"));
   updateView();
 
 }
@@ -419,6 +490,11 @@ void  Visualizer::updateView(int reset_camera){
   //update the wall with the new points (wrapped on unwrapped)
   vtkSmartPointer<vtkPolyData> wall=model->get_mesh();
 
+  // std::cout << "----------------------------------------------------------------------------" << std::endl;
+
+  // wall->Print(std::cout);
+    // std::cout << "----------------------------------------------------------------------------" << std::endl;
+
   // Visualize
   vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 
@@ -437,8 +513,11 @@ void  Visualizer::updateView(int reset_camera){
 
   std::cout << "adding texture" << std::endl;
 
-  if (this->ui->colorComboBox->currentText()=="RGB")
+  if (this->ui->colorComboBox->currentText()=="RGB (bright)")
     actor->SetTexture(model->m_full_texture);
+
+  if (this->ui->colorComboBox->currentText()=="RGB (original)")
+    actor->SetTexture(model->m_full_texture_original);
 
   if (this->ui->colorComboBox->currentText()=="IR")
     actor->SetTexture(model->m_full_ir_texture);
@@ -526,9 +605,18 @@ void Visualizer::on_colorComboBox_currentIndexChanged(const QString & text){
     model->compute_plain_colors();
     model->m_selected_ir=false;
   }
-  if (text.toStdString() == "RGB"){
+  if (text.toStdString() == "RGB (bright)"){
     std::cout << "calculating RGB colors" << std::endl;
-    model->compute_rgb_colors();
+    if (model->m_is_ply){
+      model->compute_rgb_colors();
+    }
+    model->m_selected_ir=false;
+  }
+  if (text.toStdString() == "RGB (original)"){
+    std::cout << "calculating RGB original colors" << std::endl;
+    if (model->m_is_ply){
+      model->compute_unaltered_colors();
+    }
     model->m_selected_ir=false;
   }
   if (text.toStdString() == "IR"){
@@ -2199,13 +2287,13 @@ void Visualizer::on_experimentalLoadingcheckBox_clicked(){
 void Visualizer::on_fixOrientationcheckBox_clicked(){
   std::cout << "setting fix orientation" << std::endl;
 
-  if (m_config->fixOrientationcheckBox->isChecked()){
-    std::cout << "fixing orientation fo mesh" << std::endl;
-    model->m_fix_orientation=true;
-  }else{
-    std::cout << "not fixing orientation fo mesh" << std::endl;
-    model->m_fix_orientation=false;
-  }
+  // if (m_config->fixOrientationcheckBox->isChecked()){
+  //   std::cout << "fixing orientation fo mesh" << std::endl;
+  //   model->m_fix_orientation=true;
+  // }else{
+  //   std::cout << "not fixing orientation fo mesh" << std::endl;
+  //   model->m_fix_orientation=false;
+  // }
 
 }
 

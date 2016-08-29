@@ -150,8 +150,10 @@ public:
 
 
      //Misc
+     vtkSmartPointer<vtkTexture> m_full_texture_original;
      vtkSmartPointer<vtkTexture> m_full_texture;
      vtkSmartPointer<vtkTexture> m_full_ir_texture;
+     vtkSmartPointer<vtkUnsignedCharArray> m_colors_unaltered; //original colors, rgb if present and all white if not
      vtkSmartPointer<vtkUnsignedCharArray> m_colors_original; //original colors, rgb if present and all white if not
      vtkSmartPointer<vtkUnsignedCharArray> m_colors_active;
      row_type m_center;
@@ -230,6 +232,7 @@ public:
      void clear();
      void set_mesh(vtkSmartPointer<vtkPolyData>);
      void set_texture(vtkSmartPointer<vtkTexture>);
+     void set_texture_original(vtkSmartPointer<vtkTexture> texture);
      void set_ir_texture(vtkSmartPointer<vtkTexture>);
      void read_info();
      vtkSmartPointer<vtkUnsignedCharArray> get_colors();
@@ -244,6 +247,7 @@ public:
      void compute_plain_colors();
      void compute_rgb_colors();
      void compute_depth_colors();
+     void compute_unaltered_colors();
      void create_grid();
      void scale_mesh();
      void center_mesh();

@@ -43,6 +43,7 @@ public:
      void SetFileName(std::string);
      void Update();
      std::string GetTexturePath();
+     std::string GetTextureOriginalPath();
      vtkSmartPointer<vtkPolyData> GetOutput();
 
      bool experimental_loading;
@@ -51,6 +52,7 @@ public:
 private:
 
      std::string m_full_texture_name;
+     std::string m_full_texture_original_name;
 
      void read_mtl_file();
      void read_textures();

@@ -90,7 +90,7 @@
       <rect>
        <x>10</x>
        <y>100</y>
-       <width>91</width>
+       <width>121</width>
        <height>23</height>
       </rect>
      </property>
@@ -103,7 +103,7 @@
       <rect>
        <x>10</x>
        <y>140</y>
-       <width>91</width>
+       <width>121</width>
        <height>22</height>
       </rect>
      </property>
@@ -211,7 +211,7 @@ p, li { white-space: pre-wrap; }
       <rect>
        <x>10</x>
        <y>180</y>
-       <width>91</width>
+       <width>121</width>
        <height>23</height>
       </rect>
      </property>

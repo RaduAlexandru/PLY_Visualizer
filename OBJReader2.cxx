@@ -4,6 +4,7 @@
 OBJReader2::OBJReader2():
 m_polyData(vtkSmartPointer<vtkPolyData>::New()),
 m_full_texture_name("full_texture.png"),
+m_full_texture_original_name("full_texture_original.png"),
 experimental_loading(true),
 should_fix_orientation(true)
 {
@@ -127,6 +128,9 @@ void OBJReader2::create_full_texture(){
 
     //Increase the exposure
     // m_full_texture = m_full_texture + cv::Scalar(75, 75, 75); //increase the brightness by 75 units
+
+    cv::imwrite( m_path+ m_full_texture_original_name, m_full_texture );
+
     fix_exposure();
 
     // std::cout << "writing to file-----------" << m_path <<  "full_texture.png" << std::endl;
@@ -881,4 +885,11 @@ std::string OBJReader2::GetTexturePath(){
   std::string ret;
   ret=m_path + m_full_texture_name;
   return ret;
+}
+
+std::string OBJReader2::GetTextureOriginalPath(){
+  std::string ret;
+  ret=m_path + m_full_texture_original_name;
+  return ret;
+
 }

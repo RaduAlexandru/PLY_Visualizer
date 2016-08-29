@@ -11,6 +11,7 @@ Model::Model():
   // m_cells(vtkSmartPointer<vtkCellArray>::New()),
   m_colors_original(vtkSmartPointer<vtkUnsignedCharArray>::New()),
   m_colors_active(vtkSmartPointer<vtkUnsignedCharArray>::New()),
+  m_colors_unaltered(vtkSmartPointer<vtkUnsignedCharArray>::New()),
   m_deleted_streached_trigs(false),
   m_draw_grid_active(true),
   m_draw_grid_inactive(false),
@@ -35,10 +36,10 @@ Model::Model():
   m_render_grid_unwrapped(true),
   m_render_grid_wrapped(true),
   m_render_walls(true),
-  m_magnification_full_img(15),
-  m_magnification_grid_unwrapped(3),
-  m_magnification_grid_wrapped(3),
-  m_magnification_walls(5),
+  m_magnification_full_img(8),
+  m_magnification_grid_unwrapped(2),
+  m_magnification_grid_wrapped(2),
+  m_magnification_walls(3),
 
   m_has_tcoords(false),
   m_has_normals(false),
@@ -70,6 +71,10 @@ void Model::set_texture(vtkSmartPointer<vtkTexture> texture){
   m_full_texture=texture;
 }
 
+void Model::set_texture_original(vtkSmartPointer<vtkTexture> texture){
+  m_full_texture_original=texture;
+}
+
 void Model::set_ir_texture(vtkSmartPointer<vtkTexture> texture){
   m_full_ir_texture=texture;
 }
@@ -97,6 +102,11 @@ void Model::clear(){
   m_points_unwrapped_full_cloud->clear();
   m_colors_original->Initialize();
   m_colors_active->Initialize();
+  m_colors_unaltered->Initialize();
+
+  m_colors_original= vtkSmartPointer<vtkUnsignedCharArray>::New();
+  m_colors_active= vtkSmartPointer<vtkUnsignedCharArray>::New();
+  m_colors_unaltered= vtkSmartPointer<vtkUnsignedCharArray>::New();
   m_center.clear();
   clustered_clouds.clear();
   planes.clear();
@@ -345,7 +355,9 @@ void Model::write_points_to_mesh(){
   }
   m_wall->SetPoints(points_active);
 
-  m_wall->GetPointData()->SetScalars(this->m_colors_active);
+  // if (m_colors_active->GetNumberOfTuples()>1){
+    m_wall->GetPointData()->SetScalars(this->m_colors_active);
+  // }
 
   if (this->m_is_unwrapped){
     delete_streched_trigs();
@@ -1214,13 +1226,39 @@ void Model::compute_rgb_colors(){
     num_points=m_points_wrapped.size();
   }
 
-  for (vtkIdType i = 0; i < num_points; i++) {
+  int num_colors=m_colors_original->GetNumberOfTuples();
+  int min = std::min (num_points, num_colors);
+  for (vtkIdType i = 0; i < min; i++) {
     m_colors_active->InsertNextTuple(m_colors_original->GetTuple(i));
   }
 
   //m_wall->GetPointData()->SetScalars(colors_active);
 
 }
+
+void Model::compute_unaltered_colors(){
+  m_colors_active->Reset();
+  m_colors_active = vtkSmartPointer<vtkUnsignedCharArray>::New();
+  m_colors_active->SetNumberOfComponents(3);
+  m_colors_active->SetName("rgb");
+
+
+  int num_points;
+  if (m_is_unwrapped){
+    num_points=m_points_unwrapped.size();
+  }else{
+    num_points=m_points_wrapped.size();
+  }
+
+  int num_colors=m_colors_unaltered->GetNumberOfTuples();
+  int min = std::min (num_points, num_colors);
+  for (vtkIdType i = 0; i < min; i++) {
+    m_colors_active->InsertNextTuple(m_colors_unaltered->GetTuple(i));
+  }
+
+
+}
+
 
 void Model::compute_depth_colors(){
 
