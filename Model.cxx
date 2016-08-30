@@ -139,14 +139,17 @@ void Model::clear(){
 }
 
 
-void Model::read_info(){
+void Model::read_info(int read_color){
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
   points=m_wall->GetPoints();
   m_points_wrapped= vtk_to_vector(points);
   m_points_wrapped_ds=compute_decimated(m_points_wrapped);
   m_cells_wrapped    =this->m_wall->GetPolys();
-  m_colors_original  = get_colors();
-  m_colors_active  = get_colors();
+  if (read_color){
+    m_colors_original  = get_colors();
+    m_colors_active  = get_colors();
+  }
+
   m_radius           = estimate_radius(m_points_wrapped_ds);
   m_circumference    =2*M_PI*m_radius;   //In the case of a non cylindrical one, the circumference is the perimeter of all the walls
 

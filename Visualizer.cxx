@@ -2115,7 +2115,7 @@ void Visualizer::render_walls(){
     transformFilter->Update();
     //Get the new points and the new normals
     model->m_wall=transformFilter->GetOutput();
-    model->read_info();
+    model->read_info(0);
     updateView();
 
 
@@ -2205,7 +2205,7 @@ void Visualizer::render_walls(){
     transformFilter_back->Update();
     //Get the new points and the new normals
     model->m_wall=transformFilter_back->GetOutput();
-    model->read_info();
+    model->read_info(0);
     updateView();
 
 

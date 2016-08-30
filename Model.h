@@ -234,7 +234,7 @@ public:
      void set_texture(vtkSmartPointer<vtkTexture>);
      void set_texture_original(vtkSmartPointer<vtkTexture> texture);
      void set_ir_texture(vtkSmartPointer<vtkTexture>);
-     void read_info();
+     void read_info(int read_color=1);
      vtkSmartPointer<vtkUnsignedCharArray> get_colors();
      double estimate_radius (pcl::PointCloud<pcl::PointXYZ>::Ptr points );
      vtkSmartPointer<vtkPolyData> get_mesh();
