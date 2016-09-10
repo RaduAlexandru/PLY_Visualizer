@@ -340,7 +340,7 @@ vtkSmartPointer<vtkPolyData> Visualizer::auto_fix_orientation( vtkSmartPointer<v
   std::cout << "fixing orientation" << std::endl;
 
   matrix_type normals_for_orientation;
-  int step_val=100;
+  int downsample=10;
 
   double angle=0.0;
 
@@ -382,10 +382,10 @@ vtkSmartPointer<vtkPolyData> Visualizer::auto_fix_orientation( vtkSmartPointer<v
 
 
   //Cluster the normals of the points.
-  cv::Mat samples(normals_for_orientation.size(), 3, CV_32F);
+  cv::Mat samples(normals_for_orientation.size()/downsample, 3, CV_32F);
   for( int y = 0; y < samples.rows; y++ ){
     for( int x = 0; x < samples.cols; x++ ){
-      samples.at<float>(y,x)=normals_for_orientation[y][x];
+      samples.at<float>(y,x)=normals_for_orientation[y*downsample][x];
     }
   }
 
