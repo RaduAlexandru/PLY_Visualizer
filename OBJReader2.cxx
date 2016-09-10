@@ -70,64 +70,137 @@ void OBJReader2::read_mtl_file(){
 }
 
 void OBJReader2::read_textures(){
-  std::cout << "OBJ_READER::read_textures" << std::endl;
-  // std::cin.get();
+  // m_textures.clear();
+  //
+  // int max_rows=0, max_cols=0;
+  //
+  // for (size_t i = 0; i < m_texture_file_names.size(); i++) {
+  //    m_textures.push_back( cv::imread(m_texture_file_names[i]) );
+  //    if (m_textures[i].rows > max_rows){
+  //      max_rows=m_textures[i].rows;
+  //    }
+  //    if (m_textures[i].cols > max_cols){
+  //      max_cols=m_textures[i].cols;
+  //    }
+  // }
+  //
+  // //Resize the individual textures to be the same size (biggest)
+  // cv::Size size(max_cols,max_rows);  //x,y
+  // for (size_t i = 0; i < m_textures.size(); i++) {
+  //   cv::resize(m_textures[i],m_textures[i],size);//resize image
+  // }
+  //
+  // m_polys.resize(m_texture_file_names.size());  //polys will be clasified in vectors as many as we have materials
+  //
+  // std::cout << "finished reading textures" << std::endl;
+  // size_t sizeInBytes = m_textures[0].step[0] * m_textures[0].rows;
+  // std::cout << "size in bytes of first texture: " <<  sizeInBytes << std::endl;
+  // std::cout << "size in mb of first texture: " <<  sizeInBytes/1000/1000 << std::endl;
+  // // std::cin.get();
 
-  std::cout << "creating fake big img" << std::endl;
-  // cv::Mat full = cv::Mat::zeros(32000, 32000, CV_8UC3) ;
-
-  std::cout << "finished creating fake big img" << std::endl;
-  // std::cin.get();
-  // exit(1);
+  std::cout << "objreader::read_textures" << std::endl;
 
   m_textures.clear();
+  int downsample=2;
 
   int max_rows=0, max_cols=0;
 
   for (size_t i = 0; i < m_texture_file_names.size(); i++) {
-     m_textures.push_back( cv::imread(m_texture_file_names[i]) );
-     if (m_textures[i].rows > max_rows){
-       max_rows=m_textures[i].rows;
+     cv::Mat img= cv::imread(m_texture_file_names[i]);
+     if (img.rows > max_rows){
+       max_rows=img.rows;
      }
-     if (m_textures[i].cols > max_cols){
-       max_cols=m_textures[i].cols;
+     if (img.cols > max_cols){
+       max_cols=img.cols;
      }
   }
 
-  //Resize the individual textures to be the same size (biggest)
-  cv::Size size(max_cols,max_rows);  //x,y
-  for (size_t i = 0; i < m_textures.size(); i++) {
-    cv::resize(m_textures[i],m_textures[i],size);//resize image
-  }
+  m_polys.resize(m_texture_file_names.size());
 
-  m_polys.resize(m_texture_file_names.size());  //polys will be clasified in vectors as many as we have materials
-
-  std::cout << "finished reading textures" << std::endl;
-  size_t sizeInBytes = m_textures[0].step[0] * m_textures[0].rows;
-  std::cout << "size in bytes of first texture: " <<  sizeInBytes << std::endl;
-  std::cout << "size in mb of first texture: " <<  sizeInBytes/1000/1000 << std::endl;
-  // std::cin.get();
+  m_indiv_texture_size=max_rows/downsample;
 }
 
 
 void OBJReader2::create_full_texture(){
+  // std::cout << "OBJ_READER::create_full_texture" << std::endl;
+  //
+  //  //Calculate how big should the full_texture be
+  //  m_multiplier=ceil(sqrt(m_textures.size()));
+  //
+  //
+  //  //make a texture big enough to get all of the small ones
+  //  int t_rows=m_textures[0].rows;
+  //  int t_cols=m_textures[0].cols;
+  //  //32788
+  //  std::cout << "full texture will be: " << t_rows*m_multiplier << " x " <<  t_cols*m_multiplier << std::endl;
+  //  std::cout << "type of full texture is " <<  type2str(m_textures[0].type()) << std::endl;
+  //  m_full_texture = cv::Mat::zeros(t_rows*m_multiplier, t_cols*m_multiplier, m_textures[0].type()) ;
+  //
+  //  //Copy the textures in a row by row manner.
+  //   int x_idx=0, y_idx=-t_rows;
+  //   for (size_t i = 0; i < m_textures.size(); i++) {
+  //     if ((i)%m_multiplier==0){
+  //       x_idx=0;
+  //       y_idx+=t_rows;
+  //     }else{
+  //       x_idx+=t_cols;
+  //     }
+  //
+  //     //According to the start of the img we need to get the offset taking into acount that opencv has origin at upper corner and opengl at lower corner
+  //     double offset_x=(double)x_idx/m_full_texture.cols;
+  //     double offset_y= (double)(m_full_texture.rows - (y_idx+t_rows))/m_full_texture.rows;
+  //
+  //     std::vector<double> offset_vec={offset_x,offset_y};
+  //     m_tcoord_offsets.push_back(offset_vec);
+  //
+  //     m_textures[i].copyTo(m_full_texture(cv::Rect(x_idx, y_idx, t_cols, t_rows)));
+  //   }
+  //
+  //   //Increase the exposure
+  //   // m_full_texture = m_full_texture + cv::Scalar(75, 75, 75); //increase the brightness by 75 units
+  //
+  //   cv::imwrite( m_path+ m_full_texture_original_name, m_full_texture );
+  //
+  //   std::cout << "finished creating full texture" << std::endl;
+  //   // std::cin.get();
+  //
+  //   // m_textures.clear();
+  //
+  //   fix_exposure();
+  //
+  //   // std::cout << "writing to file-----------" << m_path <<  "full_texture.png" << std::endl;
+  //   cv::imwrite( m_path+ m_full_texture_name, m_full_texture );
+  //
+  //   m_full_texture.release();
+  //   for (size_t i = 0; i < m_textures.size(); i++) {
+  //     m_textures[i].release();
+  //   }
+  //   // m_textures.clear();
+  //
+  //   std::cout << "finished creating fixing exposure" << std::endl;
+  //   // std::cin.get();
+
+
+
+
   std::cout << "OBJ_READER::create_full_texture" << std::endl;
 
    //Calculate how big should the full_texture be
-   m_multiplier=ceil(sqrt(m_textures.size()));
+   m_multiplier=ceil(sqrt(m_texture_file_names.size()));
 
+   std::cout << "objreader::create_full_texture: individual tex size is " << m_indiv_texture_size << std::endl;
 
    //make a texture big enough to get all of the small ones
-   int t_rows=m_textures[0].rows;
-   int t_cols=m_textures[0].cols;
+   int t_rows=m_indiv_texture_size;
+   int t_cols=m_indiv_texture_size;
    //32788
    std::cout << "full texture will be: " << t_rows*m_multiplier << " x " <<  t_cols*m_multiplier << std::endl;
-   std::cout << "type of full texture is " <<  type2str(m_textures[0].type()) << std::endl;
-   m_full_texture = cv::Mat::zeros(t_rows*m_multiplier, t_cols*m_multiplier, m_textures[0].type()) ;
+  //  std::cout << "type of full texture is " <<  type2str(m_textures[0].type()) << std::endl;
+   m_full_texture = cv::Mat::zeros(t_rows*m_multiplier, t_cols*m_multiplier, CV_8UC3) ;
 
    //Copy the textures in a row by row manner.
     int x_idx=0, y_idx=-t_rows;
-    for (size_t i = 0; i < m_textures.size(); i++) {
+    for (size_t i = 0; i < m_texture_file_names.size(); i++) {
       if ((i)%m_multiplier==0){
         x_idx=0;
         y_idx+=t_rows;
@@ -142,7 +215,11 @@ void OBJReader2::create_full_texture(){
       std::vector<double> offset_vec={offset_x,offset_y};
       m_tcoord_offsets.push_back(offset_vec);
 
-      m_textures[i].copyTo(m_full_texture(cv::Rect(x_idx, y_idx, t_cols, t_rows)));
+      cv::Mat img= cv::imread(m_texture_file_names[i]);
+      cv::Size size(m_indiv_texture_size,m_indiv_texture_size);
+      cv::resize(img,img,size);//resize image
+
+      img.copyTo(m_full_texture(cv::Rect(x_idx, y_idx, t_cols, t_rows)));
     }
 
     //Increase the exposure
@@ -160,7 +237,11 @@ void OBJReader2::create_full_texture(){
     // std::cout << "writing to file-----------" << m_path <<  "full_texture.png" << std::endl;
     cv::imwrite( m_path+ m_full_texture_name, m_full_texture );
 
-    // m_full_texture.release();
+    m_full_texture.release();
+    // for (size_t i = 0; i < m_textures.size(); i++) {
+    //   m_textures[i].release();
+    // }
+    // m_textures.clear();
 
     std::cout << "finished creating fixing exposure" << std::endl;
     // std::cin.get();
@@ -241,10 +322,11 @@ void OBJReader2::read_obj(){
 
 
 void OBJReader2::transform_tcoords(){
+  std::cout << "OBJReader2:: transform_tcoords" << std::endl;
   std::vector <int> tcoords_checked(m_tcoords.size(),0);
 
   //Loop through every material, though every face and change the tcoords taking into account the offset
-  for (size_t mat_idx = 0; mat_idx < m_textures.size(); mat_idx++) {
+  for (size_t mat_idx = 0; mat_idx < m_texture_file_names.size(); mat_idx++) {
     for (size_t poly_idx = 0; poly_idx < m_polys[mat_idx].size(); poly_idx++) {
       for (size_t point_idx = 0; point_idx < 3; point_idx++) {
         int tcoord_idx=m_polys[mat_idx][poly_idx][point_idx][1];
@@ -572,7 +654,7 @@ void OBJReader2::write_to_poly(){
     indices[2].resize(max);
 
 
-    for (size_t mat_idx = 0; mat_idx < m_textures.size(); mat_idx++) {
+    for (size_t mat_idx = 0; mat_idx < m_texture_file_names.size(); mat_idx++) {
       for (size_t poly_idx = 0; poly_idx < m_polys[mat_idx].size(); poly_idx++) {
         for (size_t point_idx = 0; point_idx < 3; point_idx++) {
 
@@ -616,7 +698,7 @@ void OBJReader2::write_to_poly(){
     std::vector <int> point_index(max_size, 0);
 
     int index=0;
-    for (size_t mat_idx = 0; mat_idx < m_textures.size(); mat_idx++) {
+    for (size_t mat_idx = 0; mat_idx < m_texture_file_names.size(); mat_idx++) {
       for (size_t poly_idx = 0; poly_idx < m_polys[mat_idx].size(); poly_idx++) {
         vtk_polys->InsertNextCell(3);
         for (size_t point_idx = 0; point_idx < 3; point_idx++) {
@@ -652,7 +734,7 @@ void OBJReader2::write_to_poly(){
 
 
     int gl_idx=0;  //global index that just indicates point in the mesh
-    for (size_t mat_idx = 0; mat_idx < m_textures.size(); mat_idx++) {
+    for (size_t mat_idx = 0; mat_idx < m_texture_file_names.size(); mat_idx++) {
       for (size_t poly_idx = 0; poly_idx < m_polys[mat_idx].size(); poly_idx++) {
         vtk_polys->InsertNextCell(3);
         for (size_t point_idx = 0; point_idx < 3; point_idx++) {

@@ -77,6 +77,8 @@ private:
      int m_multiplier;  //how big is the full texture with respect to the original ones.
      matrix_type m_tcoord_offsets;
 
+     int m_indiv_texture_size;
+
      matrix_type m_points;
      matrix_type m_normals;
      matrix_type m_tcoords;

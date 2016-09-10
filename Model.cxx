@@ -478,7 +478,7 @@ void Model::delete_streched_trigs(){
     }
 
     //Now we have a triangle with 3 points
-    double thresh=0.1;
+    double thresh=0.2;
 
     if (  dist(trig[0], trig[1])  > thresh || dist(trig[0], trig[2]) >thresh  || dist(trig[2], trig[1]) >thresh ){
       // std::cout << "delete cell" << i << std::endl;
