@@ -983,30 +983,62 @@ void Model::compute_unwrap4(){
     angle=angle*180.0/M_PI;
     // std::cout << "angle is: " << angle << std::endl;
     angle=std::fabs(angle-180.0);
-    if (angle>60.0){ //deviation from the 180
-      // second_pt_idx=2;
+    // if (angle>60.0){ //deviation from the 180
+    //   // second_pt_idx=2;
+    //
+    //   int idx_0=corners_mesh[0].index;
+    //   int idx_1=corners_mesh[1].index;
+    //   int idx_2=corners_mesh[2].index;
+    //
+    //   if (idx_1>idx_0) idx_2=idx_0-1;
+    //   if (idx_1<idx_0) idx_2=idx_0+1;
+    //
+    //   //special cases
+    //   if (idx_0==0 && idx_1==m_num_walls-1)  idx_2=1;
+    //   if (idx_0==0 && idx_1==1)  idx_2=m_num_walls-1;
+    //   if (idx_0==m_num_walls-1 && idx_1==m_num_walls-2)  idx_2=0;
+    //   if (idx_0==m_num_walls-1 && idx_1==0)  idx_2=m_num_walls-2;
+    //
+    //   //find the corner that has index equals to idx2
+    //   for (size_t cor = 0; cor < corners_mesh.size(); cor++) {
+    //     if(corners_mesh[cor].index==idx_2){
+    //         second_pt_idx=cor;
+    //     }
+    //   }
+    //
+    // }
 
-      int idx_0=corners_mesh[0].index;
-      int idx_1=corners_mesh[1].index;
-      int idx_2=corners_mesh[2].index;
+    //second attempt look at the second posibility of angle and check if its better
+    int idx_0=corners_mesh[0].index;
+    int idx_1=corners_mesh[1].index;
+    int idx_2;
 
-      if (idx_1>idx_0) idx_2=idx_0-1;
-      if (idx_1<idx_0) idx_2=idx_0+1;
+    if (idx_1>idx_0) idx_2=idx_0-1;
+    if (idx_1<idx_0) idx_2=idx_0+1;
 
-      //special cases
-      if (idx_0==0 && idx_1==m_num_walls-1)  idx_2=1;
-      if (idx_0==0 && idx_1==1)  idx_2=m_num_walls-1;
-      if (idx_0==m_num_walls-1 && idx_1==m_num_walls-2)  idx_2=0;
-      if (idx_0==m_num_walls-1 && idx_1==0)  idx_2=m_num_walls-2;
+    //special cases
+    if (idx_0==0 && idx_1==m_num_walls-1)  idx_2=1;
+    if (idx_0==0 && idx_1==1)  idx_2=m_num_walls-1;
+    if (idx_0==m_num_walls-1 && idx_1==m_num_walls-2)  idx_2=0;
+    if (idx_0==m_num_walls-1 && idx_1==0)  idx_2=m_num_walls-2;
 
-      //find the corner that has index equals to idx2
-      for (size_t cor = 0; cor < corners_mesh.size(); cor++) {
-        if(corners_mesh[cor].index==idx_2){
-            second_pt_idx=cor;
-        }
+    //find the corner that has index equals to idx2
+    for (size_t cor = 0; cor < corners_mesh.size(); cor++) {
+      if(corners_mesh[cor].index==idx_2){
+          second_pt_idx=cor;
       }
-
     }
+
+    //check if its grabbing the points in the other direction is bettter (have lower deviation from 180)
+    double angle2;
+    angle2=find_angle(corners_mesh[0].point,m_points_wrapped[i],corners_mesh[second_pt_idx].point);
+    angle2=angle2*180.0/M_PI;
+    angle2=std::fabs(angle2-180.0);
+
+    if (angle2>angle){
+      second_pt_idx=1;
+    }
+
 
 
     int clust_idx= std::max(corners_mesh[0].index, corners_mesh[second_pt_idx].index) -1 ;
@@ -1083,11 +1115,11 @@ void Model::compute_unwrap4(){
   std::cout << "finished clutering points" << std::endl;
 
   for (size_t i = 0; i < m_num_walls; i++) {
-    pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer2");
-    viewer.showCloud (clustered_clouds[i]);
-    while (!viewer.wasStopped ())
-    {
-    }
+    // pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer2");
+    // viewer.showCloud (clustered_clouds[i]);
+    // while (!viewer.wasStopped ())
+    // {
+    // }
   }
 
 
