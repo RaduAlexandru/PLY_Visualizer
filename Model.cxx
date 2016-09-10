@@ -742,8 +742,9 @@ void Model::compute_unwrap4(){
   seg.setOptimizeCoefficients (true);
   seg.setModelType (pcl::SACMODEL_PLANE);
   seg.setMethodType (pcl::SAC_RANSAC);
-  seg.setMaxIterations (300);
-  seg.setDistanceThreshold (0.06);
+  seg.setMaxIterations (400);
+  // seg.setDistanceThreshold (0.06);
+  seg.setDistanceThreshold (0.04);
   // seg.setDistanceThreshold (0.10);
 
   int i=0, nr_points = (int) m_points_wrapped_ds->points.size ();
@@ -1022,10 +1023,13 @@ void Model::compute_unwrap4(){
     if (idx_0==m_num_walls-1 && idx_1==m_num_walls-2)  idx_2=0;
     if (idx_0==m_num_walls-1 && idx_1==0)  idx_2=m_num_walls-2;
 
+    // std::cout << "idexes are: "<< idx_0 << " " << idx_1 << " : " << idx_2  << std::endl;
+
     //find the corner that has index equals to idx2
     for (size_t cor = 0; cor < corners_mesh.size(); cor++) {
       if(corners_mesh[cor].index==idx_2){
           second_pt_idx=cor;
+          break;
       }
     }
 
@@ -1037,12 +1041,36 @@ void Model::compute_unwrap4(){
 
     if (angle2>angle){
       second_pt_idx=1;
+    }else{
+      //angle2  is better so we assing the point to the other cluster
+      // std::cout << "closest points are: " << corners_mesh[0].index << " and " << corners_mesh[1].index << std::endl;
+      // std::cout << "angle is: " <<angle << std::endl;
+      // std::cout << "angle2 is: " << angle2 << std::endl;
+
+      // if (angle2>70){
+      //   std::cout << "closest points are: " << corners_mesh[0].index << " and " << corners_mesh[1].index << std::endl;
+      //   std::cout << "angle is: " <<angle << std::endl;
+      //   std::cout << "angle2 is: " << angle2 << std::endl;
+      //   std::cin.get();
+      // }
+
     }
+
+    // if (angle2>70){
+    //   std::cout << "angle2 is: " <<angle2 << std::endl;
+    //    std::cin.get();
+    // }
+    // if (angle>70){
+    //   std::cout << "angle is: "<< angle << std::endl;
+    //   std::cin.get();
+    // }
+
+
+
 
 
 
     int clust_idx= std::max(corners_mesh[0].index, corners_mesh[second_pt_idx].index) -1 ;
-
     int min_idx=std::min(corners_mesh[0].index, corners_mesh[second_pt_idx].index);
     int max_idx=std::max(corners_mesh[0].index, corners_mesh[second_pt_idx].index);
     if(min_idx==0 && max_idx==m_num_walls-1){

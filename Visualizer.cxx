@@ -452,10 +452,33 @@ vtkSmartPointer<vtkPolyData> Visualizer::auto_fix_orientation( vtkSmartPointer<v
 
   transformFilter->SetTransform(trans);
   transformFilter->Update();
-  return transformFilter->GetOutput();
 
+  vtkSmartPointer<vtkPolyData> wall_aligned;
+  wall_aligned=transformFilter->GetOutput();
+
+  // return wall_aligned;
+
+
+  //Rotate so as to get the 8th wall in the middle
+  vtkSmartPointer<vtkTransform> trans2 = vtkSmartPointer<vtkTransform>::New();
+  trans2->RotateZ(90);
+  vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter2 = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+  #if VTK_MAJOR_VERSION <= 5
+      transformFilter2->SetInputConnection(wall_aligned->GetProducerPort());
+  #else
+      transformFilter2->SetInputData(wall_aligned);
+  #endif
+  transformFilter2->SetTransform(trans2);
+  transformFilter2->Update();
 
   std::cout << "finished autofixing the orientation" << std::endl;
+
+
+
+
+  return transformFilter2->GetOutput();
+
+
 
 
 }
