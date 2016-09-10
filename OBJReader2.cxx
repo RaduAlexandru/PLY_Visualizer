@@ -74,7 +74,7 @@ void OBJReader2::read_textures(){
   // std::cin.get();
 
   std::cout << "creating fake big img" << std::endl;
-  cv::Mat full = cv::Mat::zeros(32000, 32000, CV_8UC3) ;
+  // cv::Mat full = cv::Mat::zeros(32000, 32000, CV_8UC3) ;
 
   std::cout << "finished creating fake big img" << std::endl;
   // std::cin.get();
@@ -153,14 +153,14 @@ void OBJReader2::create_full_texture(){
     std::cout << "finished creating full texture" << std::endl;
     // std::cin.get();
 
-    m_textures.clear();
+    // m_textures.clear();
 
     fix_exposure();
 
     // std::cout << "writing to file-----------" << m_path <<  "full_texture.png" << std::endl;
     cv::imwrite( m_path+ m_full_texture_name, m_full_texture );
 
-    m_full_texture.release();
+    // m_full_texture.release();
 
     std::cout << "finished creating fixing exposure" << std::endl;
     // std::cin.get();
