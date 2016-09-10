@@ -30,7 +30,7 @@ Model::Model():
   m_experiemental_loading(true),
   m_fix_orientation(true),
   m_num_walls(8),
-  m_deform_walls(true),
+  m_deform_walls(false),
   m_path_global(""),  //Will be set afterwards
   m_render_full_img(true),
   m_render_grid_unwrapped(true),
@@ -742,8 +742,9 @@ void Model::compute_unwrap4(){
   seg.setOptimizeCoefficients (true);
   seg.setModelType (pcl::SACMODEL_PLANE);
   seg.setMethodType (pcl::SAC_RANSAC);
-  seg.setMaxIterations (100);
-  seg.setDistanceThreshold (0.04);
+  seg.setMaxIterations (300);
+  seg.setDistanceThreshold (0.06);
+  // seg.setDistanceThreshold (0.10);
 
   int i=0, nr_points = (int) m_points_wrapped_ds->points.size ();
 
@@ -938,7 +939,7 @@ void Model::compute_unwrap4(){
      }
 
 
-  // //Show intersection points
+  //Show intersection points
   // pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer2");
   // viewer.showCloud (cloud);
   // while (!viewer.wasStopped ())
@@ -1283,16 +1284,36 @@ void Model::compute_unwrap4(){
 
  //Move the walls closer together
  matrix_type min_max(cluster_count);
+ // for (size_t clust = 0; clust < cluster_count; clust++) {
+ //   //Go through all the indices and calculate the min max for that cluster_count  (Watchout is is on the ds)
+ //   double min_x_cur=std::numeric_limits<double>::max();;
+ //   double max_x_cur=std::numeric_limits<double>::min();;
+ //   for (size_t i_idx = 0; i_idx < m_inliers_vec[clust]->indices.size (); i_idx++) {
+ //     if ( clustered_clouds[clust]->points[m_inliers_vec[clust]->indices[i_idx]].x > max_x_cur  ){
+ //       max_x_cur=clustered_clouds[clust]->points[m_inliers_vec[clust]->indices[i_idx]].x;
+ //     }
+ //     if ( clustered_clouds[clust]->points[m_inliers_vec[clust]->indices[i_idx]].x < min_x_cur  ){
+ //       min_x_cur=clustered_clouds[clust]->points[m_inliers_vec[clust]->indices[i_idx]].x;
+ //     }
+ //
+ //   }
+ //   // std::cout << "cluster " << clust  << std::endl;
+ //   // std::cout << "min max " <<  min_x_cur << " " << max_x_cur << clust  << std::endl;
+ //
+ //   min_max[clust]=row_type {min_x_cur, max_x_cur};  //there are now unordered
+ // }
+
+
  for (size_t clust = 0; clust < cluster_count; clust++) {
    //Go through all the indices and calculate the min max for that cluster_count  (Watchout is is on the ds)
    double min_x_cur=std::numeric_limits<double>::max();;
    double max_x_cur=std::numeric_limits<double>::min();;
-   for (size_t i_idx = 0; i_idx < m_inliers_vec[clust]->indices.size (); i_idx++) {
-     if ( clustered_clouds[clust]->points[m_inliers_vec[clust]->indices[i_idx]].x > max_x_cur  ){
-       max_x_cur=clustered_clouds[clust]->points[m_inliers_vec[clust]->indices[i_idx]].x;
+   for (size_t i_idx = 0; i_idx < clustered_clouds[clust]->points.size (); i_idx++) {
+     if ( clustered_clouds[clust]->points[i_idx].x > max_x_cur  ){
+       max_x_cur=clustered_clouds[clust]->points[i_idx].x;
      }
-     if ( clustered_clouds[clust]->points[m_inliers_vec[clust]->indices[i_idx]].x < min_x_cur  ){
-       min_x_cur=clustered_clouds[clust]->points[m_inliers_vec[clust]->indices[i_idx]].x;
+     if ( clustered_clouds[clust]->points[i_idx].x < min_x_cur  ){
+       min_x_cur=clustered_clouds[clust]->points[i_idx].x;
      }
 
    }
@@ -1387,28 +1408,28 @@ void Model::compute_unwrap4(){
      searchPoint=clustered_clouds[clust]->points[i];
 
 
-    //  if (m_deform_walls){
-    //    int K = 50;
-    //    // double radius=0.1;
-    //    double radius=0.05;
-    //    //  double radius=0.16;
-     //
-    //    std::vector<int> pointIdxNKNSearch(K);
-    //    std::vector<float> pointNKNSquaredDistance(K);
-     //
-    //    double avg_dist=0.0;
-     //
-    //    if (  kdtree.radiusSearch (searchPoint, radius, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
-    //    {
-    //     for (size_t p = 0; p < pointIdxNKNSearch.size (); ++p){
-    //        // //average the dist of the K nearest neghbours
-    //        avg_dist+=clustered_clouds[clust]->points[ pointIdxNKNSearch[p] ].y;
-    //      }
-    //    }
-     //
-    //    avg_dist=avg_dist/pointIdxNKNSearch.size ();
-    //    m_points_unwrapped[idx][1]=m_points_unwrapped[idx][1]-avg_dist;
-    //  }
+     if (m_deform_walls){
+       int K = 50;
+       // double radius=0.1;
+       double radius=0.05;
+       //  double radius=0.16;
+
+       std::vector<int> pointIdxNKNSearch(K);
+       std::vector<float> pointNKNSquaredDistance(K);
+
+       double avg_dist=0.0;
+
+       if (  kdtree.radiusSearch (searchPoint, radius, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
+       {
+        for (size_t p = 0; p < pointIdxNKNSearch.size (); ++p){
+           // //average the dist of the K nearest neghbours
+           avg_dist+=clustered_clouds[clust]->points[ pointIdxNKNSearch[p] ].y;
+         }
+       }
+
+       avg_dist=avg_dist/pointIdxNKNSearch.size ();
+       m_points_unwrapped[idx][1]=m_points_unwrapped[idx][1]-avg_dist;
+     }
 
 
 

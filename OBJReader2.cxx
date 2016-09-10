@@ -71,13 +71,13 @@ void OBJReader2::read_mtl_file(){
 
 void OBJReader2::read_textures(){
   std::cout << "OBJ_READER::read_textures" << std::endl;
-  std::cin.get();
+  // std::cin.get();
 
   std::cout << "creating fake big img" << std::endl;
   cv::Mat full = cv::Mat::zeros(32000, 32000, CV_8UC3) ;
 
   std::cout << "finished creating fake big img" << std::endl;
-  std::cin.get();
+  // std::cin.get();
   // exit(1);
 
   m_textures.clear();
@@ -106,7 +106,7 @@ void OBJReader2::read_textures(){
   size_t sizeInBytes = m_textures[0].step[0] * m_textures[0].rows;
   std::cout << "size in bytes of first texture: " <<  sizeInBytes << std::endl;
   std::cout << "size in mb of first texture: " <<  sizeInBytes/1000/1000 << std::endl;
-  std::cin.get();
+  // std::cin.get();
 }
 
 
@@ -151,7 +151,7 @@ void OBJReader2::create_full_texture(){
     cv::imwrite( m_path+ m_full_texture_original_name, m_full_texture );
 
     std::cout << "finished creating full texture" << std::endl;
-    std::cin.get();
+    // std::cin.get();
 
     m_textures.clear();
 
