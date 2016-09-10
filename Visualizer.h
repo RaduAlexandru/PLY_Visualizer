@@ -47,6 +47,8 @@
 #include <vtkWorldPointPicker.h>
 #include <vtkInteractorObserver.h>
 
+#include "vtkTexturingHelper.h"
+
 
 
 #include <opencv2/core/core.hpp>

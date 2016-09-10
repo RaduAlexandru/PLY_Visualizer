@@ -8,7 +8,9 @@
 #include <vtkDataArray.h>
 #include <algorithm>
 
-
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 
 
@@ -28,5 +30,7 @@ vtkSmartPointer<vtkFloatArray> vector_to_vtk_normal_tcoords( matrix_type normals
 double interpolate ( double input , double input_start, double input_end, double output_start, double output_end);
 
 double median(row_type vec);
+
+std::string type2str(int type);
 
 #endif

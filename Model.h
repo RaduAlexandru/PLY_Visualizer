@@ -93,6 +93,12 @@ struct by_distance_center {
 };
 
 
+static bool abs_compare(int a, int b)
+{
+    return (std::abs(a) < std::abs(b));
+}
+
+
 struct plane_struct {
     pcl::ModelCoefficients coef;
     Eigen::Vector3f normal;
@@ -100,10 +106,36 @@ struct plane_struct {
     int index_cluster; //index to indicate which cluster is the plane resposible for
 };
 
+struct line_struct {
+     row_type direction;
+     row_type point;
+     double angle;   //angle of the line with respect to the x axis
+     double distance; //distance from a point to this line. Will be changed in each iteration when a point is checked
+     int index; //index assigned to indicat the ordering with respect to the angle
+};
+
+struct point_struct{
+    row_type point;
+    double angle;   //angle of the line with respect to the x axis
+    double distance; //distance from a point to this line. Will be changed in each iteration when a point is checked
+    int index; //index assigned to indicat the ordering with respect to the angle
+};
+
 
 struct by_angle {
     bool operator()(plane_struct const &a, plane_struct const &b) {
         return a.angle < b.angle;
+    }
+
+    bool operator()(point_struct const &a, point_struct const &b) {
+        return a.angle < b.angle;
+    }
+};
+
+
+struct by_distance{
+    bool operator()(point_struct const &a, point_struct const &b) {
+        return a.distance < b.distance;
     }
 };
 
@@ -167,6 +199,7 @@ public:
      //Unwrap results
       std::vector<pcl::PointIndices::Ptr> m_inliers_vec;
       matrix_type m_normals_blured;
+
 
 
       //IR
@@ -242,6 +275,7 @@ public:
      void compute_unwrap();
      void compute_unwrap2();
      void compute_unwrap3();
+     void compute_unwrap4();
      std::vector<double> compute_angles(matrix_type points);
      std::vector<double> compute_distances_to_radius(matrix_type points, double radius);
      void compute_plain_colors();
@@ -256,6 +290,8 @@ public:
      bool is_contained(row_type , row_type);
      pcl::PointCloud<pcl::PointXYZ>::Ptr compute_decimated(matrix_type);
      double dist(row_type vec1, row_type vec2);
+     double dist_no_z(row_type vec1, row_type vec2);
+     double find_angle(row_type p0, row_type p1, row_type p2); //angle between 3 points where p1 is the center
 
      void blur_normals();
 

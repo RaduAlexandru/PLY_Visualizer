@@ -153,6 +153,33 @@ Visualizer::Visualizer():
 
 
 void Visualizer::on_loadFileButton_clicked(){
+
+
+  // //Vtktexturing helper
+  // vtkTexturingHelper helper;
+  // helper.ReadGeometryFile("/media/alex/Data/Master/SHK/Data/New_data/obj_modif/calibMesh3of8.obj");
+  // helper.ReadTextureFiles("/media/alex/Data/Master/SHK/Data/New_data/obj_modif/tex", ".png", 2);
+  // helper.ApplyTextures();
+  //
+  // vtkSmartPointer<vtkActor> actor = helper.GetActor();
+  //
+  //
+  //
+  // renderer->AddActor(actor);
+  // renderer->ResetCamera();
+  //
+  //
+  //
+  //
+  //
+  // return;
+  // //---------------
+
+
+
+
+
+
   QString file_name;
   QString selfilter = tr("Mesh (*.obj *.ply)");
   file_name = QFileDialog::getOpenFileName(this,
@@ -313,6 +340,7 @@ vtkSmartPointer<vtkPolyData> Visualizer::auto_fix_orientation( vtkSmartPointer<v
   std::cout << "fixing orientation" << std::endl;
 
   matrix_type normals_for_orientation;
+  int step_val=100;
 
   double angle=0.0;
 
@@ -532,7 +560,7 @@ void  Visualizer::updateView(int reset_camera){
     renderer->ResetCamera();
   }
 
-  // draw_sphere(0,0,0);
+  draw_sphere(0,0,0);
 
   // draw_text_grid();
   std::cout << "START UPDATE VIEW- wall" << std::endl;
@@ -589,7 +617,7 @@ void Visualizer::on_unwrapButton_clicked(){
 
   if (model->m_points_unwrapped.empty() && !model->m_points_wrapped.empty()){
     // model->compute_unwrap(); //for cylinder chimneys
-    model->compute_unwrap2();
+    model->compute_unwrap4();
     model->write_points_to_mesh();  //Need to add the computed unwraps to the mesh so that the grid is correct
     model->create_grid();
   }

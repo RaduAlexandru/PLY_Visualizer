@@ -71,6 +71,16 @@ void OBJReader2::read_mtl_file(){
 
 void OBJReader2::read_textures(){
   std::cout << "OBJ_READER::read_textures" << std::endl;
+  std::cin.get();
+
+  std::cout << "creating fake big img" << std::endl;
+  cv::Mat full = cv::Mat::zeros(32000, 32000, CV_8UC3) ;
+
+  std::cout << "finished creating fake big img" << std::endl;
+  std::cin.get();
+  // exit(1);
+
+  m_textures.clear();
 
   int max_rows=0, max_cols=0;
 
@@ -91,6 +101,12 @@ void OBJReader2::read_textures(){
   }
 
   m_polys.resize(m_texture_file_names.size());  //polys will be clasified in vectors as many as we have materials
+
+  std::cout << "finished reading textures" << std::endl;
+  size_t sizeInBytes = m_textures[0].step[0] * m_textures[0].rows;
+  std::cout << "size in bytes of first texture: " <<  sizeInBytes << std::endl;
+  std::cout << "size in mb of first texture: " <<  sizeInBytes/1000/1000 << std::endl;
+  std::cin.get();
 }
 
 
@@ -104,6 +120,9 @@ void OBJReader2::create_full_texture(){
    //make a texture big enough to get all of the small ones
    int t_rows=m_textures[0].rows;
    int t_cols=m_textures[0].cols;
+   //32788
+   std::cout << "full texture will be: " << t_rows*m_multiplier << " x " <<  t_cols*m_multiplier << std::endl;
+   std::cout << "type of full texture is " <<  type2str(m_textures[0].type()) << std::endl;
    m_full_texture = cv::Mat::zeros(t_rows*m_multiplier, t_cols*m_multiplier, m_textures[0].type()) ;
 
    //Copy the textures in a row by row manner.
@@ -131,10 +150,20 @@ void OBJReader2::create_full_texture(){
 
     cv::imwrite( m_path+ m_full_texture_original_name, m_full_texture );
 
+    std::cout << "finished creating full texture" << std::endl;
+    std::cin.get();
+
+    m_textures.clear();
+
     fix_exposure();
 
     // std::cout << "writing to file-----------" << m_path <<  "full_texture.png" << std::endl;
     cv::imwrite( m_path+ m_full_texture_name, m_full_texture );
+
+    m_full_texture.release();
+
+    std::cout << "finished creating fixing exposure" << std::endl;
+    // std::cin.get();
 
 }
 
