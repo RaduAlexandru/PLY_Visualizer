@@ -640,7 +640,7 @@ void Visualizer::on_unwrapButton_clicked(){
 
   if (model->m_points_unwrapped.empty() && !model->m_points_wrapped.empty()){
     // model->compute_unwrap(); //for cylinder chimneys
-    model->compute_unwrap4();
+    model->compute_unwrap5();
     model->write_points_to_mesh();  //Need to add the computed unwraps to the mesh so that the grid is correct
     model->create_grid();
   }

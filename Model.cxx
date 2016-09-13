@@ -719,6 +719,561 @@ void Model::compute_unwrap3(){
 
 
 
+void Model::compute_unwrap5(){
+//Run ransca to get intial planes
+//each point will get clustered into the plane that is closest to it.
+
+
+  int cluster_count = m_num_walls;
+
+  //vector of planes that will be ftted to the clouds
+  planes.clear();
+  planes.resize(m_num_walls);
+  for (size_t i = 0; i < m_num_walls; i++) {
+     planes[i].coef.values.resize(4);
+     planes[i].index_cluster=i;
+   }
+
+
+  //Get the rough planes
+  pcl::SACSegmentation<pcl::PointXYZ> seg;
+  pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_plane (new pcl::PointCloud<pcl::PointXYZ> ());
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_f(new pcl::PointCloud<pcl::PointXYZ>);
+  seg.setOptimizeCoefficients (false);
+  seg.setModelType (pcl::SACMODEL_PLANE);
+  seg.setMethodType (pcl::SAC_RANSAC);
+  seg.setMaxIterations (400);
+  seg.setDistanceThreshold (0.03);
+
+  int i=0, nr_points = (int) m_points_wrapped_ds->points.size ();
+
+  while (i<m_num_walls)
+  {
+    // Segment the largest planar component from the remaining cloud
+    seg.setInputCloud (m_points_wrapped_ds);
+    seg.segment (*inliers, (planes[i].coef));
+    if (inliers->indices.size () == 0)
+    {
+      std::cout << "Could not estimate a planar model for the given dataset." << std::endl;
+      break;
+    }
+
+    // Extract the planar inliers from the input cloud
+    pcl::ExtractIndices<pcl::PointXYZ> extract;
+    extract.setInputCloud (m_points_wrapped_ds);
+    extract.setIndices (inliers);
+    extract.setNegative (false);
+
+    // Get the points associated with the planar surface
+    extract.filter (*cloud_plane);
+    std::cout << "PointCloud representing the planar component: " << cloud_plane->points.size () << " data points." << std::endl;
+
+    // pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer2");
+    // viewer.showCloud (cloud_plane);
+    // while (!viewer.wasStopped ())
+    // {
+    // }
+
+    // Remove the planar inliers, extract the rest
+    extract.setNegative (true);
+    extract.filter (*cloud_f);
+    *m_points_wrapped_ds = *cloud_f;
+
+    i++;
+  }
+
+
+  //Add the normal as an eigen vector for easier calculations
+  for (size_t i = 0; i < planes.size(); i++) {
+    planes[i].normal = Eigen::Vector3f::Map(planes[i].coef.values.data(), 3);
+  }
+
+
+  //Fix normals of planes so that they point towards the center
+  //Dot product between the (point on a plane- center) and the normal (if it's negative then flip the normal)
+  //WATCHOUT I SET Z and Y to 0 because if I set x and y Imight not get a solution since the plane might be paralel to Z axis.
+  //Needs a more reobust way of finding points to account for parallel planes
+  for (size_t i = 0; i < planes.size(); i++) {
+    Eigen::Vector3f dir((- (planes[i].coef.values[3] / planes[i].coef.values[0]) ) - m_center[0],
+                        - m_center[1],
+                        - m_center[2]);
+
+    double dot= planes[i].normal.dot(dir);
+
+    if (dot<0.0){
+      std::for_each(planes[i].coef.values.begin(), planes[i].coef.values.end(), [](float& d) { d=-d;});
+      planes[i].normal = Eigen::Vector3f::Map(planes[i].coef.values.data(), 3);
+    }
+  }
+
+
+
+  //get the angles of the planes with respect to the x axis
+  for (size_t i = 0; i < planes.size(); i++) {
+      Eigen::Vector2f normal = Eigen::Vector2f::Map(planes[i].coef.values.data(), 2);
+      Eigen::Vector2f x_axis (1.0, 0.0);
+
+
+      float dot = normal.dot(x_axis);      //dot produt
+      float cross = normal.x()*x_axis.y() - x_axis.x()*normal.y(); //cross, determinant
+      double angle = atan2(cross, dot) ;  // atan2(y, x) or atan2(sin, cos)
+
+      angle = interpolate ( angle , -M_PI, M_PI, 0.0, 1.0);
+
+      planes[i].angle=angle;
+  }
+  std::sort(planes.begin(), planes.end(), by_angle());
+
+  for (size_t i = 0; i < planes.size(); i++) {
+    planes[i].index_cluster=i;
+    planes[i].coef.values[3]=planes[i].coef.values[3]-0.2;  //HACK
+  }
+
+
+ //-------------------
+
+  matrix_type_i clustered_points_indices(m_num_walls);
+
+
+  //Build a vector of cloud points
+  clustered_clouds.clear();
+  for (size_t clust = 0; clust < m_num_walls; clust++) {
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+   clustered_clouds.push_back(cloud);
+  }
+
+
+
+
+  int clust_idx;
+  //For each point in the mesh get the plane that is closest to it.
+  for (size_t i = 0; i < m_points_wrapped.size(); i++) {
+
+    int closest_plane_idx=-1;
+    double distance=999999999;
+
+    for (size_t plane_idx = 0; plane_idx < planes.size(); plane_idx++) {
+      pcl::PointXYZ p;
+      p.x=m_points_wrapped[i][0];
+      p.y=m_points_wrapped[i][1];
+      p.z=m_points_wrapped[i][2];
+      double cur_dist=pcl::pointToPlaneDistanceSigned (p , planes[plane_idx].coef.values[0],
+                                                           planes[plane_idx].coef.values[1],
+                                                           planes[plane_idx].coef.values[2],
+                                                           planes[plane_idx].coef.values[3]);
+
+      cur_dist=std::fabs(cur_dist);
+      if (cur_dist < distance){
+        distance= cur_dist;
+        closest_plane_idx=plane_idx;
+      }
+    }
+
+
+    pcl::PointXYZ pt;
+    pt.x=m_points_wrapped[i][0];
+    pt.y=m_points_wrapped[i][1];
+    pt.z=m_points_wrapped[i][2];
+
+
+    clust_idx=planes[closest_plane_idx].index_cluster;
+    clustered_clouds[clust_idx]->points.push_back(pt);
+    clustered_points_indices[clust_idx].push_back(i);
+  }
+
+  std::cout << "finished clutering points" << std::endl;
+
+  for (size_t i = 0; i < m_num_walls; i++) {
+    // pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer2");
+    // viewer.showCloud (clustered_clouds[i]);
+    // while (!viewer.wasStopped ())
+    // {
+    // }
+  }
+
+
+  //-----------------------
+
+
+
+
+  //NOW we have the clutered clouds
+
+
+  //Decimate the clouds
+  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clustered_clouds_ds;
+  for (size_t clust = 0; clust < cluster_count; clust++) {
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    clustered_clouds_ds.push_back(cloud);
+  }
+  for (size_t clust = 0; clust < cluster_count; clust++) {
+    pcl::VoxelGrid<pcl::PointXYZ> ds;  //create downsampling filter
+    ds.setInputCloud (clustered_clouds[clust]);
+    ds.setLeafSize (0.1, 0.1, 0.1);
+    ds.filter (*clustered_clouds_ds[clust]);
+  }
+
+
+
+
+  //vector of planes that will be ftted to the clouds
+  planes.clear();
+  planes.resize(cluster_count);
+  for (size_t i = 0; i < cluster_count; i++) {
+     planes[i].coef.values.resize(4);
+     planes[i].index_cluster=i;
+   }
+
+
+  std::cout << "segmenting" << std::endl;
+
+  m_inliers_vec.clear();
+
+  #pragma omp parallel for
+  for (size_t clust = 0; clust < cluster_count; clust++) {
+    pcl::PointIndices::Ptr inliers2 (new pcl::PointIndices);
+    pcl::SACSegmentation<pcl::PointXYZ> seg2;
+
+    //  seg.setOptimizeCoefficients (true);
+
+    seg2.setModelType (pcl::SACMODEL_PLANE);
+    seg2.setMethodType (pcl::SAC_RANSAC);
+    //  seg.setDistanceThreshold (0.02);
+    seg2.setDistanceThreshold (0.05);
+   // seg.setDistanceThreshold (0.007);
+
+    seg2.setInputCloud (clustered_clouds[clust]);
+    seg2.segment (*inliers2, (planes[clust].coef));
+
+    if (inliers2->indices.size () == 0)
+    {
+      PCL_ERROR ("Could not estimate a planar model for the given dataset.");
+    }
+
+    m_inliers_vec.push_back(inliers2);
+
+
+    std::cerr << "Model coefficients: " << planes[clust].coef.values[0] << " "
+                                         << planes[clust].coef.values[1] << " "
+                                         << planes[clust].coef.values[2] << " "
+                                         << planes[clust].coef.values[3] << std::endl;
+ }
+
+
+ //Add the normal as an eigen vector for easier calculations
+ for (size_t i = 0; i < planes.size(); i++) {
+   planes[i].normal = Eigen::Vector3f::Map(planes[i].coef.values.data(), 3);
+ }
+
+
+ //Fix normals of planes so that they point towards the center
+ //Dot product between the (point on a plane- center) and the normal (if it's negative then flip the normal)
+ //WATCHOUT I SET Z and Y to 0 because if I set x and y Imight not get a solution since the plane might be paralel to Z axis.
+ //Needs a more reobust way of finding points to account for parallel planes
+ for (size_t i = 0; i < planes.size(); i++) {
+   Eigen::Vector3f dir((- (planes[i].coef.values[3] / planes[i].coef.values[0]) ) - m_center[0],
+                       - m_center[1],
+                       - m_center[2]);
+
+   double dot= planes[i].normal.dot(dir);
+
+   if (dot<0.0){
+     std::for_each(planes[i].coef.values.begin(), planes[i].coef.values.end(), [](float& d) { d=-d;});
+     planes[i].normal = Eigen::Vector3f::Map(planes[i].coef.values.data(), 3);
+   }
+ }
+
+
+
+ //get the angles of the planes with respect to the x axis
+ for (size_t i = 0; i < planes.size(); i++) {
+     Eigen::Vector2f normal = Eigen::Vector2f::Map(planes[i].coef.values.data(), 2);
+     Eigen::Vector2f x_axis (1.0, 0.0);
+
+
+     float dot = normal.dot(x_axis);      //dot produt
+     float cross = normal.x()*x_axis.y() - x_axis.x()*normal.y(); //cross, determinant
+     double angle = atan2(cross, dot) ;  // atan2(y, x) or atan2(sin, cos)
+
+     angle = interpolate ( angle , -M_PI, M_PI, 0.0, 1.0);
+
+     planes[i].angle=angle;
+ }
+ std::sort(planes.begin(), planes.end(), by_angle());
+
+
+
+
+ //Writing the original walls in the model
+ // std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clustered_clouds_ds;
+ clustered_clouds_original.clear();
+ for (size_t clust = 0; clust < cluster_count; clust++) {
+   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+   clustered_clouds_original.push_back(cloud);
+ }
+ for (size_t clust = 0; clust < cluster_count; clust++) {
+   clustered_clouds_original[clust]->width    = clustered_clouds[clust]->points.size();
+   clustered_clouds_original[clust]->height   = 1;
+   clustered_clouds_original[clust]->is_dense = false;
+   clustered_clouds_original[clust]->points.resize (clustered_clouds[clust]->points.size());
+
+   for (size_t i = 0; i < clustered_clouds[clust]->points.size(); i++){
+     clustered_clouds_original[clust]->points[i].x =  clustered_clouds[clust]->points[i].x;
+     clustered_clouds_original[clust]->points[i].y =  clustered_clouds[clust]->points[i].y;
+     clustered_clouds_original[clust]->points[i].z =  clustered_clouds[clust]->points[i].z;
+   }
+
+ }
+
+
+
+
+
+
+
+
+
+ // go through the planes and calculate the rotation translation matrix to map them
+ m_plane_centers.resize(planes.size());
+ #pragma omp parallel for
+ for (size_t i = 0; i < planes.size(); i++) {
+   //TODO::MAKE ALL this code use to use eigen, clean it
+
+   vtkSmartPointer<vtkPlaneSource> planeSource = vtkSmartPointer<vtkPlaneSource>::New();
+   planeSource->SetCenter(0.0, 0.0, 0.0);
+   planeSource->SetNormal( planes[i].coef.values[0],
+                           planes[i].coef.values[1],
+                           planes[i].coef.values[2]);
+   planeSource->Push(-planes[i].coef.values[3]);
+   planeSource->Update();
+
+   double center_vtk[3];
+   planeSource->GetCenter(center_vtk);
+   m_plane_centers[i]=row_type {center_vtk[0],center_vtk[1],center_vtk[2]};
+   // Eigen::Vector3f plane_center = Eigen::Vector3f::Map(center_vtk, 3);
+   // plane_center[2]=0.0;
+
+   Eigen::Vector3f plane_center;
+   plane_center[0]=center_vtk[0];
+   plane_center[1]=center_vtk[1];
+   plane_center[2]=0.0;
+
+
+   // double offset= 0.03*i;  //TODO REMOVE: Each plane gets closer and closer
+   // double offset= 0.05*i;  //TODO REMOVE: Each plane gets closer and closer
+   double offset= 0.00*i;  //TODO REMOVE: Each plane gets closer and closer
+
+
+   row_type end_point(3);
+   end_point[0]= planes[i].angle * m_circumference - offset; //I don't know why it needs to be summed and not -
+   end_point[1]= 0.0;
+   end_point[2]= 0.0;
+
+
+   //TEST: Second way of calculating the end point
+   // double angle_wall=360.0/(double)m_num_walls;
+   // angle_wall= angle_wall *M_PI/180.0;
+   // double side= sqrt (m_radius*m_radius +m_radius*m_radius -2*m_radius*m_radius* cos (angle_wall));
+   // // pos=pos/2;
+   // double pos= side*i;
+   // pos=pos- (side/2);
+   // end_point[0]=pos;
+   //-----------------
+
+   Eigen::Affine3f transform_2 = Eigen::Affine3f::Identity();
+   Eigen::Affine3f transform_center = Eigen::Affine3f::Identity();
+
+   // Define a translation of 2.5 meters on the x axis.
+   transform_2.translation() << end_point[0], end_point[1], end_point[2];
+   transform_center.translation() << -plane_center[0], -plane_center[1], -plane_center[2];
+
+
+   double r = (90 * M_PI /180) + interpolate (planes[i].angle, 0.0, 1.0, -M_PI, M_PI);
+   transform_2.rotate (Eigen::AngleAxisf (r, Eigen::Vector3f::UnitZ()));
+
+
+   std::cout << transform_2.matrix() << std::endl;
+   int clust_idx= planes[i].index_cluster;
+
+   pcl::transformPointCloud (*(clustered_clouds[clust_idx]), *(clustered_clouds[clust_idx]), transform_center);
+   pcl::transformPointCloud (*(clustered_clouds[clust_idx]), *(clustered_clouds[clust_idx]), transform_2);
+
+ }
+
+
+
+
+ //Move the walls closer together
+ matrix_type min_max(cluster_count);
+ // for (size_t clust = 0; clust < cluster_count; clust++) {
+ //   //Go through all the indices and calculate the min max for that cluster_count  (Watchout is is on the ds)
+ //   double min_x_cur=std::numeric_limits<double>::max();;
+ //   double max_x_cur=std::numeric_limits<double>::min();;
+ //   for (size_t i_idx = 0; i_idx < m_inliers_vec[clust]->indices.size (); i_idx++) {
+ //     if ( clustered_clouds[clust]->points[m_inliers_vec[clust]->indices[i_idx]].x > max_x_cur  ){
+ //       max_x_cur=clustered_clouds[clust]->points[m_inliers_vec[clust]->indices[i_idx]].x;
+ //     }
+ //     if ( clustered_clouds[clust]->points[m_inliers_vec[clust]->indices[i_idx]].x < min_x_cur  ){
+ //       min_x_cur=clustered_clouds[clust]->points[m_inliers_vec[clust]->indices[i_idx]].x;
+ //     }
+ //
+ //   }
+ //   // std::cout << "cluster " << clust  << std::endl;
+ //   // std::cout << "min max " <<  min_x_cur << " " << max_x_cur << clust  << std::endl;
+ //
+ //   min_max[clust]=row_type {min_x_cur, max_x_cur};  //there are now unordered
+ // }
+
+
+ for (size_t clust = 0; clust < cluster_count; clust++) {
+   //Go through all the indices and calculate the min max for that cluster_count  (Watchout is is on the ds)
+   double min_x_cur=std::numeric_limits<double>::max();;
+   double max_x_cur=std::numeric_limits<double>::min();;
+   for (size_t i_idx = 0; i_idx < clustered_clouds[clust]->points.size (); i_idx++) {
+     if ( clustered_clouds[clust]->points[i_idx].x > max_x_cur  ){
+       max_x_cur=clustered_clouds[clust]->points[i_idx].x;
+     }
+     if ( clustered_clouds[clust]->points[i_idx].x < min_x_cur  ){
+       min_x_cur=clustered_clouds[clust]->points[i_idx].x;
+     }
+
+   }
+   // std::cout << "cluster " << clust  << std::endl;
+   // std::cout << "min max " <<  min_x_cur << " " << max_x_cur << clust  << std::endl;
+
+   min_max[clust]=row_type {min_x_cur, max_x_cur};  //there are now unordered
+ }
+
+
+ //Now that we have the min and max, move them
+ std::cout << "movements" << std::endl;
+ row_type movements(cluster_count, 0.0);
+ for (size_t i = 0; i < planes.size(); i++) {
+   int clust_idx= planes[i].index_cluster;
+   if (i==0){
+     movements[clust_idx]= 0.0 - min_max[clust_idx][0];
+   }else{
+     movements[clust_idx]=0.0;
+     movements[clust_idx]+= movements[planes[i-1].index_cluster];
+     movements[clust_idx]+= (min_max[planes[i-1].index_cluster][1] - min_max[clust_idx][0] );
+   }
+   std::cout << "clust index " << clust_idx << std::endl;
+   std::cout << "movemnt: " << movements[clust_idx] << std::endl;
+ }
+
+ std::cout << "move them given the min and max" << std::endl;
+ for (size_t i = 0; i < planes.size(); i++) {
+   int clust_idx= planes[i].index_cluster;
+
+
+
+   std::cout << "plane: " << i << std::endl;
+   std::cout << "min max: " << min_max[clust_idx][0] << " " << min_max[clust_idx][1] << std::endl;
+
+
+
+   //Move it
+   // Eigen::Affine3f transform = Eigen::Affine3f::Identity();
+   // transform.translation() << min_x_cur - max_x_prev, 0.0, 0.0;
+   // pcl::transformPointCloud (*(clustered_clouds[clust_idx]), *(clustered_clouds[clust_idx]), transform);
+   for (size_t p_idx = 0; p_idx < clustered_clouds[clust_idx]->points.size(); p_idx++) {
+     clustered_clouds[clust_idx]->points[p_idx].x = clustered_clouds[clust_idx]->points[p_idx].x + movements[clust_idx];
+   }
+
+ }
+
+
+ //showing stuff
+ // for (size_t i = 0; i < planes.size(); i++) {
+ //   int clust_idx= planes[i].index_cluster;
+ //    pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer2");
+ //    viewer.showCloud (clustered_clouds[clust_idx]);
+ //    while (!viewer.wasStopped ())
+ //    {
+ //    }
+ // }
+
+
+
+
+ std::cout << "wiritng to unwrapped points" << std::endl;
+
+ //write the unwrapped points
+ m_points_unwrapped.resize(m_points_wrapped.size());
+ for (size_t i = 0; i < m_points_unwrapped.size(); i++) {
+   m_points_unwrapped[i].resize(3);
+ }
+
+ for (size_t clust = 0; clust < cluster_count; clust++) {
+   int idx=0;
+
+   pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+   kdtree.setInputCloud (clustered_clouds[clust]);
+
+   for (size_t i = 0; i < clustered_clouds[clust]->points.size(); i++) {
+
+     //we have a point and an index to insert it to, move the index until it winds the fisrt label
+    //  while(labels.at<int>(idx,0)!=clust){
+    //    idx++;
+    //  }
+
+    idx= clustered_points_indices[clust][i];
+
+     m_points_unwrapped[idx][0]= clustered_clouds[clust]->points[i].x;
+     m_points_unwrapped[idx][1]= clustered_clouds[clust]->points[i].y;
+     m_points_unwrapped[idx][2]= clustered_clouds[clust]->points[i].z;
+
+
+     //Need to check the nearest neightbours to fix the y (ditance to the plane)
+     pcl::PointXYZ searchPoint;
+     searchPoint=clustered_clouds[clust]->points[i];
+
+
+     if (m_deform_walls){
+       int K = 50;
+       // double radius=0.1;
+       double radius=0.05;
+       //  double radius=0.16;
+
+       std::vector<int> pointIdxNKNSearch(K);
+       std::vector<float> pointNKNSquaredDistance(K);
+
+       double avg_dist=0.0;
+
+       if (  kdtree.radiusSearch (searchPoint, radius, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
+       {
+        for (size_t p = 0; p < pointIdxNKNSearch.size (); ++p){
+           // //average the dist of the K nearest neghbours
+           avg_dist+=clustered_clouds[clust]->points[ pointIdxNKNSearch[p] ].y;
+         }
+       }
+
+       avg_dist=avg_dist/pointIdxNKNSearch.size ();
+       m_points_unwrapped[idx][1]=m_points_unwrapped[idx][1]-avg_dist;
+     }
+
+
+
+
+     //clap the distance
+     // if ( fabs(m_points_unwrapped[idx][1]) > 0.1 ){
+     //   m_points_unwrapped[idx][1]=0.0;
+     //   clustered_clouds[clust]->points[i].y=0.0;
+     // }
+
+   }
+ }
+
+
+
+
+
+
+
+}
+
+
 //unwrapp that assing each points to a cluster not based on normals but based on distance to edges
 void Model::compute_unwrap4(){
   std::cout << "computing unwrap 2" << std::endl;
@@ -739,7 +1294,7 @@ void Model::compute_unwrap4(){
   pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_plane (new pcl::PointCloud<pcl::PointXYZ> ());
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_f(new pcl::PointCloud<pcl::PointXYZ>);
-  seg.setOptimizeCoefficients (true);
+  seg.setOptimizeCoefficients (false);
   seg.setModelType (pcl::SACMODEL_PLANE);
   seg.setMethodType (pcl::SAC_RANSAC);
   seg.setMaxIterations (400);
@@ -921,20 +1476,20 @@ void Model::compute_unwrap4(){
        corners_mesh[i].index=i;
 
       //  draw_sphere(P[0], P[1], P[2] );
-
+      //
       // cloud->points[i].x =  P[0];
       // cloud->points[i].y =  P[1];
       // cloud->points[i].z =  P[2];
       //
-      // if(i==6){
+      // // if(i==6){
       //   cloud->points[i].r=255;
       //   cloud->points[i].g=0;
       //   cloud->points[i].b=0;
-      // }else{
-      //   cloud->points[i].r=255;
-      //   cloud->points[i].g=255;
-      //   cloud->points[i].b=255;
-      // }
+      // // }else{
+      // //   cloud->points[i].r=255;
+      // //   cloud->points[i].g=255;
+      // //   cloud->points[i].b=255;
+      // // }
 
 
      }
@@ -946,6 +1501,25 @@ void Model::compute_unwrap4(){
   // while (!viewer.wasStopped ())
   // {
   // }
+
+
+  // m_points_wrapped_ds=compute_decimated(m_points_wrapped);
+  // boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+  // viewer->setBackgroundColor (0, 0, 0);
+  // viewer->addPointCloud<pcl::PointXYZRGB> (cloud, "sample cloud");
+  // viewer->addPointCloud<pcl::PointXYZ> (m_points_wrapped_ds, "sample cloud2");
+  // viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "sample cloud");
+  // viewer->addCoordinateSystem (1.0);
+  // viewer->initCameraParameters ();
+  // while (!viewer->wasStopped ())
+  // {
+  //   viewer->spinOnce (100);
+  //   boost::this_thread::sleep (boost::posix_time::microseconds (100000));
+  // }
+
+
+
+
 
   std::cout << "finished getting the corner points" << std::endl;
 

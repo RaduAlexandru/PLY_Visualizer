@@ -43,6 +43,7 @@
 #include <pcl/ModelCoefficients.h>
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
+#include <pcl/sample_consensus/sac_model_plane.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/extract_indices.h>
@@ -276,6 +277,7 @@ public:
      void compute_unwrap2();
      void compute_unwrap3();
      void compute_unwrap4();
+     void compute_unwrap5();
      std::vector<double> compute_angles(matrix_type points);
      std::vector<double> compute_distances_to_radius(matrix_type points, double radius);
      void compute_plain_colors();
