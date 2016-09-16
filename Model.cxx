@@ -827,7 +827,7 @@ void Model::compute_unwrap5(){
 
   for (size_t i = 0; i < planes.size(); i++) {
     planes[i].index_cluster=i;
-    planes[i].coef.values[3]=planes[i].coef.values[3]-0.2;  //HACK
+    planes[i].coef.values[3]=planes[i].coef.values[3]-0.1;  //HACK
   }
 
 
