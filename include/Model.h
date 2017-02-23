@@ -60,6 +60,7 @@
 #include <Eigen/Dense>
 
 #include <QObject>
+#include "Mesh.h"
 
 
 // #include <boost/ptr_container/ptr_vector.hpp>
@@ -85,11 +86,19 @@
 //Calculate the distance of a point int he cloud to the center (disregarding Z azis)
 struct by_distance_center {
     bool operator()(pcl::PointXYZ const &p1, pcl::PointXYZ const &p2) {
-        if   (pcl::geometry::distance(p1, pcl::PointXYZ (0.0, 0.0, p1.z))  >  	pcl::geometry::distance(p2, pcl::PointXYZ (0.0, 0.0, p2.z)) ){
+        // if   (pcl::geometry::distance(p1, pcl::PointXYZ (0.0, 0.0, p1.z))  >  	pcl::geometry::distance(p2, pcl::PointXYZ (0.0, 0.0, p2.z)) ){
+        //     return true;
+        // }else{
+        //     return false;
+        // }
+
+        //For some reason the old versio of pcl and/or eigen doesn't work with pcl::geometry::distance so I implementd my own distance calculation
+        if   (utils::distance(p1, pcl::PointXYZ (0.0, 0.0, p1.z))  >  	utils::distance(p2, pcl::PointXYZ (0.0, 0.0, p2.z)) ){
             return true;
         }else{
             return false;
         }
+
     }
 };
 
@@ -164,48 +173,66 @@ class Model :  public QObject
 public:
      Model();
 
-     int m_num_walls;
+
+    //  std::unique_ptr<Mesh> mesh;
+     int m_num_walls;        //number of walls that the user wants to unwrap
      vtkSmartPointer<vtkPolyData> m_wall;
 
 
      //Wrapped
      matrix_type m_points_wrapped;
-     matrix_type m_normals_wrapped;
-     //  matrix_type m_tcoords_wrapped;
-     vtkSmartPointer<vtkCellArray> m_cells_wrapped;
-     pcl::PointCloud<pcl::PointXYZ>::Ptr m_points_wrapped_ds;
-
-     //Unwrapped
      matrix_type m_points_unwrapped;
+     matrix_type m_normals_wrapped;
      matrix_type m_normals_unwrapped;
+     vtkSmartPointer<vtkCellArray> m_cells_wrapped;
      vtkSmartPointer<vtkCellArray> m_cells_unwrapped;
+     pcl::PointCloud<pcl::PointXYZ>::Ptr m_points_wrapped_ds;
      pcl::PointCloud<pcl::PointXYZ>::Ptr m_points_unwrapped_full_cloud;
+     vtkSmartPointer<vtkDataArray> tcoords_ir;
+     vtkSmartPointer<vtkDataArray> tcoords_rgb;
 
 
-     //Misc
-     vtkSmartPointer<vtkTexture> m_full_texture_original;
-     vtkSmartPointer<vtkTexture> m_full_texture;
-     vtkSmartPointer<vtkTexture> m_full_ir_texture;
-     vtkSmartPointer<vtkUnsignedCharArray> m_colors_unaltered; //original colors, rgb if present and all white if not
+     //State----------------Indicated the state of the mesh that is being displayed
+     int m_num_walls_baked;  //num of walls with which the unwrapped was calculated. The points are already computed and stored in points_unwraped
+     bool m_is_unwrapped;  //is it is unwrapped then the get_mesh method should write the unwrapped points and vice-versa
+     bool m_has_texture;
+     bool m_has_ir;
+     bool m_deleted_streached_trigs;
+     bool m_has_tcoords;
+     bool m_has_normals;
+     bool m_is_obj;
+     bool m_is_ply;
+     double m_radius;
+     double m_circumference;
+     bool m_is_cylindrical;
+
+
+     //Texture and colors
+     vtkSmartPointer<vtkTexture> m_texture_original;
+     vtkSmartPointer<vtkTexture> m_texture_bright;
+     vtkSmartPointer<vtkTexture> m_ir_texture;
      vtkSmartPointer<vtkUnsignedCharArray> m_colors_original; //original colors, rgb if present and all white if not
+     vtkSmartPointer<vtkUnsignedCharArray> m_colors_bright; //original colors, rgb if present and all white if not
      vtkSmartPointer<vtkUnsignedCharArray> m_colors_active;
+
+
      row_type m_center;
      std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clustered_clouds;
      std::vector<plane_struct> planes;
-     //  matrix_type m_walls_wrapped_bounds;
      std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clustered_clouds_original;
      matrix_type m_ransac_centers;
 
 
      //Unwrap results
-      std::vector<pcl::PointIndices::Ptr> m_inliers_vec;
-      matrix_type m_normals_blured;
+     std::vector<pcl::PointIndices::Ptr> m_inliers_vec;
+     matrix_type m_normals_blured;
+
+
+     //Other
+     double* m_bounds;
 
 
 
-      //IR
-      vtkSmartPointer<vtkDataArray> tcoords_ir;
-      vtkSmartPointer<vtkDataArray> tcoords_rgb;
 
 
 
@@ -221,23 +248,15 @@ public:
 
     //  int m_num_points;        //num of points in the m_wall
     //  int m_point_components;  //components of each point, normally 3 (x,y,z)
-     double m_radius;         //estimated radius of the cylinder
-     double m_circumference;
-     double* m_bounds;
 
-     bool m_is_unwrapped;
+
      bool m_selecting_defects;
      bool m_selecting_grid;
-     bool m_deleted_streached_trigs;
      bool m_draw_grid_active;
      bool m_draw_grid_inactive;
-     bool m_has_ir;
      bool m_selected_ir;
 
-     bool m_has_tcoords;
-     bool m_has_normals;
-     bool m_is_obj;
-     bool m_is_ply;
+
 
      //  std::vector<vtkSmartPointer<vtkPolyData>> grid_cells;
      matrix_type m_grid;
@@ -263,9 +282,9 @@ public:
      int m_magnification_walls;
 
 
-     void clear();
+     void clear(); //clear everything that is in the model and sets it back to default
      void set_mesh(vtkSmartPointer<vtkPolyData>);
-     void set_texture(vtkSmartPointer<vtkTexture>);
+     void set_texture_bright(vtkSmartPointer<vtkTexture>);
      void set_texture_original(vtkSmartPointer<vtkTexture> texture);
      void set_ir_texture(vtkSmartPointer<vtkTexture>);
      void read_info(int read_color=1);
@@ -278,12 +297,13 @@ public:
      void compute_unwrap3();
      void compute_unwrap4();
      void compute_unwrap5();
+     void compute_unwrap_cyl();
      std::vector<double> compute_angles(matrix_type points);
      std::vector<double> compute_distances_to_radius(matrix_type points, double radius);
      void compute_plain_colors();
-     void compute_rgb_colors();
+     void compute_original_colors();
      void compute_depth_colors();
-     void compute_unaltered_colors();
+     void compute_bright_colors();
      void create_grid();
      void scale_mesh();
      void center_mesh();

@@ -39,6 +39,7 @@ Visualizer::Visualizer():
   this->ui->colorComboBox->addItem("RGB (original)");
   this->ui->colorComboBox->addItem("IR");
   this->ui->colorComboBox->addItem("Depth");
+  //this->ui->colorComboBox->addItem("")
   // this->ui->colorComboBox->addItem("Curvature");
 
   this->ui->numWallsText->setText(QString::number(model->m_num_walls));
@@ -267,7 +268,8 @@ void Visualizer::on_loadFileButton_clicked(){
 //-----------
 
     model->set_mesh(mesh_orientated);
-    model->m_colors_unaltered=vtkUnsignedCharArray::SafeDownCast(rgb_unaltered);
+    model->m_colors_original=vtkUnsignedCharArray::SafeDownCast(rgb_unaltered);
+    model->m_colors_bright=vtkUnsignedCharArray::SafeDownCast(rgb_bright);
 
     model->m_is_ply=true;  //Need to add this at the finale because set mesh reset everything to defualts
     model->m_is_obj=false;
@@ -308,7 +310,7 @@ void Visualizer::on_loadFileButton_clicked(){
     vtkSmartPointer<vtkPolyData> mesh_orientated= auto_fix_orientation(obj_reader->GetOutput());
 
     model->set_mesh(mesh_orientated);
-    model->set_texture(texture);
+    model->set_texture_bright(texture);
     model->set_texture_original(texture_orig);
 
     vtkSmartPointer<vtkDataArray> tcoords = obj_reader->GetOutput()->GetPointData()->GetTCoords();
@@ -434,7 +436,7 @@ vtkSmartPointer<vtkPolyData> Visualizer::auto_fix_orientation( vtkSmartPointer<v
     std::cout << "ORIENT: Rotatin 90 in X" << std::endl;
     trans->RotateX(90);
   }else if(index==2){
-    std::cout << "ORIENT: Orientation si corrct" << std::endl;
+    std::cout << "ORIENT: Orientation is correct" << std::endl;
     //I'ts in the correct orientation so don't do anything
     trans->RotateX(0);
   }
@@ -478,6 +480,20 @@ vtkSmartPointer<vtkPolyData> Visualizer::auto_fix_orientation( vtkSmartPointer<v
 
   return transformFilter2->GetOutput();
 
+}
+
+void auto_fix_pose( vtkSmartPointer<vtkPolyData> polydata){
+
+  //make a deep copy of the polydata and do all the transformation on that copy. Afterwards set the input polydata to that transformed mesh. This is done so that we avoid to do something like: polydata= transformation->GetOutput() because the transformation was computed on the polydata and this will incurr a circular filtering.
+  vtkSmartPointer<vtkPolyData> mesh_temp = vtkSmartPointer<vtkPolyData>::New();
+  mesh_temp->DeepCopy(polydata);
+
+
+  //fix orientation
+  //
+
+
+  //fix at the center of the world
 
 
 
@@ -487,22 +503,22 @@ vtkSmartPointer<vtkPolyData> Visualizer::auto_fix_orientation( vtkSmartPointer<v
 void  Visualizer::draw_sphere(double x, double y, double z, double r, double g, double b ){
 
   // // Create a sphere
-  //   vtkSmartPointer<vtkSphereSource> sphereSource =
-  //     vtkSmartPointer<vtkSphereSource>::New();
-  //   sphereSource->SetCenter(x, y, z);
-  //   sphereSource->SetRadius(0.1);
-  //
-  //   vtkSmartPointer<vtkPolyDataMapper> mapper =
-  //     vtkSmartPointer<vtkPolyDataMapper>::New();
-  //   mapper->SetInputConnection(sphereSource->GetOutputPort());
-  //
-  //   vtkSmartPointer<vtkActor> actor =
-  //     vtkSmartPointer<vtkActor>::New();
-  //   actor->SetMapper(mapper);
-  //   actor->GetProperty()->SetColor(r, g, b);
-  //
-  //
-  //   renderer->AddActor(actor);
+    vtkSmartPointer<vtkSphereSource> sphereSource =
+      vtkSmartPointer<vtkSphereSource>::New();
+    sphereSource->SetCenter(x, y, z);
+    sphereSource->SetRadius(0.1);
+
+    vtkSmartPointer<vtkPolyDataMapper> mapper =
+      vtkSmartPointer<vtkPolyDataMapper>::New();
+    mapper->SetInputConnection(sphereSource->GetOutputPort());
+
+    vtkSmartPointer<vtkActor> actor =
+      vtkSmartPointer<vtkActor>::New();
+    actor->SetMapper(mapper);
+    actor->GetProperty()->SetColor(r, g, b);
+
+
+    renderer->AddActor(actor);
 
 }
 
@@ -565,13 +581,13 @@ void  Visualizer::updateView(int reset_camera){
   std::cout << "adding texture" << std::endl;
 
   if (this->ui->colorComboBox->currentText()=="RGB (bright)")
-    actor->SetTexture(model->m_full_texture);
+    actor->SetTexture(model->m_texture_bright);
 
   if (this->ui->colorComboBox->currentText()=="RGB (original)")
-    actor->SetTexture(model->m_full_texture_original);
+    actor->SetTexture(model->m_texture_original);
 
   if (this->ui->colorComboBox->currentText()=="IR")
-    actor->SetTexture(model->m_full_ir_texture);
+    actor->SetTexture(model->m_ir_texture);
 
   actor->GetProperty()->BackfaceCullingOn();
 
@@ -640,7 +656,13 @@ void Visualizer::on_unwrapButton_clicked(){
 
   if (model->m_points_unwrapped.empty() && !model->m_points_wrapped.empty()){
     // model->compute_unwrap(); //for cylinder chimneys
-    model->compute_unwrap5();
+
+    if (model->m_is_cylindrical){
+      model->compute_unwrap_cyl();
+    }else{
+      model->compute_unwrap5();
+    }
+
     model->write_points_to_mesh();  //Need to add the computed unwraps to the mesh so that the grid is correct
     model->create_grid();
   }
@@ -657,16 +679,16 @@ void Visualizer::on_colorComboBox_currentIndexChanged(const QString & text){
     model->m_selected_ir=false;
   }
   if (text.toStdString() == "RGB (bright)"){
-    std::cout << "calculating RGB colors" << std::endl;
+    std::cout << "calculating RGB brightened colors" << std::endl;
     if (model->m_is_ply){
-      model->compute_rgb_colors();
+      model->compute_bright_colors();
     }
     model->m_selected_ir=false;
   }
   if (text.toStdString() == "RGB (original)"){
     std::cout << "calculating RGB original colors" << std::endl;
     if (model->m_is_ply){
-      model->compute_unaltered_colors();
+      model->compute_original_colors();
     }
     model->m_selected_ir=false;
   }
@@ -1582,12 +1604,12 @@ void Visualizer::on_renderGridWrappedButton_clicked (){
 void Visualizer::calculate_bounds( matrix_type corners, double* bounds){
   // double bounds[6];
   // double *bounds = (double*)malloc(6*sizeof(double));
-  bounds[0]=999999;   //x_min
-  bounds[1]=-999999;  //x_max
-  bounds[2]=999999;   //y_min
-  bounds[3]=-999999;  //y_max
-  bounds[4]=999999;   //z_min
-  bounds[5]=-999999;  //z_max
+  bounds[0]=std::numeric_limits<double>::max();     //x_min
+  bounds[1]=std::numeric_limits<double>::lowest();  //x_max
+  bounds[2]=std::numeric_limits<double>::max();     //y_min
+  bounds[3]=std::numeric_limits<double>::lowest();  //y_max
+  bounds[4]=std::numeric_limits<double>::max();     //z_min
+  bounds[5]=std::numeric_limits<double>::lowest();  //z_max
 
   for (size_t i = 0; i < corners.size(); i++) {
     //x min
@@ -1613,7 +1635,7 @@ void Visualizer::calculate_bounds( matrix_type corners, double* bounds){
       bounds[5]=corners[i][2];
   }
 
-  std::cout << "inside funct: " << std::endl;
+  // std::cout << "inside funct: " << std::endl;
   std::cout  << "xmin: " << bounds[0] << " "
              << "xmax: " << bounds[1] << std::endl
              << "ymin: " << bounds[2] << " "
@@ -1624,7 +1646,7 @@ void Visualizer::calculate_bounds( matrix_type corners, double* bounds){
 }
 
 
-void Visualizer::SetCameraPositionOrientation( vtkCamera* cam, double position[3],
+void Visualizer::set_cam_pose( vtkCamera* cam, double position[3],
                                          double orientation[3] )
 {
     double focus[3];

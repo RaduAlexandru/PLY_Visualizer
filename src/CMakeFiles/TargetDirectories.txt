@@ -1,0 +1,1 @@
+/media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/src/CMakeFiles/Visualizer.dir

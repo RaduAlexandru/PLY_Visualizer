@@ -127,28 +127,48 @@ public:
   vtkSmartPointer<InteractorPointPicker> interactor;
   std::shared_ptr<ConfigDialog> m_config;
 
-  void select_ir_mesh();
 
+
+
+  //reads a mesh that has IR texture. Sets that texture image and the IR texture coordinates into the interal mesh.
+  void select_ir_mesh();
+  //draws a grid of 1x1m^2 cells. It will draw the ones that are inactive in gray and the active ones (the ones selected) in red
   void draw_grid();
+  //draw each individual cell of the grid.
   void draw_cell(row_type bounds, double r, double g, double b);
-  void render_to_file(std::string path, int magnification=15);
-  void SetCameraPositionOrientation( vtkCamera* cam, double position[3], double orientation[3] );
+  //set the pose of the camera (TODO: check it again because it may not work as intendend since the orientation is indirectly set by modifying the focus)
+  void set_cam_pose( vtkCamera* cam, double position[3], double orientation[3] );
+  //Calculate the bounding box of a vector of points. It calculates the min and max in each dimension.
   void calculate_bounds( matrix_type corners, double* bounds);
+  //projects a points in 3D world into the 2D image. The coordinate in 2D is relative to the upper left corner (the OpenCV standard)
   void world_to_display(double* point_world, double* point_display);
   void set_camera_default_pos();
+
+  //orientate the mesh so that the princial axis of the chimney (the one running throungh the hole) is pointing in the Z direction of the world.
   vtkSmartPointer<vtkPolyData> auto_fix_orientation( vtkSmartPointer<vtkPolyData>);
+  //void auto_fix_pose( vtkSmartPointer<vtkPolyData>);
 
 
+
+  //DRAWING----------------------------------------------------------------------------------
   //TODO: Remove it, just needed for testing the distance in knn
+  //Draw a sphere at a certain position in the world and with a certai color
   void draw_sphere(double x, double y, double z,  double r=1.0, double g=1.0, double b=1.0);
+  //draw line between two points in the world
   void draw_line (double* pos1, double* pos2 );
-
+  //draw a text with shows how many of the grid cells are selected (eg: 5/30)
   void draw_text_grid();
 
-  //Rendering to file
+  //RENDER TO FILE--------------------------------------------------------------------------
+  //render the image viewed on the screen into a file. The image will can be of a higher resolution than the screen depending on the magnification factor (1=using the screen resolution)
+  void render_to_file(std::string path, int magnification=15);
+  //set the camera in the correct position to render the full unwrapped wall. And then call render_to_file
   void render_full_img();
+  //Move the camera around in front of each cell of the grid (cells are unwrapped). It then calls render_to_file
   void render_grid_unwrapped();
+  //Move the camera around in front of each cell of the grid (cells are wrapped). It then calls render_to_file
   void render_grid_wrapped();
+  //Move the camera around in front of wall (wrapped view). It then calls render_to_file
   void render_walls();
 
 

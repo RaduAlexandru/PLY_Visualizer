@@ -2,6 +2,7 @@
 #include <iostream>
 
 Model::Model():
+  // mesh(new Mesh()),
   m_radius(0.0),
   m_circumference(0.0),
   m_is_unwrapped(false),
@@ -11,7 +12,7 @@ Model::Model():
   // m_cells(vtkSmartPointer<vtkCellArray>::New()),
   m_colors_original(vtkSmartPointer<vtkUnsignedCharArray>::New()),
   m_colors_active(vtkSmartPointer<vtkUnsignedCharArray>::New()),
-  m_colors_unaltered(vtkSmartPointer<vtkUnsignedCharArray>::New()),
+  m_colors_bright(vtkSmartPointer<vtkUnsignedCharArray>::New()),
   m_deleted_streached_trigs(false),
   m_draw_grid_active(true),
   m_draw_grid_inactive(false),
@@ -44,7 +45,8 @@ Model::Model():
   m_has_tcoords(false),
   m_has_normals(false),
   m_is_obj(false),
-  m_is_ply(false)
+  m_is_ply(false),
+  m_is_cylindrical(true)
 
 {
 
@@ -67,16 +69,16 @@ void Model::set_mesh(vtkSmartPointer<vtkPolyData> mesh){
   //scale_mesh();  //TODO: REMOVE this one because it was only used so as to better see the fitted planes
 }
 
-void Model::set_texture(vtkSmartPointer<vtkTexture> texture){
-  m_full_texture=texture;
+void Model::set_texture_bright(vtkSmartPointer<vtkTexture> texture){
+  m_texture_bright=texture;
 }
 
 void Model::set_texture_original(vtkSmartPointer<vtkTexture> texture){
-  m_full_texture_original=texture;
+  m_texture_original=texture;
 }
 
 void Model::set_ir_texture(vtkSmartPointer<vtkTexture> texture){
-  m_full_ir_texture=texture;
+  m_ir_texture=texture;
 }
 
 void Model::clear(){
@@ -102,11 +104,11 @@ void Model::clear(){
   m_points_unwrapped_full_cloud->clear();
   m_colors_original->Initialize();
   m_colors_active->Initialize();
-  m_colors_unaltered->Initialize();
+  m_colors_bright->Initialize();
 
   m_colors_original= vtkSmartPointer<vtkUnsignedCharArray>::New();
   m_colors_active= vtkSmartPointer<vtkUnsignedCharArray>::New();
-  m_colors_unaltered= vtkSmartPointer<vtkUnsignedCharArray>::New();
+  m_colors_bright= vtkSmartPointer<vtkUnsignedCharArray>::New();
   m_center.clear();
   clustered_clouds.clear();
   planes.clear();
@@ -324,7 +326,7 @@ double Model::estimate_radius(pcl::PointCloud<pcl::PointXYZ>::Ptr points ){
   //Get the median of those distance as the radius
   row_type distances(further_num);
   for (size_t i = 0; i < further_points.size(); i++) {
-    float dist= pcl::geometry::distance(further_points[i], pcl::PointXYZ (0.0, 0.0, further_points[i].z));
+    float dist= utils::distance(further_points[i], pcl::PointXYZ (0.0, 0.0, further_points[i].z));
     distances[i]=dist;
   }
 
@@ -499,6 +501,7 @@ double Model::dist(row_type vec1, row_type vec2){
     dist+= std::pow (vec1[i] - vec2[i],2);
   }
   dist=sqrt(dist);
+  return dist;
 }
 
 
@@ -508,6 +511,7 @@ double Model::dist_no_z(row_type vec1, row_type vec2){
     dist+= std::pow (vec1[i] - vec2[i],2);
   }
   dist=sqrt(dist);
+  return dist;
 }
 
 
@@ -602,6 +606,39 @@ void Model::blur_normals(){
   std::cout << "finished blurring the normals" << std::endl;
 
 }
+
+
+void Model::compute_unwrap_cyl(){
+  //In this case the chimney may be cylindrical or even a cone
+  //calculate the distance of every point to the center. Plot the distance in Z and the radius of the points and you will see the line that corresponds with the radius
+
+  row_type center{0.0,0.0,0.0};
+  matrix_type data;  //data containing in the first coordinate the point and in the second coordinate the z and distance of the points
+  data.resize(m_points_wrapped.size());
+  for (size_t i = 0; i < m_points_wrapped.size(); i++) {
+    data[i].resize(2);
+  }
+
+  for (size_t i = 0; i < m_points_wrapped.size(); i++) {
+    double dist = dist_no_z(m_points_wrapped[i],center);
+    data[i][0]=m_points_wrapped[i][2]; //z coordinate of the point
+    data[i][1]=dist;
+    //std::cout << "dist is " << dist << '\n';
+  }
+
+  std::ofstream file("data.dat");
+  file << "#x y" << endl;
+  for(int i=0; i<data.size(); i++){
+      file << data[i][0] << ' ' << data[i][1] << endl;
+  }
+  file.close();
+
+  std::cout << "writing--------------------------------------------" << '\n';
+
+
+}
+
+
 
 
 
@@ -2890,7 +2927,7 @@ void Model::compute_plain_colors(){
 
 }
 
-void Model::compute_rgb_colors(){
+void Model::compute_original_colors(){
 
   m_colors_active->Reset();
   m_colors_active = vtkSmartPointer<vtkUnsignedCharArray>::New();
@@ -2915,7 +2952,7 @@ void Model::compute_rgb_colors(){
 
 }
 
-void Model::compute_unaltered_colors(){
+void Model::compute_bright_colors(){
   m_colors_active->Reset();
   m_colors_active = vtkSmartPointer<vtkUnsignedCharArray>::New();
   m_colors_active->SetNumberOfComponents(3);
@@ -2929,10 +2966,10 @@ void Model::compute_unaltered_colors(){
     num_points=m_points_wrapped.size();
   }
 
-  int num_colors=m_colors_unaltered->GetNumberOfTuples();
+  int num_colors=m_colors_bright->GetNumberOfTuples();
   int min = std::min (num_points, num_colors);
   for (vtkIdType i = 0; i < min; i++) {
-    m_colors_active->InsertNextTuple(m_colors_unaltered->GetTuple(i));
+    m_colors_active->InsertNextTuple(m_colors_bright->GetTuple(i));
   }
 
 
@@ -3068,7 +3105,7 @@ void Model::create_grid(){
     z_min+=box_size_z;
   }
 
-  //Detect cells that have now points inside
+  //Detect cells that have no points inside
   row_type_i cells_occupied(m_grid.size(), 0);
   for (size_t point_idx = 0; point_idx < cloud->points.size(); point_idx++) {
     for (size_t cell_idx = 0; cell_idx < m_grid.size(); cell_idx++) {

@@ -1,14 +1,18 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-if(POLICY CMP0020)
-  cmake_policy(SET CMP0020 NEW)
-endif()
-
 PROJECT(Visualizer)
 
 set(CMAKE_BUILD_TYPE Release)
 
+
+SET(CMAKE_CXX_FLAGS "-std=c++0x")				# New C11
+set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/bin)			# Binary file location
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})			# Exectuable file location for main and subprojects
+set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/lib)		# Library file location for main and subprojects
+set(PROJECT_SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)			# Source folder
+set(PROJECT_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)		# Header folder
+set(PROJECT_UI_DIR ${CMAKE_SOURCE_DIR}/ui)		# Ui folder
 
 
 
@@ -19,11 +23,13 @@ find_package( OpenCV REQUIRED )
 find_package(Boost COMPONENTS thread date_time program_options filesystem system REQUIRED)
 
 include_directories(${PCL_INCLUDE_DIRS})
+include_directories(${PROJECT_INCLUDE_DIR})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
 
 include(${VTK_USE_FILE})
+message (${VTK_USE_FILE})
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${Boost_INCLUDE_DIR})
@@ -40,10 +46,9 @@ else()
 endif()
 
 
-file(GLOB CXX_FILES *.cxx)
-file(GLOB UI_FILES *.ui)
-file(GLOB QT_WRAP *.h)
-
+file(GLOB CXX_FILES ${PROJECT_SOURCE_DIR}/*.cxx)
+file(GLOB UI_FILES ${PROJECT_UI_DIR}/*.ui)
+file(GLOB QT_WRAP ${PROJECT_INCLUDE_DIR}/*.h)
 
 
 
@@ -64,7 +69,7 @@ else()
   add_executable(Visualizer MACOSX_BUNDLE ${CXX_FILES} ${UISrcs} ${MOCSrcs})
 
   #for C++11
-  target_compile_features(Visualizer PRIVATE cxx_range_for )
+  #target_compile_features(Visualizer PRIVATE cxx_range_for )
 
   if(VTK_LIBRARIES)
     if(${VTK_VERSION} VERSION_LESS "6")
