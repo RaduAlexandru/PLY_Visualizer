@@ -641,6 +641,8 @@ void  Visualizer::updateView(int reset_camera){
 
 
 
+
+
   // Visualize
   vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   mapper->SetInputConnection(wall->GetProducerPort());
@@ -664,14 +666,6 @@ void  Visualizer::updateView(int reset_camera){
   // actor->SetTexture(texture_bright);
 
 
-
-
-
-
-
-
-
-
   actor->GetProperty()->BackfaceCullingOn();
 
 
@@ -683,7 +677,6 @@ void  Visualizer::updateView(int reset_camera){
   }
 
   draw_sphere(0,0,0);
-
 
 
 
