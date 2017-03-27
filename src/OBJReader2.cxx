@@ -5,8 +5,7 @@ OBJReader2::OBJReader2():
 m_polyData(vtkSmartPointer<vtkPolyData>::New()),
 m_full_texture_name("full_texture.png"),
 m_full_texture_original_name("full_texture_original.png"),
-experimental_loading(true),
-should_fix_orientation(true)
+experimental_loading(true)
 {
 
 }
@@ -796,13 +795,6 @@ void OBJReader2::write_to_poly(){
   m_polyData->SetPolys(vtk_polys);
 
   m_polyData->Squeeze();
-
-  // if (should_fix_orientation){
-  //   std::cout << "OBJReader2::fixing orientation" << std::endl;
-  //   fix_orientation();
-  // }
-
-  // decimate_mesh();
 
 
 }

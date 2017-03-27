@@ -47,7 +47,6 @@ public:
      vtkSmartPointer<vtkPolyData> GetOutput();
 
      bool experimental_loading;
-     bool should_fix_orientation;
 
 private:
 

@@ -83,38 +83,13 @@
 
 
 
-//Calculate the distance of a point int he cloud to the center (disregarding Z azis)
-struct by_distance_center {
-    bool operator()(pcl::PointXYZ const &p1, pcl::PointXYZ const &p2) {
-        // if   (pcl::geometry::distance(p1, pcl::PointXYZ (0.0, 0.0, p1.z))  >  	pcl::geometry::distance(p2, pcl::PointXYZ (0.0, 0.0, p2.z)) ){
-        //     return true;
-        // }else{
-        //     return false;
-        // }
-
-        //For some reason the old versio of pcl and/or eigen doesn't work with pcl::geometry::distance so I implementd my own distance calculation
-        if   (utils::distance(p1, pcl::PointXYZ (0.0, 0.0, p1.z))  >  	utils::distance(p2, pcl::PointXYZ (0.0, 0.0, p2.z)) ){
-            return true;
-        }else{
-            return false;
-        }
-
-    }
-};
-
-
 static bool abs_compare(int a, int b)
 {
     return (std::abs(a) < std::abs(b));
 }
 
 
-struct plane_struct {
-    pcl::ModelCoefficients coef;
-    Eigen::Vector3f normal;
-    double angle;
-    int index_cluster; //index to indicate which cluster is the plane resposible for
-};
+
 
 struct line_struct {
      row_type direction;
@@ -150,16 +125,7 @@ struct by_distance{
 };
 
 
-struct column_comparer
-{
-    int column_num;
-    column_comparer(int c) : column_num(c) {}
 
-    bool operator()(const std::vector<double> & lhs, const std::vector<double> & rhs) const
-    {
-        return lhs[column_num] < rhs[column_num];
-    }
-};
 
 
 
@@ -174,7 +140,7 @@ public:
      Model();
 
 
-    //  std::unique_ptr<Mesh> mesh;
+     std::unique_ptr<Mesh> mesh;
      int m_num_walls;        //number of walls that the user wants to unwrap
      vtkSmartPointer<vtkPolyData> m_wall;
 
@@ -291,13 +257,13 @@ public:
      vtkSmartPointer<vtkUnsignedCharArray> get_colors();
      double estimate_radius (pcl::PointCloud<pcl::PointXYZ>::Ptr points );
      vtkSmartPointer<vtkPolyData> get_mesh();
-     void write_points_to_mesh();
+    //  void write_points_to_mesh();
      void compute_unwrap();
      void compute_unwrap2();
      void compute_unwrap3();
-     void compute_unwrap4();
+    //  void compute_unwrap4();
      void compute_unwrap5();
-     void compute_unwrap_cyl();
+    //  void compute_unwrap_cyl();
      std::vector<double> compute_angles(matrix_type points);
      std::vector<double> compute_distances_to_radius(matrix_type points, double radius);
      void compute_plain_colors();
@@ -307,12 +273,12 @@ public:
      void create_grid();
      void scale_mesh();
      void center_mesh();
-     void delete_streched_trigs();
+    //  void delete_streched_trigs();
      bool is_contained(pcl::PointXYZ , row_type);
      bool is_contained(row_type , row_type);
      pcl::PointCloud<pcl::PointXYZ>::Ptr compute_decimated(matrix_type);
-     double dist(row_type vec1, row_type vec2);
-     double dist_no_z(row_type vec1, row_type vec2);
+    //  double dist(row_type vec1, row_type vec2);
+    //  double dist_no_z(row_type vec1, row_type vec2);
      double find_angle(row_type p0, row_type p1, row_type p2); //angle between 3 points where p1 is the center
 
      void blur_normals();

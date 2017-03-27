@@ -47,6 +47,8 @@ namespace utils {
     return (diff.norm ());
   }
 
+  double dist(row_type vec1, row_type vec2);
+  double dist_no_z(row_type vec1, row_type vec2);
 }
 
 

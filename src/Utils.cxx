@@ -124,3 +124,28 @@ std::string type2str(int type) {
 
   return r;
 }
+
+
+namespace utils{
+
+
+  double dist(row_type vec1, row_type vec2){
+    double dist=0.0;
+    for (size_t i = 0; i < vec1.size(); i++) {
+      dist+= std::pow (vec1[i] - vec2[i],2);
+    }
+    dist=sqrt(dist);
+    return dist;
+  }
+
+
+  double dist_no_z(row_type vec1, row_type vec2){
+    double dist=0.0;
+    for (size_t i = 0; i < vec1.size()-1; i++) {
+      dist+= std::pow (vec1[i] - vec2[i],2);
+    }
+    dist=sqrt(dist);
+    return dist;
+  }
+
+}

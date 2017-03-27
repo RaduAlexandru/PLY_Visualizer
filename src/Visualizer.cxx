@@ -156,148 +156,47 @@ Visualizer::Visualizer():
 void Visualizer::on_loadFileButton_clicked(){
 
 
-  // //Vtktexturing helper
-  // vtkTexturingHelper helper;
-  // helper.ReadGeometryFile("/media/alex/Data/Master/SHK/Data/New_data/obj_modif/calibMesh3of8.obj");
-  // helper.ReadTextureFiles("/media/alex/Data/Master/SHK/Data/New_data/obj_modif/tex", ".png", 2);
-  // helper.ApplyTextures();
-  //
-  // vtkSmartPointer<vtkActor> actor = helper.GetActor();
-  //
-  //
-  //
-  // renderer->AddActor(actor);
-  // renderer->ResetCamera();
-  //
-  //
-  //
-  //
-  //
-  // return;
-  // //---------------
-
-
-
-
-
-
   QString file_name;
   QString selfilter = tr("Mesh (*.obj *.ply)");
-  file_name = QFileDialog::getOpenFileName(this,
-  	         tr("Open File"), "./", selfilter);
-
+  file_name = QFileDialog::getOpenFileName(this, tr("Open File"), "./", selfilter);
   if (file_name.isEmpty()){
     return;
   }
 
   // QString file_name="/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/researchDenslyTexturedMesh.obj";
+  // QString file_name="/media/alex/Data/Master/SHK/Data/New_data/ply_3/optim_colored_o4.ply";
 
   std::cout << "filename: " << file_name.toStdString() << std::endl;
 
 
+  model->mesh->clear();
+  model->mesh->set_nr_walls(  atoi (this->ui->numWallsText->text().toStdString().data())  ) ;
+
   if (boost::ends_with(file_name.toStdString(), ".ply")) {
     std::cout << "reading .ply file" << std::endl;
-
-
 
     vtkSmartPointer<vtkPLYReader> reader = vtkSmartPointer<vtkPLYReader>::New();
     reader->SetFileName ( file_name.toStdString().data() );
     reader->Update();
 
-    vtkSmartPointer<vtkPolyData> mesh_orientated= auto_fix_orientation(reader->GetOutput());
-
-
-    //Get the colors
-    //Brighten them
-    //write them in the mesh orientated, they will atuometically get read by the set mesh
-
-    //The original one, brutce forcefully set them inside the model
-
-
-    auto rgb_unaltered  =mesh_orientated->GetPointData()->GetScalars();
-    vtkSmartPointer<vtkUnsignedCharArray> rgb_bright= vtkSmartPointer<vtkUnsignedCharArray>::New();
-    rgb_bright->SetNumberOfComponents(3);
-
-    int num_colors=rgb_unaltered->GetNumberOfTuples();
-
-    cv::Mat colors_bright(num_colors, 1,  CV_8UC3);
-
-    for (size_t i = 0; i < num_colors; i++) {
-      cv::Vec3b &intensity = colors_bright.at<cv::Vec3b>(i, 0);
-
-      double* color_pixel;
-      color_pixel=rgb_unaltered->GetTuple(i);
-
-      intensity.val[0] = color_pixel[0];
-      intensity.val[1] = color_pixel[1];
-      intensity.val[2] = color_pixel[2];
-    }
-
-
-
-
-    //brithen colors bright
-    cv::Mat hsv;
-    cv::cvtColor(colors_bright,hsv,CV_BGR2HSV);
-    std::vector<cv::Mat> channels;
-    cv::split(hsv,channels);
-    cv::normalize(channels[1], channels[1], 0, 255, cv::NORM_MINMAX);
-    cv::normalize(channels[2], channels[2], 0, 255, cv::NORM_MINMAX);
-    cv::Mat result;
-    cv::merge(channels,hsv);
-    cv::cvtColor(hsv,result,CV_HSV2BGR);
-    result.copyTo(colors_bright);
-
-    //Copy colors bright back into a unsigned char arrays
-    for (int i = 0; i < colors_bright.cols; i++) {
-      for (int j = 0; j < colors_bright.rows; j++) {
-          cv::Vec3b intensity = colors_bright.at<cv::Vec3b>(j, i);
-
-          double color_pixel[3];
-          color_pixel[0]= intensity.val[0];
-          color_pixel[1]= intensity.val[1];
-          color_pixel[2]= intensity.val[2];
-
-          rgb_bright->InsertNextTuple(color_pixel);
-      }
-    }
-
-
-      mesh_orientated->GetPointData()->SetScalars(rgb_bright);
-
-//-----------
-
-    model->set_mesh(mesh_orientated);
-    model->m_colors_original=vtkUnsignedCharArray::SafeDownCast(rgb_unaltered);
-    model->m_colors_bright=vtkUnsignedCharArray::SafeDownCast(rgb_bright);
-
-    model->m_is_ply=true;  //Need to add this at the finale because set mesh reset everything to defualts
-    model->m_is_obj=false;
-
-    //copy the ply to a temp_ply
-    //decimate the temp
-    //Get normals for it (polydata normals)
-    // For each point in the original ply grab the neares K poin in the temp one
-    //Normals of the original ply will be a weigther average (wight=distance) of the normals of the neightbours
-    //then it would be no need to to blur normals in the case that we read a ply file
-
-
+    model->mesh->set_state_ply(true);
+    model->mesh->set_mesh(reader->GetOutput());
 
   }else if (boost::ends_with(file_name.toStdString(), ".obj")){
     std::cout << "reading .obj file" << std::endl;
 
     std::unique_ptr<OBJReader2> obj_reader(new OBJReader2());
     obj_reader->experimental_loading=model->m_experiemental_loading;
-    obj_reader->should_fix_orientation=model->m_fix_orientation;
     obj_reader->SetFileName(file_name.toStdString());
     obj_reader->Update();
 
     //brightned texture
-    vtkSmartPointer<vtkPNGReader> pngReader = vtkSmartPointer<vtkPNGReader>::New();
-    pngReader->SetFileName (obj_reader->GetTexturePath().data() );
-    pngReader->Update();
-    vtkSmartPointer<vtkTexture> texture = vtkSmartPointer<vtkTexture>::New();
-    texture->SetInputConnection(pngReader->GetOutputPort());
+    vtkSmartPointer<vtkPNGReader> pngReader_bright = vtkSmartPointer<vtkPNGReader>::New();
+    pngReader_bright->SetFileName (obj_reader->GetTexturePath().data() );
+    pngReader_bright->Update();
+    vtkSmartPointer<vtkTexture> texture_bright = vtkSmartPointer<vtkTexture>::New();
+    texture_bright->SetInputConnection(pngReader_bright->GetOutputPort());
+    // texture_bright->Update();
 
     //original texture
     vtkSmartPointer<vtkPNGReader> pngReader_orig = vtkSmartPointer<vtkPNGReader>::New();
@@ -305,26 +204,14 @@ void Visualizer::on_loadFileButton_clicked(){
     pngReader_orig->Update();
     vtkSmartPointer<vtkTexture> texture_orig = vtkSmartPointer<vtkTexture>::New();
     texture_orig->SetInputConnection(pngReader_orig->GetOutputPort());
+    // texture_orig->Update();
 
-    //Fix orientation
-    vtkSmartPointer<vtkPolyData> mesh_orientated= auto_fix_orientation(obj_reader->GetOutput());
 
-    model->set_mesh(mesh_orientated);
-    model->set_texture_bright(texture);
-    model->set_texture_original(texture_orig);
+    model->mesh->set_state_obj(true);
+    model->mesh->set_mesh(obj_reader->GetOutput());
+    model->mesh->set_texture_bright(texture_bright);
+    model->mesh->set_texture_original(texture_orig);
 
-    vtkSmartPointer<vtkDataArray> tcoords = obj_reader->GetOutput()->GetPointData()->GetTCoords();
-    if(tcoords){
-      std::cout << "RGB:the polydata has tcoords" << std::endl;
-    }else{
-      std::cout << "RGB:the polydata does not have tcoords" << std::endl;
-    }
-    model->tcoords_rgb=tcoords;
-
-    std::cout << "visualizer:: rgb toocrds numer: "  << model->tcoords_rgb->GetSize()<< std::endl;
-
-    model->m_is_obj=true;
-    model->m_is_ply=false;
   }else{
     std::cout << "NOT VALID FORMAT" << std::endl;
     return;
@@ -332,8 +219,180 @@ void Visualizer::on_loadFileButton_clicked(){
 
 
 
+
+
+  std::cout << "before setting colors we have a mesh with points " << model->mesh->get_nr_points_wrapped() << '\n';
+
+
   ui->colorComboBox->setCurrentIndex(ui->colorComboBox->findText("RGB (bright)"));
+
+  std::cout << "after setting colors we have a mesh with points " << model->mesh->get_nr_points_wrapped() << '\n';
+
   updateView();
+
+
+  std::cout << "finished--------------------------" << '\n';
+
+
+
+
+
+
+
+
+//   QString file_name;
+//   QString selfilter = tr("Mesh (*.obj *.ply)");
+//   file_name = QFileDialog::getOpenFileName(this,
+//   	         tr("Open File"), "./", selfilter);
+//
+//   if (file_name.isEmpty()){
+//     return;
+//   }
+//
+//   // QString file_name="/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/researchDenslyTexturedMesh.obj";
+//
+//   std::cout << "filename: " << file_name.toStdString() << std::endl;
+//
+//
+//   if (boost::ends_with(file_name.toStdString(), ".ply")) {
+//     std::cout << "reading .ply file" << std::endl;
+//
+//
+//
+//     vtkSmartPointer<vtkPLYReader> reader = vtkSmartPointer<vtkPLYReader>::New();
+//     reader->SetFileName ( file_name.toStdString().data() );
+//     reader->Update();
+//
+//     vtkSmartPointer<vtkPolyData> mesh_orientated= auto_fix_orientation(reader->GetOutput());
+//
+//
+//     //Get the colors
+//     //Brighten them
+//     //write them in the mesh orientated, they will atuometically get read by the set mesh
+//
+//     //The original one, brutce forcefully set them inside the model
+//
+//
+//     auto rgb_unaltered  =mesh_orientated->GetPointData()->GetScalars();
+//     vtkSmartPointer<vtkUnsignedCharArray> rgb_bright= vtkSmartPointer<vtkUnsignedCharArray>::New();
+//     rgb_bright->SetNumberOfComponents(3);
+//
+//     int num_colors=rgb_unaltered->GetNumberOfTuples();
+//
+//     cv::Mat colors_bright(num_colors, 1,  CV_8UC3);
+//
+//     for (size_t i = 0; i < num_colors; i++) {
+//       cv::Vec3b &intensity = colors_bright.at<cv::Vec3b>(i, 0);
+//
+//       double* color_pixel;
+//       color_pixel=rgb_unaltered->GetTuple(i);
+//
+//       intensity.val[0] = color_pixel[0];
+//       intensity.val[1] = color_pixel[1];
+//       intensity.val[2] = color_pixel[2];
+//     }
+//
+//
+//
+//
+//     //brithen colors bright
+//     cv::Mat hsv;
+//     cv::cvtColor(colors_bright,hsv,CV_BGR2HSV);
+//     std::vector<cv::Mat> channels;
+//     cv::split(hsv,channels);
+//     cv::normalize(channels[1], channels[1], 0, 255, cv::NORM_MINMAX);
+//     cv::normalize(channels[2], channels[2], 0, 255, cv::NORM_MINMAX);
+//     cv::Mat result;
+//     cv::merge(channels,hsv);
+//     cv::cvtColor(hsv,result,CV_HSV2BGR);
+//     result.copyTo(colors_bright);
+//
+//     //Copy colors bright back into a unsigned char arrays
+//     for (int i = 0; i < colors_bright.cols; i++) {
+//       for (int j = 0; j < colors_bright.rows; j++) {
+//           cv::Vec3b intensity = colors_bright.at<cv::Vec3b>(j, i);
+//
+//           double color_pixel[3];
+//           color_pixel[0]= intensity.val[0];
+//           color_pixel[1]= intensity.val[1];
+//           color_pixel[2]= intensity.val[2];
+//
+//           rgb_bright->InsertNextTuple(color_pixel);
+//       }
+//     }
+//
+//
+//       mesh_orientated->GetPointData()->SetScalars(rgb_bright);
+//
+// //-----------
+//
+//     model->set_mesh(mesh_orientated);
+//     model->m_colors_original=vtkUnsignedCharArray::SafeDownCast(rgb_unaltered);
+//     model->m_colors_bright=vtkUnsignedCharArray::SafeDownCast(rgb_bright);
+//
+//     model->m_is_ply=true;  //Need to add this at the finale because set mesh reset everything to defualts
+//     model->m_is_obj=false;
+//
+//     //copy the ply to a temp_ply
+//     //decimate the temp
+//     //Get normals for it (polydata normals)
+//     // For each point in the original ply grab the neares K poin in the temp one
+//     //Normals of the original ply will be a weigther average (wight=distance) of the normals of the neightbours
+//     //then it would be no need to to blur normals in the case that we read a ply file
+//
+//
+//
+//   }else if (boost::ends_with(file_name.toStdString(), ".obj")){
+//     std::cout << "reading .obj file" << std::endl;
+//
+//     std::unique_ptr<OBJReader2> obj_reader(new OBJReader2());
+//     obj_reader->experimental_loading=model->m_experiemental_loading;
+//     obj_reader->should_fix_orientation=model->m_fix_orientation;
+//     obj_reader->SetFileName(file_name.toStdString());
+//     obj_reader->Update();
+//
+//     //brightned texture
+//     vtkSmartPointer<vtkPNGReader> pngReader = vtkSmartPointer<vtkPNGReader>::New();
+//     pngReader->SetFileName (obj_reader->GetTexturePath().data() );
+//     pngReader->Update();
+//     vtkSmartPointer<vtkTexture> texture = vtkSmartPointer<vtkTexture>::New();
+//     texture->SetInputConnection(pngReader->GetOutputPort());
+//
+//     //original texture
+//     vtkSmartPointer<vtkPNGReader> pngReader_orig = vtkSmartPointer<vtkPNGReader>::New();
+//     pngReader_orig->SetFileName (obj_reader->GetTextureOriginalPath().data() );
+//     pngReader_orig->Update();
+//     vtkSmartPointer<vtkTexture> texture_orig = vtkSmartPointer<vtkTexture>::New();
+//     texture_orig->SetInputConnection(pngReader_orig->GetOutputPort());
+//
+//     //Fix orientation
+//     vtkSmartPointer<vtkPolyData> mesh_orientated= auto_fix_orientation(obj_reader->GetOutput());
+//
+//     model->set_mesh(mesh_orientated);
+//     model->set_texture_bright(texture);
+//     model->set_texture_original(texture_orig);
+//
+//     vtkSmartPointer<vtkDataArray> tcoords = obj_reader->GetOutput()->GetPointData()->GetTCoords();
+//     if(tcoords){
+//       std::cout << "RGB:the polydata has tcoords" << std::endl;
+//     }else{
+//       std::cout << "RGB:the polydata does not have tcoords" << std::endl;
+//     }
+//     model->tcoords_rgb=tcoords;
+//
+//     std::cout << "visualizer:: rgb toocrds numer: "  << model->tcoords_rgb->GetSize()<< std::endl;
+//
+//     model->m_is_obj=true;
+//     model->m_is_ply=false;
+//   }else{
+//     std::cout << "NOT VALID FORMAT" << std::endl;
+//     return;
+//   }
+//
+//
+//
+//   ui->colorComboBox->setCurrentIndex(ui->colorComboBox->findText("RGB (bright)"));
+//   updateView();
 
 }
 
@@ -555,39 +614,63 @@ void  Visualizer::updateView(int reset_camera){
   renderer->RemoveAllViewProps();
 
   //update the wall with the new points (wrapped on unwrapped)
-  vtkSmartPointer<vtkPolyData> wall=model->get_mesh();
+  vtkSmartPointer<vtkPolyData> wall=model->mesh->get_vtk_mesh();
 
-  // std::cout << "----------------------------------------------------------------------------" << std::endl;
 
-  // wall->Print(std::cout);
-    // std::cout << "----------------------------------------------------------------------------" << std::endl;
+
+
+
+  // //HACK, get the obj mesh directly
+  // QString file_name="/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/researchDenslyTexturedMesh.obj";
+  // std::unique_ptr<OBJReader2> obj_reader(new OBJReader2());
+  // obj_reader->experimental_loading=model->m_experiemental_loading;
+  // obj_reader->SetFileName(file_name.toStdString());
+  // obj_reader->Update();
+  //
+  // //brightned texture
+  // vtkSmartPointer<vtkPNGReader> pngReader_bright = vtkSmartPointer<vtkPNGReader>::New();
+  // pngReader_bright->SetFileName (obj_reader->GetTexturePath().data() );
+  // pngReader_bright->Update();
+  // vtkSmartPointer<vtkTexture> texture_bright = vtkSmartPointer<vtkTexture>::New();
+  // texture_bright->SetInputConnection(pngReader_bright->GetOutputPort());
+  //
+  // wall=obj_reader->GetOutput();
+  //
+  //
+
+
+
 
   // Visualize
   vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-
-  std::cout << "creating mapper" << std::endl;
-  #if VTK_MAJOR_VERSION <= 5
-      mapper->SetInputConnection(wall->GetProducerPort());
-  #else
-      mapper->SetInputData(wall);
-  #endif
-  std::cout << "updating mapper" << std::endl;
-
-
+  mapper->SetInputConnection(wall->GetProducerPort());
   mapper->Update();
   vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
   actor->SetMapper(mapper);
 
-  std::cout << "adding texture" << std::endl;
 
-  if (this->ui->colorComboBox->currentText()=="RGB (bright)")
-    actor->SetTexture(model->m_texture_bright);
+  if (model->mesh->has_texture()){
+    std::cout << "updating view with an actor with texture" << '\n';
+    if (this->ui->colorComboBox->currentText()=="RGB (bright)")
+      actor->SetTexture(model->mesh->get_texture_bright());
 
-  if (this->ui->colorComboBox->currentText()=="RGB (original)")
-    actor->SetTexture(model->m_texture_original);
+    if (this->ui->colorComboBox->currentText()=="RGB (original)")
+      actor->SetTexture(model->mesh->get_texture_original());
 
-  if (this->ui->colorComboBox->currentText()=="IR")
-    actor->SetTexture(model->m_ir_texture);
+    if (this->ui->colorComboBox->currentText()=="IR")
+      actor->SetTexture(model->mesh->get_texture_ir());
+  }
+
+  // actor->SetTexture(texture_bright);
+
+
+
+
+
+
+
+
+
 
   actor->GetProperty()->BackfaceCullingOn();
 
@@ -600,6 +683,12 @@ void  Visualizer::updateView(int reset_camera){
   }
 
   draw_sphere(0,0,0);
+
+
+
+
+
+
 
   // draw_text_grid();
   std::cout << "START UPDATE VIEW- wall" << std::endl;
@@ -650,24 +739,15 @@ void Visualizer::on_clearButton_clicked(){
 void Visualizer::on_unwrapButton_clicked(){
   std::cout << "unwrapping" << std::endl;
 
-  if (!model->m_points_wrapped.empty()){
-    model->m_is_unwrapped=!model->m_is_unwrapped;
-  }
-
-  if (model->m_points_unwrapped.empty() && !model->m_points_wrapped.empty()){
-    // model->compute_unwrap(); //for cylinder chimneys
-
-    if (model->m_is_cylindrical){
-      model->compute_unwrap_cyl();
-    }else{
-      model->compute_unwrap5();
-    }
-
-    model->write_points_to_mesh();  //Need to add the computed unwraps to the mesh so that the grid is correct
+  if (model->mesh->has_data()){
+    model->mesh->set_state_unwrapped( !model->mesh->get_state_unwrapped() );
+    model->mesh->compute_unwrap();
+    // model->write_points_to_mesh();  //Need to add the computed unwraps to the mesh so that the grid is correct
     model->create_grid();
+    updateView();
   }
+  // model->compute_unwrap(); //for cylinder chimneys
 
-  updateView();
 }
 
 void Visualizer::on_colorComboBox_currentIndexChanged(const QString & text){
@@ -675,39 +755,39 @@ void Visualizer::on_colorComboBox_currentIndexChanged(const QString & text){
 
   if (text.toStdString() == "Plain"){
     std::cout << "calculating plain colors" << std::endl;
-    model->compute_plain_colors();
-    model->m_selected_ir=false;
+    model->mesh->compute_plain_colors();
+    model->mesh->set_state_selected_ir(false);
   }
   if (text.toStdString() == "RGB (bright)"){
     std::cout << "calculating RGB brightened colors" << std::endl;
-    if (model->m_is_ply){
-      model->compute_bright_colors();
+    if (model->mesh->is_ply()){
+      model->mesh->compute_bright_colors();
     }
-    model->m_selected_ir=false;
+    model->mesh->set_state_selected_ir(false);
   }
   if (text.toStdString() == "RGB (original)"){
     std::cout << "calculating RGB original colors" << std::endl;
-    if (model->m_is_ply){
-      model->compute_original_colors();
+    if (model->mesh->is_ply()){
+      model->mesh->compute_original_colors();
     }
-    model->m_selected_ir=false;
+    model->mesh->set_state_selected_ir(false);
   }
   if (text.toStdString() == "IR"){
     std::cout << "calculating IR colors" << std::endl;
-    if (!model->m_has_ir){
+    if (!model->mesh->has_ir() ){
       select_ir_mesh();
     }
-    model->m_has_ir=true;
-    model->m_selected_ir=true;
+    model->mesh->set_state_has_ir(true);
+    model->mesh->set_state_selected_ir(true);
   }
   if (text.toStdString() == "Depth"){
     std::cout << "calculating Depth colors" << std::endl;
-    model->compute_depth_colors();
-    model->m_selected_ir=false;
+    model->mesh->compute_depth_colors();
+    model->mesh->set_state_selected_ir(false);
   }
   if (text.toStdString() == "Curvature"){
     std::cout << "calculating Curvature colors" << std::endl;
-    model->m_selected_ir=false;
+    model->mesh->set_state_selected_ir(false);
   }
 
   updateView(0);  //by passing 0 it forces the camera to not be reset when updating the renderer view
@@ -740,7 +820,7 @@ void Visualizer::select_ir_mesh(){
 
     std::unique_ptr<OBJReader2> obj_reader(new OBJReader2());
     obj_reader->experimental_loading=model->m_experiemental_loading;
-    obj_reader->should_fix_orientation=model->m_fix_orientation;
+    // obj_reader->should_fix_orientation=model->m_fix_orientation;
     obj_reader->SetFileName(file_name.toStdString());
     obj_reader->Update();
 
@@ -922,7 +1002,7 @@ void Visualizer::on_renderGridCellButton_clicked(){
   if (model->m_points_unwrapped.empty() && !model->m_points_wrapped.empty()){
     // model->compute_unwrap(); //for cylinder chimneys
     model->compute_unwrap2();
-    model->write_points_to_mesh();  //Need to add the computed unwraps to the mesh so that the grid is correct
+    // model->write_points_to_mesh();  //Need to add the computed unwraps to the mesh so that the grid is correct
     model->create_grid();
   }
   updateView();
@@ -1832,7 +1912,7 @@ void Visualizer::render_full_img(){
   model->m_is_unwrapped=true;
   if (model->m_points_unwrapped.empty() && !model->m_points_wrapped.empty()){
     model->compute_unwrap2();
-    model->write_points_to_mesh();  //Need to add the computed unwraps to the mesh so that the grid is correct
+    // model->write_points_to_mesh();  //Need to add the computed unwraps to the mesh so that the grid is correct
     model->create_grid();
   }
   updateView();
@@ -1906,7 +1986,7 @@ void Visualizer::render_grid_unwrapped(){
   model->m_is_unwrapped=true;
   if (model->m_points_unwrapped.empty() && !model->m_points_wrapped.empty()){
     model->compute_unwrap2();
-    model->write_points_to_mesh();  //Need to add the computed unwraps to the mesh so that the grid is correct
+    // model->write_points_to_mesh();  //Need to add the computed unwraps to the mesh so that the grid is correct
     model->create_grid();
   }
   updateView();
@@ -2002,7 +2082,7 @@ void Visualizer::render_grid_wrapped(){
   model->m_is_unwrapped=false;
   if (model->m_points_unwrapped.empty() && !model->m_points_wrapped.empty()){
     model->compute_unwrap2();
-    model->write_points_to_mesh();  //Need to add the computed unwraps to the mesh so that the grid is correct
+    // model->write_points_to_mesh();  //Need to add the computed unwraps to the mesh so that the grid is correct
     model->create_grid();
   }
   updateView();
@@ -2143,7 +2223,7 @@ void Visualizer::render_walls(){
   model->m_is_unwrapped=false;
   if (model->m_points_unwrapped.empty() && !model->m_points_wrapped.empty()){
     model->compute_unwrap2();
-    model->write_points_to_mesh();  //Need to add the computed unwraps to the mesh so that the grid is correct
+    // model->write_points_to_mesh();  //Need to add the computed unwraps to the mesh so that the grid is correct
     model->create_grid();
   }
   updateView();
@@ -2341,7 +2421,7 @@ void Visualizer::on_renderToFileButton_clicked(){
 void Visualizer::on_numWallsText_textChanged(const QString & text){
   std::cout << "setting the num of walls to " <<  text.toStdString() << std::endl;
   int num= atoi (text.toStdString().data());
-  model->m_num_walls = atoi (text.toStdString().data());
+  model->mesh->set_nr_walls(  atoi (text.toStdString().data())  ) ;
 }
 
 void Visualizer::on_experimentalLoadingcheckBox_clicked(){
