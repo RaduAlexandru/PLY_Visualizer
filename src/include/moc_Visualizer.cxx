@@ -22,7 +22,7 @@ static const uint qt_meta_data_Visualizer[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-      30,   14, // methods
+      32,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -58,8 +58,10 @@ static const uint qt_meta_data_Visualizer[] = {
      849,  102,   11,   11, 0x0a,
      894,  102,   11,   11, 0x0a,
      937,  102,   11,   11, 0x0a,
-     974,   11,   11,   11, 0x0a,
-    1008,   11,   11,   11, 0x0a,
+     974,  102,   11,   11, 0x0a,
+    1014,  102,   11,   11, 0x0a,
+    1054,   11,   11,   11, 0x0a,
+    1088,   11,   11,   11, 0x0a,
 
        0        // eod
 };
@@ -93,6 +95,8 @@ static const char qt_meta_stringdata_Visualizer[] = {
     "on_gridUnwrappedMagText_textChanged(QString)\0"
     "on_gridWrappedMagText_textChanged(QString)\0"
     "on_wallsMagText_textChanged(QString)\0"
+    "on_aboveThreshText_textChanged(QString)\0"
+    "on_belowThreshText_textChanged(QString)\0"
     "on_loadFileConfigButton_clicked()\0"
     "grid_changed_slot()\0"
 };
@@ -131,8 +135,10 @@ void Visualizer::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 25: _t->on_gridUnwrappedMagText_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
         case 26: _t->on_gridWrappedMagText_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
         case 27: _t->on_wallsMagText_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
-        case 28: _t->on_loadFileConfigButton_clicked(); break;
-        case 29: _t->grid_changed_slot(); break;
+        case 28: _t->on_aboveThreshText_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 29: _t->on_belowThreshText_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 30: _t->on_loadFileConfigButton_clicked(); break;
+        case 31: _t->grid_changed_slot(); break;
         default: ;
         }
     }
@@ -170,9 +176,9 @@ int Visualizer::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 30)
+        if (_id < 32)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 30;
+        _id -= 32;
     }
     return _id;
 }

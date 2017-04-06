@@ -99,23 +99,8 @@ struct line_struct {
      int index; //index assigned to indicat the ordering with respect to the angle
 };
 
-struct point_struct{
-    row_type point;
-    double angle;   //angle of the line with respect to the x axis
-    double distance; //distance from a point to this line. Will be changed in each iteration when a point is checked
-    int index; //index assigned to indicat the ordering with respect to the angle
-};
 
 
-struct by_angle {
-    bool operator()(plane_struct const &a, plane_struct const &b) {
-        return a.angle < b.angle;
-    }
-
-    bool operator()(point_struct const &a, point_struct const &b) {
-        return a.angle < b.angle;
-    }
-};
 
 
 struct by_distance{

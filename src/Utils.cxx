@@ -128,6 +128,18 @@ std::string type2str(int type) {
 
 namespace utils{
 
+  std::chrono::steady_clock::time_point begin;
+  void tick(  ){
+    begin = std::chrono::steady_clock::now();
+  };
+
+  // template<typename TimeT >
+  // void tock(std::string name){
+  //   std::chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
+  //   std::cout << "TIME: " << name << " = " << std::chrono::duration_cast<TimeT>(end - begin).count() <<std::endl;
+  // };
+
+
 
   double dist(row_type vec1, row_type vec2){
     double dist=0.0;
@@ -138,12 +150,31 @@ namespace utils{
     return dist;
   }
 
+  double dist_squared(row_type vec1, row_type vec2){
+    double dist=0.0;
+    for (size_t i = 0; i < vec1.size(); i++) {
+      dist+= std::pow (vec1[i] - vec2[i],2);
+    }
+    // dist=sqrt(dist);
+    return dist;
+  }
+
 
   double dist_no_z(row_type vec1, row_type vec2){
     double dist=0.0;
     for (size_t i = 0; i < vec1.size()-1; i++) {
       dist+= std::pow (vec1[i] - vec2[i],2);
     }
+    dist=sqrt(dist);
+    return dist;
+  }
+
+  double dist_no_y(row_type vec1, row_type vec2){
+    double dist=0.0;
+
+    dist+= std::pow (vec1[0] - vec2[0],2);
+    dist+= std::pow (vec1[2] - vec2[2],2);
+    
     dist=sqrt(dist);
     return dist;
   }

@@ -695,8 +695,8 @@ void Model::compute_unwrap3(){
 
 
 void Model::compute_unwrap5(){
-//Run ransca to get intial planes
-//each point will get clustered into the plane that is closest to it.
+  //Run ransca to get intial planes
+  //each point will get clustered into the plane that is closest to it.
 
 
   int cluster_count = m_num_walls;

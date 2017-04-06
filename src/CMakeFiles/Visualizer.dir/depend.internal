@@ -8,6 +8,8 @@ CMakeFiles/Visualizer.dir/ConfigDialog.cxx.o
  /usr/include/qt4/Qt3Support/q3valuelist.h
  /usr/include/qt4/QtCore/QPoint
  /usr/include/qt4/QtCore/QPointF
+ /usr/include/qt4/QtCore/QVariant
+ /usr/include/qt4/QtCore/qabstractitemmodel.h
  /usr/include/qt4/QtCore/qalgorithms.h
  /usr/include/qt4/QtCore/qatomic.h
  /usr/include/qt4/QtCore/qatomic_aarch64.h
@@ -39,11 +41,14 @@ CMakeFiles/Visualizer.dir/ConfigDialog.cxx.o
  /usr/include/qt4/QtCore/qatomic_windowsce.h
  /usr/include/qt4/QtCore/qatomic_x86_64.h
  /usr/include/qt4/QtCore/qbasicatomic.h
+ /usr/include/qt4/QtCore/qbuffer.h
  /usr/include/qt4/QtCore/qbytearray.h
  /usr/include/qt4/QtCore/qchar.h
  /usr/include/qt4/QtCore/qconfig.h
+ /usr/include/qt4/QtCore/qcoreapplication.h
  /usr/include/qt4/QtCore/qcoreevent.h
  /usr/include/qt4/QtCore/qdatastream.h
+ /usr/include/qt4/QtCore/qeventloop.h
  /usr/include/qt4/QtCore/qfeatures.h
  /usr/include/qt4/QtCore/qfile.h
  /usr/include/qt4/QtCore/qglobal.h
@@ -53,6 +58,7 @@ CMakeFiles/Visualizer.dir/ConfigDialog.cxx.o
  /usr/include/qt4/QtCore/qline.h
  /usr/include/qt4/QtCore/qlinkedlist.h
  /usr/include/qt4/QtCore/qlist.h
+ /usr/include/qt4/QtCore/qlocale.h
  /usr/include/qt4/QtCore/qmap.h
  /usr/include/qt4/QtCore/qmargins.h
  /usr/include/qt4/QtCore/qmetatype.h
@@ -62,6 +68,7 @@ CMakeFiles/Visualizer.dir/ConfigDialog.cxx.o
  /usr/include/qt4/QtCore/qobjectdefs.h
  /usr/include/qt4/QtCore/qpair.h
  /usr/include/qt4/QtCore/qpoint.h
+ /usr/include/qt4/QtCore/qpointer.h
  /usr/include/qt4/QtCore/qrect.h
  /usr/include/qt4/QtCore/qregexp.h
  /usr/include/qt4/QtCore/qscopedpointer.h
@@ -76,37 +83,85 @@ CMakeFiles/Visualizer.dir/ConfigDialog.cxx.o
  /usr/include/qt4/QtCore/qstringmatcher.h
  /usr/include/qt4/QtCore/qvariant.h
  /usr/include/qt4/QtCore/qvector.h
+ /usr/include/qt4/QtGui/QAction
+ /usr/include/qt4/QtGui/QApplication
+ /usr/include/qt4/QtGui/QButtonGroup
+ /usr/include/qt4/QtGui/QCheckBox
  /usr/include/qt4/QtGui/QDialog
+ /usr/include/qt4/QtGui/QGridLayout
+ /usr/include/qt4/QtGui/QGroupBox
+ /usr/include/qt4/QtGui/QHeaderView
+ /usr/include/qt4/QtGui/QLabel
+ /usr/include/qt4/QtGui/QLineEdit
  /usr/include/qt4/QtGui/QPlatformWindow
+ /usr/include/qt4/QtGui/QPushButton
+ /usr/include/qt4/QtGui/QWidget
+ /usr/include/qt4/QtGui/qabstractbutton.h
+ /usr/include/qt4/QtGui/qabstractitemdelegate.h
+ /usr/include/qt4/QtGui/qabstractitemview.h
+ /usr/include/qt4/QtGui/qabstractscrollarea.h
+ /usr/include/qt4/QtGui/qabstractslider.h
+ /usr/include/qt4/QtGui/qabstractspinbox.h
+ /usr/include/qt4/QtGui/qaction.h
+ /usr/include/qt4/QtGui/qactiongroup.h
+ /usr/include/qt4/QtGui/qapplication.h
+ /usr/include/qt4/QtGui/qboxlayout.h
  /usr/include/qt4/QtGui/qbrush.h
+ /usr/include/qt4/QtGui/qbuttongroup.h
+ /usr/include/qt4/QtGui/qcheckbox.h
  /usr/include/qt4/QtGui/qcolor.h
  /usr/include/qt4/QtGui/qcursor.h
+ /usr/include/qt4/QtGui/qdesktopwidget.h
  /usr/include/qt4/QtGui/qdialog.h
  /usr/include/qt4/QtGui/qdrag.h
  /usr/include/qt4/QtGui/qevent.h
  /usr/include/qt4/QtGui/qfont.h
  /usr/include/qt4/QtGui/qfontinfo.h
  /usr/include/qt4/QtGui/qfontmetrics.h
+ /usr/include/qt4/QtGui/qframe.h
+ /usr/include/qt4/QtGui/qgridlayout.h
+ /usr/include/qt4/QtGui/qgroupbox.h
+ /usr/include/qt4/QtGui/qheaderview.h
+ /usr/include/qt4/QtGui/qicon.h
  /usr/include/qt4/QtGui/qimage.h
+ /usr/include/qt4/QtGui/qitemselectionmodel.h
  /usr/include/qt4/QtGui/qkeysequence.h
+ /usr/include/qt4/QtGui/qlabel.h
+ /usr/include/qt4/QtGui/qlayout.h
+ /usr/include/qt4/QtGui/qlayoutitem.h
+ /usr/include/qt4/QtGui/qlineedit.h
  /usr/include/qt4/QtGui/qmacdefines_mac.h
  /usr/include/qt4/QtGui/qmatrix.h
  /usr/include/qt4/QtGui/qmime.h
  /usr/include/qt4/QtGui/qpaintdevice.h
  /usr/include/qt4/QtGui/qpainterpath.h
  /usr/include/qt4/QtGui/qpalette.h
+ /usr/include/qt4/QtGui/qpen.h
  /usr/include/qt4/QtGui/qpixmap.h
  /usr/include/qt4/QtGui/qplatformwindow_qpa.h
  /usr/include/qt4/QtGui/qplatformwindowformat_qpa.h
  /usr/include/qt4/QtGui/qpolygon.h
+ /usr/include/qt4/QtGui/qpushbutton.h
  /usr/include/qt4/QtGui/qregion.h
  /usr/include/qt4/QtGui/qrgb.h
+ /usr/include/qt4/QtGui/qrubberband.h
  /usr/include/qt4/QtGui/qsizepolicy.h
+ /usr/include/qt4/QtGui/qslider.h
+ /usr/include/qt4/QtGui/qstyle.h
+ /usr/include/qt4/QtGui/qstyleoption.h
+ /usr/include/qt4/QtGui/qtabbar.h
+ /usr/include/qt4/QtGui/qtabwidget.h
+ /usr/include/qt4/QtGui/qtextcursor.h
+ /usr/include/qt4/QtGui/qtextformat.h
+ /usr/include/qt4/QtGui/qtextoption.h
  /usr/include/qt4/QtGui/qtransform.h
+ /usr/include/qt4/QtGui/qtransportauth_qws.h
+ /usr/include/qt4/QtGui/qvalidator.h
  /usr/include/qt4/QtGui/qwidget.h
  /usr/include/qt4/QtGui/qwindowdefs.h
  /usr/include/qt4/QtGui/qwindowdefs_win.h
  /usr/include/qt4/QtGui/qwmatrix.h
+ ui_ConfigDialog.h
 CMakeFiles/Visualizer.dir/InteractorPointPicker.cxx.o
  ../include/InteractorPointPicker.h
  /media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/src/InteractorPointPicker.cxx
@@ -267,6 +322,7 @@ CMakeFiles/Visualizer.dir/InteractorPointPicker.cxx.o
 CMakeFiles/Visualizer.dir/Mesh.cxx.o
  ../include/Mesh.h
  ../include/Utils.h
+ ../include/Utils.tcc
  /media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/src/Mesh.cxx
  /usr/include/eigen3/Eigen/Cholesky
  /usr/include/eigen3/Eigen/Core
@@ -679,6 +735,7 @@ CMakeFiles/Visualizer.dir/Mesh.cxx.o
  /usr/include/vtk-5.8/vtkDataSetSurfaceFilter.h
  /usr/include/vtk-5.8/vtkDebugLeaksManager.h
  /usr/include/vtk-5.8/vtkDoubleArray.h
+ /usr/include/vtk-5.8/vtkExtractEdges.h
  /usr/include/vtk-5.8/vtkFieldData.h
  /usr/include/vtk-5.8/vtkFloatArray.h
  /usr/include/vtk-5.8/vtkFollower.h
@@ -732,6 +789,7 @@ CMakeFiles/Visualizer.dir/Mesh.cxx.o
  /usr/include/vtk-5.8/vtkSetGet.h
  /usr/include/vtk-5.8/vtkSmartPointer.h
  /usr/include/vtk-5.8/vtkSmartPointerBase.h
+ /usr/include/vtk-5.8/vtkSmoothPolyDataFilter.h
  /usr/include/vtk-5.8/vtkSortDataArray.h
  /usr/include/vtk-5.8/vtkSphereSource.h
  /usr/include/vtk-5.8/vtkStdString.h
@@ -766,6 +824,7 @@ CMakeFiles/Visualizer.dir/Model.cxx.o
  ../include/Mesh.h
  ../include/Model.h
  ../include/Utils.h
+ ../include/Utils.tcc
  /media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/src/Model.cxx
  /usr/include/eigen3/Eigen/Cholesky
  /usr/include/eigen3/Eigen/Core
@@ -1226,6 +1285,7 @@ CMakeFiles/Visualizer.dir/Model.cxx.o
  /usr/include/vtk-5.8/vtkDataSetSurfaceFilter.h
  /usr/include/vtk-5.8/vtkDebugLeaksManager.h
  /usr/include/vtk-5.8/vtkDoubleArray.h
+ /usr/include/vtk-5.8/vtkExtractEdges.h
  /usr/include/vtk-5.8/vtkFieldData.h
  /usr/include/vtk-5.8/vtkFloatArray.h
  /usr/include/vtk-5.8/vtkFollower.h
@@ -1279,6 +1339,7 @@ CMakeFiles/Visualizer.dir/Model.cxx.o
  /usr/include/vtk-5.8/vtkSetGet.h
  /usr/include/vtk-5.8/vtkSmartPointer.h
  /usr/include/vtk-5.8/vtkSmartPointerBase.h
+ /usr/include/vtk-5.8/vtkSmoothPolyDataFilter.h
  /usr/include/vtk-5.8/vtkSortDataArray.h
  /usr/include/vtk-5.8/vtkSphereSource.h
  /usr/include/vtk-5.8/vtkStdString.h
@@ -1312,6 +1373,7 @@ CMakeFiles/Visualizer.dir/Model.cxx.o
 CMakeFiles/Visualizer.dir/OBJReader2.cxx.o
  ../include/OBJReader2.h
  ../include/Utils.h
+ ../include/Utils.tcc
  /media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/src/OBJReader2.cxx
  /usr/include/eigen3/Eigen/Cholesky
  /usr/include/eigen3/Eigen/Core
@@ -1687,6 +1749,7 @@ CMakeFiles/Visualizer.dir/OBJReader2.cxx.o
  /usr/include/vtk-5.8/vtkstd/vector
 CMakeFiles/Visualizer.dir/Utils.cxx.o
  ../include/Utils.h
+ ../include/Utils.tcc
  /media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/src/Utils.cxx
  /usr/include/eigen3/Eigen/Core
  /usr/include/eigen3/Eigen/Eigen2Support
@@ -1867,6 +1930,7 @@ CMakeFiles/Visualizer.dir/Visualizer.cxx.o
  ../include/Model.h
  ../include/OBJReader2.h
  ../include/Utils.h
+ ../include/Utils.tcc
  ../include/Visualizer.h
  ../include/vtkTexturingHelper.h
  /media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/src/Visualizer.cxx
@@ -2477,6 +2541,7 @@ CMakeFiles/Visualizer.dir/Visualizer.cxx.o
  /usr/include/vtk-5.8/vtkDebugLeaksManager.h
  /usr/include/vtk-5.8/vtkDelaunay2D.h
  /usr/include/vtk-5.8/vtkDoubleArray.h
+ /usr/include/vtk-5.8/vtkExtractEdges.h
  /usr/include/vtk-5.8/vtkExtractSelection.h
  /usr/include/vtk-5.8/vtkExtractSelectionBase.h
  /usr/include/vtk-5.8/vtkFieldData.h
@@ -2552,6 +2617,7 @@ CMakeFiles/Visualizer.dir/Visualizer.cxx.o
  /usr/include/vtk-5.8/vtkSetGet.h
  /usr/include/vtk-5.8/vtkSmartPointer.h
  /usr/include/vtk-5.8/vtkSmartPointerBase.h
+ /usr/include/vtk-5.8/vtkSmoothPolyDataFilter.h
  /usr/include/vtk-5.8/vtkSortDataArray.h
  /usr/include/vtk-5.8/vtkSphere.h
  /usr/include/vtk-5.8/vtkSphereSource.h
@@ -2601,6 +2667,8 @@ CMakeFiles/Visualizer.dir/include/moc_ConfigDialog.cxx.o
  /usr/include/qt4/Qt3Support/q3valuelist.h
  /usr/include/qt4/QtCore/QPoint
  /usr/include/qt4/QtCore/QPointF
+ /usr/include/qt4/QtCore/QVariant
+ /usr/include/qt4/QtCore/qabstractitemmodel.h
  /usr/include/qt4/QtCore/qalgorithms.h
  /usr/include/qt4/QtCore/qatomic.h
  /usr/include/qt4/QtCore/qatomic_aarch64.h
@@ -2632,11 +2700,14 @@ CMakeFiles/Visualizer.dir/include/moc_ConfigDialog.cxx.o
  /usr/include/qt4/QtCore/qatomic_windowsce.h
  /usr/include/qt4/QtCore/qatomic_x86_64.h
  /usr/include/qt4/QtCore/qbasicatomic.h
+ /usr/include/qt4/QtCore/qbuffer.h
  /usr/include/qt4/QtCore/qbytearray.h
  /usr/include/qt4/QtCore/qchar.h
  /usr/include/qt4/QtCore/qconfig.h
+ /usr/include/qt4/QtCore/qcoreapplication.h
  /usr/include/qt4/QtCore/qcoreevent.h
  /usr/include/qt4/QtCore/qdatastream.h
+ /usr/include/qt4/QtCore/qeventloop.h
  /usr/include/qt4/QtCore/qfeatures.h
  /usr/include/qt4/QtCore/qfile.h
  /usr/include/qt4/QtCore/qglobal.h
@@ -2646,6 +2717,7 @@ CMakeFiles/Visualizer.dir/include/moc_ConfigDialog.cxx.o
  /usr/include/qt4/QtCore/qline.h
  /usr/include/qt4/QtCore/qlinkedlist.h
  /usr/include/qt4/QtCore/qlist.h
+ /usr/include/qt4/QtCore/qlocale.h
  /usr/include/qt4/QtCore/qmap.h
  /usr/include/qt4/QtCore/qmargins.h
  /usr/include/qt4/QtCore/qmetatype.h
@@ -2655,6 +2727,7 @@ CMakeFiles/Visualizer.dir/include/moc_ConfigDialog.cxx.o
  /usr/include/qt4/QtCore/qobjectdefs.h
  /usr/include/qt4/QtCore/qpair.h
  /usr/include/qt4/QtCore/qpoint.h
+ /usr/include/qt4/QtCore/qpointer.h
  /usr/include/qt4/QtCore/qrect.h
  /usr/include/qt4/QtCore/qregexp.h
  /usr/include/qt4/QtCore/qscopedpointer.h
@@ -2669,37 +2742,85 @@ CMakeFiles/Visualizer.dir/include/moc_ConfigDialog.cxx.o
  /usr/include/qt4/QtCore/qstringmatcher.h
  /usr/include/qt4/QtCore/qvariant.h
  /usr/include/qt4/QtCore/qvector.h
+ /usr/include/qt4/QtGui/QAction
+ /usr/include/qt4/QtGui/QApplication
+ /usr/include/qt4/QtGui/QButtonGroup
+ /usr/include/qt4/QtGui/QCheckBox
  /usr/include/qt4/QtGui/QDialog
+ /usr/include/qt4/QtGui/QGridLayout
+ /usr/include/qt4/QtGui/QGroupBox
+ /usr/include/qt4/QtGui/QHeaderView
+ /usr/include/qt4/QtGui/QLabel
+ /usr/include/qt4/QtGui/QLineEdit
  /usr/include/qt4/QtGui/QPlatformWindow
+ /usr/include/qt4/QtGui/QPushButton
+ /usr/include/qt4/QtGui/QWidget
+ /usr/include/qt4/QtGui/qabstractbutton.h
+ /usr/include/qt4/QtGui/qabstractitemdelegate.h
+ /usr/include/qt4/QtGui/qabstractitemview.h
+ /usr/include/qt4/QtGui/qabstractscrollarea.h
+ /usr/include/qt4/QtGui/qabstractslider.h
+ /usr/include/qt4/QtGui/qabstractspinbox.h
+ /usr/include/qt4/QtGui/qaction.h
+ /usr/include/qt4/QtGui/qactiongroup.h
+ /usr/include/qt4/QtGui/qapplication.h
+ /usr/include/qt4/QtGui/qboxlayout.h
  /usr/include/qt4/QtGui/qbrush.h
+ /usr/include/qt4/QtGui/qbuttongroup.h
+ /usr/include/qt4/QtGui/qcheckbox.h
  /usr/include/qt4/QtGui/qcolor.h
  /usr/include/qt4/QtGui/qcursor.h
+ /usr/include/qt4/QtGui/qdesktopwidget.h
  /usr/include/qt4/QtGui/qdialog.h
  /usr/include/qt4/QtGui/qdrag.h
  /usr/include/qt4/QtGui/qevent.h
  /usr/include/qt4/QtGui/qfont.h
  /usr/include/qt4/QtGui/qfontinfo.h
  /usr/include/qt4/QtGui/qfontmetrics.h
+ /usr/include/qt4/QtGui/qframe.h
+ /usr/include/qt4/QtGui/qgridlayout.h
+ /usr/include/qt4/QtGui/qgroupbox.h
+ /usr/include/qt4/QtGui/qheaderview.h
+ /usr/include/qt4/QtGui/qicon.h
  /usr/include/qt4/QtGui/qimage.h
+ /usr/include/qt4/QtGui/qitemselectionmodel.h
  /usr/include/qt4/QtGui/qkeysequence.h
+ /usr/include/qt4/QtGui/qlabel.h
+ /usr/include/qt4/QtGui/qlayout.h
+ /usr/include/qt4/QtGui/qlayoutitem.h
+ /usr/include/qt4/QtGui/qlineedit.h
  /usr/include/qt4/QtGui/qmacdefines_mac.h
  /usr/include/qt4/QtGui/qmatrix.h
  /usr/include/qt4/QtGui/qmime.h
  /usr/include/qt4/QtGui/qpaintdevice.h
  /usr/include/qt4/QtGui/qpainterpath.h
  /usr/include/qt4/QtGui/qpalette.h
+ /usr/include/qt4/QtGui/qpen.h
  /usr/include/qt4/QtGui/qpixmap.h
  /usr/include/qt4/QtGui/qplatformwindow_qpa.h
  /usr/include/qt4/QtGui/qplatformwindowformat_qpa.h
  /usr/include/qt4/QtGui/qpolygon.h
+ /usr/include/qt4/QtGui/qpushbutton.h
  /usr/include/qt4/QtGui/qregion.h
  /usr/include/qt4/QtGui/qrgb.h
+ /usr/include/qt4/QtGui/qrubberband.h
  /usr/include/qt4/QtGui/qsizepolicy.h
+ /usr/include/qt4/QtGui/qslider.h
+ /usr/include/qt4/QtGui/qstyle.h
+ /usr/include/qt4/QtGui/qstyleoption.h
+ /usr/include/qt4/QtGui/qtabbar.h
+ /usr/include/qt4/QtGui/qtabwidget.h
+ /usr/include/qt4/QtGui/qtextcursor.h
+ /usr/include/qt4/QtGui/qtextformat.h
+ /usr/include/qt4/QtGui/qtextoption.h
  /usr/include/qt4/QtGui/qtransform.h
+ /usr/include/qt4/QtGui/qtransportauth_qws.h
+ /usr/include/qt4/QtGui/qvalidator.h
  /usr/include/qt4/QtGui/qwidget.h
  /usr/include/qt4/QtGui/qwindowdefs.h
  /usr/include/qt4/QtGui/qwindowdefs_win.h
  /usr/include/qt4/QtGui/qwmatrix.h
+ ui_ConfigDialog.h
 CMakeFiles/Visualizer.dir/include/moc_InteractorPointPicker.cxx.o
  /media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/include/InteractorPointPicker.h
  /media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/src/include/moc_InteractorPointPicker.cxx
@@ -2863,6 +2984,7 @@ CMakeFiles/Visualizer.dir/include/moc_Model.cxx.o
  /media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/include/Mesh.h
  /media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/include/Model.h
  /media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/include/Utils.h
+ /media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/include/Utils.tcc
  /media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/src/include/moc_Model.cxx
  /usr/include/eigen3/Eigen/Cholesky
  /usr/include/eigen3/Eigen/Core
@@ -3323,6 +3445,7 @@ CMakeFiles/Visualizer.dir/include/moc_Model.cxx.o
  /usr/include/vtk-5.8/vtkDataSetSurfaceFilter.h
  /usr/include/vtk-5.8/vtkDebugLeaksManager.h
  /usr/include/vtk-5.8/vtkDoubleArray.h
+ /usr/include/vtk-5.8/vtkExtractEdges.h
  /usr/include/vtk-5.8/vtkFieldData.h
  /usr/include/vtk-5.8/vtkFloatArray.h
  /usr/include/vtk-5.8/vtkFollower.h
@@ -3376,6 +3499,7 @@ CMakeFiles/Visualizer.dir/include/moc_Model.cxx.o
  /usr/include/vtk-5.8/vtkSetGet.h
  /usr/include/vtk-5.8/vtkSmartPointer.h
  /usr/include/vtk-5.8/vtkSmartPointerBase.h
+ /usr/include/vtk-5.8/vtkSmoothPolyDataFilter.h
  /usr/include/vtk-5.8/vtkSortDataArray.h
  /usr/include/vtk-5.8/vtkSphereSource.h
  /usr/include/vtk-5.8/vtkStdString.h
@@ -3417,6 +3541,7 @@ CMakeFiles/Visualizer.dir/include/moc_Visualizer.cxx.o
  /media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/include/Model.h
  /media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/include/OBJReader2.h
  /media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/include/Utils.h
+ /media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/include/Utils.tcc
  /media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/include/Visualizer.h
  /media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/include/vtkTexturingHelper.h
  /media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/src/include/moc_Visualizer.cxx
@@ -4008,6 +4133,7 @@ CMakeFiles/Visualizer.dir/include/moc_Visualizer.cxx.o
  /usr/include/vtk-5.8/vtkDebugLeaksManager.h
  /usr/include/vtk-5.8/vtkDelaunay2D.h
  /usr/include/vtk-5.8/vtkDoubleArray.h
+ /usr/include/vtk-5.8/vtkExtractEdges.h
  /usr/include/vtk-5.8/vtkExtractSelection.h
  /usr/include/vtk-5.8/vtkExtractSelectionBase.h
  /usr/include/vtk-5.8/vtkFieldData.h
@@ -4083,6 +4209,7 @@ CMakeFiles/Visualizer.dir/include/moc_Visualizer.cxx.o
  /usr/include/vtk-5.8/vtkSetGet.h
  /usr/include/vtk-5.8/vtkSmartPointer.h
  /usr/include/vtk-5.8/vtkSmartPointerBase.h
+ /usr/include/vtk-5.8/vtkSmoothPolyDataFilter.h
  /usr/include/vtk-5.8/vtkSortDataArray.h
  /usr/include/vtk-5.8/vtkSphere.h
  /usr/include/vtk-5.8/vtkSphereSource.h
@@ -4132,6 +4259,7 @@ CMakeFiles/Visualizer.dir/main.cxx.o
  ../include/Model.h
  ../include/OBJReader2.h
  ../include/Utils.h
+ ../include/Utils.tcc
  ../include/Visualizer.h
  ../include/vtkTexturingHelper.h
  /media/alex/Data/Master/SHK/vtk_scripts/chimney_viewer/src/main.cxx
@@ -4723,6 +4851,7 @@ CMakeFiles/Visualizer.dir/main.cxx.o
  /usr/include/vtk-5.8/vtkDebugLeaksManager.h
  /usr/include/vtk-5.8/vtkDelaunay2D.h
  /usr/include/vtk-5.8/vtkDoubleArray.h
+ /usr/include/vtk-5.8/vtkExtractEdges.h
  /usr/include/vtk-5.8/vtkExtractSelection.h
  /usr/include/vtk-5.8/vtkExtractSelectionBase.h
  /usr/include/vtk-5.8/vtkFieldData.h
@@ -4798,6 +4927,7 @@ CMakeFiles/Visualizer.dir/main.cxx.o
  /usr/include/vtk-5.8/vtkSetGet.h
  /usr/include/vtk-5.8/vtkSmartPointer.h
  /usr/include/vtk-5.8/vtkSmartPointerBase.h
+ /usr/include/vtk-5.8/vtkSmoothPolyDataFilter.h
  /usr/include/vtk-5.8/vtkSortDataArray.h
  /usr/include/vtk-5.8/vtkSphere.h
  /usr/include/vtk-5.8/vtkSphereSource.h

@@ -124,6 +124,8 @@ public:
 
   std::shared_ptr<Model> model;
   vtkSmartPointer<vtkRenderer> renderer;
+  vtkSmartPointer<vtkPolyDataMapper> m_mapper_wall;
+  vtkSmartPointer<vtkActor> m_actor_wall;
   vtkSmartPointer<InteractorPointPicker> interactor;
   std::shared_ptr<ConfigDialog> m_config;
 
@@ -205,6 +207,8 @@ public slots:
   void on_gridUnwrappedMagText_textChanged(const QString & text);
   void on_gridWrappedMagText_textChanged(const QString & text);
   void on_wallsMagText_textChanged(const QString & text);
+  void on_aboveThreshText_textChanged(const QString & text);
+  void on_belowThreshText_textChanged(const QString & text);
 
 
   void on_loadFileConfigButton_clicked();

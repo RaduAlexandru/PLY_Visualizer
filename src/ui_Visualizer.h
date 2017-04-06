@@ -56,12 +56,14 @@ public:
     QPushButton *renderToFileButton;
     QLineEdit *numWallsText;
     QLabel *label;
+    QLineEdit *aboveThreshText;
+    QLineEdit *belowThreshText;
 
     void setupUi(QMainWindow *Visualizer)
     {
         if (Visualizer->objectName().isEmpty())
             Visualizer->setObjectName(QString::fromUtf8("Visualizer"));
-        Visualizer->resize(674, 674);
+        Visualizer->resize(674, 753);
         actionOpenFile = new QAction(Visualizer);
         actionOpenFile->setObjectName(QString::fromUtf8("actionOpenFile"));
         actionOpenFile->setEnabled(true);
@@ -139,6 +141,12 @@ public:
         label = new QLabel(dockWidgetContents);
         label->setObjectName(QString::fromUtf8("label"));
         label->setGeometry(QRect(10, 50, 98, 23));
+        aboveThreshText = new QLineEdit(dockWidgetContents);
+        aboveThreshText->setObjectName(QString::fromUtf8("aboveThreshText"));
+        aboveThreshText->setGeometry(QRect(40, 640, 113, 23));
+        belowThreshText = new QLineEdit(dockWidgetContents);
+        belowThreshText->setObjectName(QString::fromUtf8("belowThreshText"));
+        belowThreshText->setGeometry(QRect(40, 670, 113, 23));
         dockWidget->setWidget(dockWidgetContents);
         Visualizer->addDockWidget(static_cast<Qt::DockWidgetArea>(2), dockWidget);
 

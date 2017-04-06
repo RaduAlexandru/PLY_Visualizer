@@ -29,6 +29,8 @@ Visualizer::Visualizer():
   renderer(vtkSmartPointer<vtkRenderer>::New()),
   interactor(vtkSmartPointer<InteractorPointPicker>::New()),
   m_grid_metric_actor(vtkSmartPointer<vtkTextActor>::New()),
+  m_mapper_wall(vtkSmartPointer<vtkPolyDataMapper>::New()),
+  m_actor_wall(vtkSmartPointer<vtkActor>::New()),
   m_config(new ConfigDialog(this))
 {
   this->ui = new Ui_Visualizer;
@@ -39,6 +41,7 @@ Visualizer::Visualizer():
   this->ui->colorComboBox->addItem("RGB (original)");
   this->ui->colorComboBox->addItem("IR");
   this->ui->colorComboBox->addItem("Depth");
+  this->ui->colorComboBox->addItem("Depth (defects)");
   //this->ui->colorComboBox->addItem("")
   // this->ui->colorComboBox->addItem("Curvature");
 
@@ -156,15 +159,16 @@ Visualizer::Visualizer():
 void Visualizer::on_loadFileButton_clicked(){
 
 
-  QString file_name;
-  QString selfilter = tr("Mesh (*.obj *.ply)");
-  file_name = QFileDialog::getOpenFileName(this, tr("Open File"), "./", selfilter);
-  if (file_name.isEmpty()){
-    return;
-  }
+  // QString file_name;
+  // QString selfilter = tr("Mesh (*.obj *.ply)");
+  // file_name = QFileDialog::getOpenFileName(this, tr("Open File"), "./", selfilter);
+  // if (file_name.isEmpty()){
+  //   return;
+  // }
 
   // QString file_name="/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/researchDenslyTexturedMesh.obj";
   // QString file_name="/media/alex/Data/Master/SHK/Data/New_data/ply_3/optim_colored_o4.ply";
+  QString file_name="/media/alex/Data/Master/SHK/Data/euroc/mve_scene_inpainted/surface-L2-clean_crop2.ply";
 
   std::cout << "filename: " << file_name.toStdString() << std::endl;
 
@@ -225,6 +229,7 @@ void Visualizer::on_loadFileButton_clicked(){
 
 
   ui->colorComboBox->setCurrentIndex(ui->colorComboBox->findText("RGB (bright)"));
+  on_colorComboBox_currentIndexChanged("RGB (bright)");  //Explicitly call the function to recompute the colors in case the previous line didn't actualy change anything and therefore the slot didn't fire
 
   std::cout << "after setting colors we have a mesh with points " << model->mesh->get_nr_points_wrapped() << '\n';
 
@@ -609,6 +614,16 @@ void Visualizer::clearAll(){
 }
 
 
+// void  Visualizer::updateView_only_color_change(int reset_camera){
+//   std::cout << "update view" << std::endl;
+//   renderer->RemoveAllViewProps();
+//
+//   //update the wall with the new points (wrapped on unwrapped)
+//   vtkSmartPointer<vtkPolyData> wall=model->mesh->get_vtk_mesh();
+//
+// }
+
+
 void  Visualizer::updateView(int reset_camera){
   std::cout << "update view" << std::endl;
   renderer->RemoveAllViewProps();
@@ -666,7 +681,7 @@ void  Visualizer::updateView(int reset_camera){
   // actor->SetTexture(texture_bright);
 
 
-  actor->GetProperty()->BackfaceCullingOn();
+  // actor->GetProperty()->BackfaceCullingOn();
 
 
   std::cout << "adding actor" << std::endl;
@@ -731,15 +746,27 @@ void Visualizer::on_clearButton_clicked(){
 
 void Visualizer::on_unwrapButton_clicked(){
   std::cout << "unwrapping" << std::endl;
+  model->mesh->set_state_unwrapped( !model->mesh->get_state_unwrapped() );
 
-  if (model->mesh->has_data()){
-    model->mesh->set_state_unwrapped( !model->mesh->get_state_unwrapped() );
-    model->mesh->compute_unwrap();
+  if (model->mesh->has_data() && !model->mesh->has_unwrapped_data() ){
+
+
+    if ( model->mesh->get_state_unwrapped()){
+      model->mesh->compute_unwrap();
+    }
     // model->write_points_to_mesh();  //Need to add the computed unwraps to the mesh so that the grid is correct
-    model->create_grid();
-    updateView();
+
+  }else if (model->mesh->has_data() && model->mesh->has_unwrapped_data()){
+
+    //If the num of walls change we need to calculate a new unwrap
+    if ( model->mesh->get_state_unwrapped() && model->mesh->get_nr_walls()!=model->mesh->get_nr_walls_baked()){
+      model->mesh->compute_unwrap();
+    }
   }
   // model->compute_unwrap(); //for cylinder chimneys
+
+  model->create_grid();
+  updateView();
 
 }
 
@@ -776,6 +803,11 @@ void Visualizer::on_colorComboBox_currentIndexChanged(const QString & text){
   if (text.toStdString() == "Depth"){
     std::cout << "calculating Depth colors" << std::endl;
     model->mesh->compute_depth_colors();
+    model->mesh->set_state_selected_ir(false);
+  }
+  if (text.toStdString() == "Depth (defects)"){
+    std::cout << "calculating Depth_defects colors" << std::endl;
+    model->mesh->compute_depth_defects_colors();
     model->mesh->set_state_selected_ir(false);
   }
   if (text.toStdString() == "Curvature"){
@@ -2538,4 +2570,18 @@ void Visualizer::on_wallsMagText_textChanged(const QString & text){
     num=20;
   std::cout << "setting the walls magnification to to " << num << std::endl;
   model->m_magnification_walls = num;
+}
+
+void Visualizer::on_aboveThreshText_textChanged(const QString & text){
+  double num= atof (text.toStdString().data());
+  std::cout << "setting the above thresh to " <<  num << std::endl;
+  model->mesh->set_above_tresh(  num  ) ;
+  // model->mesh->compute_depth_defects_colors();
+}
+
+void Visualizer::on_belowThreshText_textChanged(const QString & text){
+  double num= atof (text.toStdString().data());
+  std::cout << "setting below thresh to " <<  num << std::endl;
+  model->mesh->set_below_tresh(  num  ) ;
+  // model->mesh->compute_depth_defects_colors();
 }
