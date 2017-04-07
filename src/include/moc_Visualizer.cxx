@@ -22,7 +22,7 @@ static const uint qt_meta_data_Visualizer[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-      32,   14, // methods
+      36,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -37,31 +37,35 @@ static const uint qt_meta_data_Visualizer[] = {
      107,  102,   11,   11, 0x0a,
      153,   11,   11,   11, 0x0a,
      186,   11,   11,   11, 0x0a,
-     212,   11,   11,   11, 0x0a,
-     250,   11,   11,   11, 0x0a,
-     286,   11,   11,   11, 0x0a,
-     317,   11,   11,   11, 0x0a,
-     351,   11,   11,   11, 0x0a,
-     382,   11,   11,   11, 0x0a,
-     419,   11,   11,   11, 0x0a,
-     451,   11,   11,   11, 0x0a,
-     492,   11,   11,   11, 0x0a,
-     528,  102,   11,   11, 0x0a,
-     565,   11,   11,   11, 0x0a,
+     219,   11,   11,   11, 0x0a,
+     245,   11,   11,   11, 0x0a,
+     283,   11,   11,   11, 0x0a,
+     319,   11,   11,   11, 0x0a,
+     350,   11,   11,   11, 0x0a,
+     384,   11,   11,   11, 0x0a,
+     415,   11,   11,   11, 0x0a,
+     452,   11,   11,   11, 0x0a,
+     484,   11,   11,   11, 0x0a,
+     525,   11,   11,   11, 0x0a,
+     561,  102,   11,   11, 0x0a,
      598,   11,   11,   11, 0x0a,
-     629,  102,   11,   11, 0x0a,
+     631,   11,   11,   11, 0x0a,
      662,   11,   11,   11, 0x0a,
-     697,   11,   11,   11, 0x0a,
-     738,   11,   11,   11, 0x0a,
-     777,   11,   11,   11, 0x0a,
-     810,  102,   11,   11, 0x0a,
-     849,  102,   11,   11, 0x0a,
-     894,  102,   11,   11, 0x0a,
-     937,  102,   11,   11, 0x0a,
-     974,  102,   11,   11, 0x0a,
-    1014,  102,   11,   11, 0x0a,
-    1054,   11,   11,   11, 0x0a,
-    1088,   11,   11,   11, 0x0a,
+     697,  102,   11,   11, 0x0a,
+     730,   11,   11,   11, 0x0a,
+     765,   11,   11,   11, 0x0a,
+     806,   11,   11,   11, 0x0a,
+     845,   11,   11,   11, 0x0a,
+     878,  102,   11,   11, 0x0a,
+     917,  102,   11,   11, 0x0a,
+     962,  102,   11,   11, 0x0a,
+    1005,  102,   11,   11, 0x0a,
+    1042,  102,   11,   11, 0x0a,
+    1082,  102,   11,   11, 0x0a,
+    1122,   11,   11,   11, 0x0a,
+    1164,   11,   11,   11, 0x0a,
+    1205,   11,   11,   11, 0x0a,
+    1239,   11,   11,   11, 0x0a,
 
        0        // eod
 };
@@ -72,6 +76,7 @@ static const char qt_meta_stringdata_Visualizer[] = {
     "on_clearButton_clicked()\0"
     "on_unwrapButton_clicked()\0text\0"
     "on_colorComboBox_currentIndexChanged(QString)\0"
+    "on_flatShadingCheckBox_clicked()\0"
     "on_perspectiveCheckBox_clicked()\0"
     "on_selectButton_clicked()\0"
     "on_showGridInactiveCheckBox_clicked()\0"
@@ -86,6 +91,7 @@ static const char qt_meta_stringdata_Visualizer[] = {
     "on_numWallsText_textChanged(QString)\0"
     "on_deformWallscheckBox_clicked()\0"
     "on_clearUnwrapButton_clicked()\0"
+    "on_recomputeColorsButton_clicked()\0"
     "on_pathText_textChanged(QString)\0"
     "on_renderFullImgcheckBox_clicked()\0"
     "on_renderGridUnwrappedcheckBox_clicked()\0"
@@ -97,6 +103,8 @@ static const char qt_meta_stringdata_Visualizer[] = {
     "on_wallsMagText_textChanged(QString)\0"
     "on_aboveThreshText_textChanged(QString)\0"
     "on_belowThreshText_textChanged(QString)\0"
+    "on_highCapDepthColorSlider_valueChanged()\0"
+    "on_lowCapDepthColorSlider_valueChanged()\0"
     "on_loadFileConfigButton_clicked()\0"
     "grid_changed_slot()\0"
 };
@@ -112,33 +120,37 @@ void Visualizer::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 2: _t->on_clearButton_clicked(); break;
         case 3: _t->on_unwrapButton_clicked(); break;
         case 4: _t->on_colorComboBox_currentIndexChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
-        case 5: _t->on_perspectiveCheckBox_clicked(); break;
-        case 6: _t->on_selectButton_clicked(); break;
-        case 7: _t->on_showGridInactiveCheckBox_clicked(); break;
-        case 8: _t->on_showGridActiveCheckBox_clicked(); break;
-        case 9: _t->on_renderToImgButton_clicked(); break;
-        case 10: _t->on_renderGridCellButton_clicked(); break;
-        case 11: _t->on_renderWallsButton_clicked(); break;
-        case 12: _t->on_renderGridWrappedButton_clicked(); break;
-        case 13: _t->on_renderToFileButton_clicked(); break;
-        case 14: _t->on_experimentalLoadingcheckBox_clicked(); break;
-        case 15: _t->on_fixOrientationcheckBox_clicked(); break;
-        case 16: _t->on_numWallsText_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
-        case 17: _t->on_deformWallscheckBox_clicked(); break;
-        case 18: _t->on_clearUnwrapButton_clicked(); break;
-        case 19: _t->on_pathText_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
-        case 20: _t->on_renderFullImgcheckBox_clicked(); break;
-        case 21: _t->on_renderGridUnwrappedcheckBox_clicked(); break;
-        case 22: _t->on_renderGridWrappedcheckBox_clicked(); break;
-        case 23: _t->on_renderWallscheckBox_clicked(); break;
-        case 24: _t->on_fullImgMagText_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
-        case 25: _t->on_gridUnwrappedMagText_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
-        case 26: _t->on_gridWrappedMagText_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
-        case 27: _t->on_wallsMagText_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
-        case 28: _t->on_aboveThreshText_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
-        case 29: _t->on_belowThreshText_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
-        case 30: _t->on_loadFileConfigButton_clicked(); break;
-        case 31: _t->grid_changed_slot(); break;
+        case 5: _t->on_flatShadingCheckBox_clicked(); break;
+        case 6: _t->on_perspectiveCheckBox_clicked(); break;
+        case 7: _t->on_selectButton_clicked(); break;
+        case 8: _t->on_showGridInactiveCheckBox_clicked(); break;
+        case 9: _t->on_showGridActiveCheckBox_clicked(); break;
+        case 10: _t->on_renderToImgButton_clicked(); break;
+        case 11: _t->on_renderGridCellButton_clicked(); break;
+        case 12: _t->on_renderWallsButton_clicked(); break;
+        case 13: _t->on_renderGridWrappedButton_clicked(); break;
+        case 14: _t->on_renderToFileButton_clicked(); break;
+        case 15: _t->on_experimentalLoadingcheckBox_clicked(); break;
+        case 16: _t->on_fixOrientationcheckBox_clicked(); break;
+        case 17: _t->on_numWallsText_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 18: _t->on_deformWallscheckBox_clicked(); break;
+        case 19: _t->on_clearUnwrapButton_clicked(); break;
+        case 20: _t->on_recomputeColorsButton_clicked(); break;
+        case 21: _t->on_pathText_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 22: _t->on_renderFullImgcheckBox_clicked(); break;
+        case 23: _t->on_renderGridUnwrappedcheckBox_clicked(); break;
+        case 24: _t->on_renderGridWrappedcheckBox_clicked(); break;
+        case 25: _t->on_renderWallscheckBox_clicked(); break;
+        case 26: _t->on_fullImgMagText_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 27: _t->on_gridUnwrappedMagText_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 28: _t->on_gridWrappedMagText_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 29: _t->on_wallsMagText_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 30: _t->on_aboveThreshText_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 31: _t->on_belowThreshText_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 32: _t->on_highCapDepthColorSlider_valueChanged(); break;
+        case 33: _t->on_lowCapDepthColorSlider_valueChanged(); break;
+        case 34: _t->on_loadFileConfigButton_clicked(); break;
+        case 35: _t->grid_changed_slot(); break;
         default: ;
         }
     }
@@ -176,9 +188,9 @@ int Visualizer::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 32)
+        if (_id < 36)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 32;
+        _id -= 36;
     }
     return _id;
 }

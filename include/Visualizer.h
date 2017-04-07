@@ -108,6 +108,9 @@
 // };
 
 
+enum UpdateType { FULL_WALL, ONLY_COLOR, ONLY_CAMERA, ONLY_GRID };
+
+
 
 // Forward Qt class declarations
 class Ui_Visualizer;
@@ -182,6 +185,7 @@ public slots:
   void on_clearButton_clicked();
   void on_unwrapButton_clicked();
   void on_colorComboBox_currentIndexChanged(const QString & text);
+  void on_flatShadingCheckBox_clicked();
   void on_perspectiveCheckBox_clicked();
   void on_selectButton_clicked();
   void on_showGridInactiveCheckBox_clicked();
@@ -198,6 +202,7 @@ public slots:
   void on_numWallsText_textChanged(const QString & text);
   void on_deformWallscheckBox_clicked();
   void on_clearUnwrapButton_clicked();
+  void on_recomputeColorsButton_clicked();
   void on_pathText_textChanged(const QString & text);
   void on_renderFullImgcheckBox_clicked();
   void on_renderGridUnwrappedcheckBox_clicked();
@@ -209,6 +214,8 @@ public slots:
   void on_wallsMagText_textChanged(const QString & text);
   void on_aboveThreshText_textChanged(const QString & text);
   void on_belowThreshText_textChanged(const QString & text);
+  void on_highCapDepthColorSlider_valueChanged();
+  void on_lowCapDepthColorSlider_valueChanged();
 
 
   void on_loadFileConfigButton_clicked();
@@ -223,7 +230,8 @@ private:
   Ui_Visualizer *ui;
 
   void clearAll();
-  void updateView(int reset_camera=1);
+  // void updateView(int reset_camera=1);
+  void updateView(UpdateType update_type=FULL_WALL);
   void update_grid_view();
 
   std::vector< vtkSmartPointer<vtkActor> > m_grid_actors;

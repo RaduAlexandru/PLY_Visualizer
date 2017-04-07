@@ -27,7 +27,10 @@ Mesh::Mesh():
 
   m_texture_original(vtkSmartPointer<vtkTexture>::New()),
   m_texture_bright(vtkSmartPointer<vtkTexture>::New()),
-  m_texture_ir(vtkSmartPointer<vtkTexture>::New())
+  m_texture_ir(vtkSmartPointer<vtkTexture>::New()),
+
+  m_high_cap_depth_color(255.0),
+  m_low_cap_depth_color(0.0)
   {
 
 }
@@ -75,7 +78,8 @@ void Mesh::set_mesh(vtkSmartPointer<vtkPolyData> polydata ){
   }
 
   //get radius and circumference
-  m_radius           = estimate_radius(m_points_wrapped_ds);
+  // m_radius           = estimate_radius(m_points_wrapped_ds);
+  m_radius           = estimate_radius2();
   m_circumference    = estimate_circumference (m_radius, m_num_walls);
 
   //if it's ply get colors, both the original and the bright ones
@@ -178,6 +182,115 @@ double Mesh::estimate_radius(pcl::PointCloud<pcl::PointXYZ>::Ptr points ){
   return radius;
 }
 
+
+double Mesh::estimate_radius2(){
+
+  std::cout << "estimating radius" << std::endl;
+  double radius=0.0;
+
+
+  //get random points on the mesh
+  int num_rand_points= 100*m_points_wrapped.size()/100.0;
+  std::random_device rnd_device;
+  std::mt19937 mersenne_engine(rnd_device());
+  std::uniform_int_distribution<int> dist(0, m_points_wrapped.size()-1);
+  auto gen = std::bind(dist, mersenne_engine);
+  std::vector<int> points_ids(num_rand_points);
+  std::generate(begin(points_ids), end(points_ids), gen);
+
+
+  // //find the crossing of their normals. Save that position in x,y coordinates
+  // for (size_t i = 0; i < points_ids.size(); i++) {
+  //
+  // }
+
+  // All the objects needed
+  pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
+  pcl::SACSegmentationFromNormals<pcl::PointXYZ, pcl::Normal> seg;
+  pcl::ExtractIndices<pcl::PointXYZ> extract;
+  pcl::ExtractIndices<pcl::Normal> extract_normals;
+  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ> ());
+
+  // Datasets
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered2 (new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::Normal>::Ptr cloud_normals2 (new pcl::PointCloud<pcl::Normal>);
+  pcl::ModelCoefficients::Ptr coefficients_plane (new pcl::ModelCoefficients), coefficients_cylinder (new pcl::ModelCoefficients);
+  pcl::PointIndices::Ptr inliers_plane (new pcl::PointIndices), inliers_cylinder (new pcl::PointIndices);
+
+  // Estimate point normals
+  ne.setSearchMethod (tree);
+  ne.setInputCloud (m_points_wrapped_ds);
+  ne.setKSearch (50);
+  ne.compute (*cloud_normals);
+
+
+  // Create the segmentation object for cylinder segmentation and set all the parameters
+  seg.setOptimizeCoefficients (true);
+  seg.setModelType (pcl::SACMODEL_CYLINDER);
+  seg.setMethodType (pcl::SAC_RANSAC);
+  seg.setNormalDistanceWeight (0.1);
+  seg.setMaxIterations (10000);
+  seg.setDistanceThreshold (0.05);
+  seg.setRadiusLimits (4.9, 5.0);
+  seg.setInputCloud (m_points_wrapped_ds);
+  seg.setInputNormals (cloud_normals);
+
+  // Obtain the cylinder inliers and coefficients
+  seg.segment (*inliers_cylinder, *coefficients_cylinder);
+  std::cerr << "Cylinder coefficients: " << *coefficients_cylinder << std::endl;
+
+
+  // //Set also the center
+  // m_bounds=m_wall->GetBounds();
+  // m_center.resize(3);
+  // m_center[0]=
+  // m_center[1]=
+  // m_center[2]=(m_bounds[5]+m_bounds[4])/2.0;
+
+  radius= coefficients_cylinder->values[6];
+  std::cout << "radius is " << radius << std::endl;
+
+  return radius;
+
+
+
+
+
+
+
+
+
+
+
+
+  // //Get the points that are further away
+  // std::sort(m_points_wrapped_ds->points.begin(), m_points_wrapped_ds->points.end(), by_distance_center());
+  //
+  // int further_num;
+  // further_num=50;
+  // //A proportion is more robust
+  // // further_num=20*m_points_wrapped_ds->points.size()/100.0;
+  // further_num=100*m_points_wrapped_ds->points.size()/100.0;
+  // std::vector< pcl::PointXYZ > further_points(m_points_wrapped_ds->points.begin(), m_points_wrapped_ds->points.begin() + further_num);
+  //
+  //
+  // //Get the median of those distance as the radius
+  // row_type distances(further_num);
+  // for (size_t i = 0; i < further_points.size(); i++) {
+  //   float dist= utils::distance(further_points[i], pcl::PointXYZ (0.0, 0.0, further_points[i].z));
+  //   distances[i]=dist;
+  // }
+  //
+  // radius= median(distances);
+  //
+  // std::cout << "radius is " << radius << std::endl;
+
+  return radius;
+}
+
 double Mesh::estimate_circumference(double radius, double num_walls){
   double circumference;
 
@@ -239,6 +352,10 @@ vtkSmartPointer<vtkPolyData> Mesh::get_vtk_mesh(){
   m_wall->SetPoints(points_active);
 
 
+  std::cout << "nr of color values is " << m_colors_active->GetNumberOfTuples()  << '\n';
+  // if (m_colors_active->GetNumberOfTuples()!=0){
+  //   m_wall->GetPointData()->SetScalars(m_colors_active);
+  // }
   if (m_is_ply){
     m_wall->GetPointData()->SetScalars(m_colors_active);
   }
@@ -310,8 +427,6 @@ vtkSmartPointer<vtkPolyData> Mesh::get_vtk_mesh(){
     std::cout << "updte" << std::endl;
     normals_alg->Update();
 
-    std::cout << "11111" << std::endl;
-
     vtkSmartPointer<vtkFloatArray> vtk_normals = vtkSmartPointer<vtkFloatArray>::New();
     vtk_normals->SetNumberOfComponents(3);
     vtk_normals->SetName("Normals");
@@ -325,6 +440,15 @@ vtkSmartPointer<vtkPolyData> Mesh::get_vtk_mesh(){
 
 
   std::cout << "finished wiriting points to mesh" << std::endl;
+  return m_wall;
+}
+
+
+
+vtkSmartPointer<vtkPolyData> Mesh::get_vtk_mesh_only_color(){
+  if (m_is_ply){
+    m_wall->GetPointData()->SetScalars(m_colors_active);
+  }
   return m_wall;
 }
 
@@ -381,10 +505,17 @@ vtkSmartPointer<vtkPolyData> Mesh::auto_fix_pose( vtkSmartPointer<vtkPolyData> p
 
   std::cout << "centering mesh" << std::endl;
   m_bounds=polydata->GetBounds();
-  m_center.resize(3);
-  m_center[0]=(m_bounds[1]+m_bounds[0])/2.0;
-  m_center[1]=(m_bounds[3]+m_bounds[2])/2.0;
-  m_center[2]=(m_bounds[5]+m_bounds[4])/2.0;
+
+  //If we already have a center of the mesh(given by estimate radius2) then we don't need to to this
+  if (m_center.empty()){
+    m_center.resize(3);
+    m_center[0]=(m_bounds[1]+m_bounds[0])/2.0;
+    m_center[1]=(m_bounds[3]+m_bounds[2])/2.0;
+    m_center[2]=(m_bounds[5]+m_bounds[4])/2.0;
+  }
+
+
+  std::cout << "m_center is " << m_center[0] << " " << m_center[1] << " "  << m_center[2] << '\n';
 
   vtkSmartPointer<vtkTransform> translation =
     vtkSmartPointer<vtkTransform>::New();
@@ -445,6 +576,8 @@ vtkSmartPointer<vtkPolyData> Mesh::auto_fix_pose( vtkSmartPointer<vtkPolyData> p
     vtk_normals_estimated->SetNumberOfComponents(3);
     vtk_normals_estimated->SetName("Normals");
     vtk_normals_estimated = vtkFloatArray::SafeDownCast(normals_alg->GetOutput()->GetPointData()->GetNormals());
+
+    polydata->GetPointData()->SetNormals(vtk_normals_estimated);
 
     normals_for_orientation=vtk_normal_tcoords_to_vector(vtk_normals_estimated);
   }
@@ -1754,27 +1887,27 @@ void Mesh::unwrap_cyl(){
 
 
   //FIFTH way smooth it and then get the difference between points
-  vtkSmartPointer<vtkPoints> points_active = vtkSmartPointer<vtkPoints>::New() ;
-  points_active=vector_to_vtk(m_points_unwrapped);
-  m_wall->SetPoints(points_active);
-  m_wall->SetPolys(m_cells_wrapped);
-
-
-  vtkSmartPointer<vtkSmoothPolyDataFilter> smoothFilter = vtkSmartPointer<vtkSmoothPolyDataFilter>::New();
-  smoothFilter->SetInputConnection(m_wall->GetProducerPort());
+  // vtkSmartPointer<vtkPoints> points_active = vtkSmartPointer<vtkPoints>::New() ;
+  // points_active=vector_to_vtk(m_points_unwrapped);
+  // m_wall->SetPoints(points_active);
+  // m_wall->SetPolys(m_cells_wrapped);
+  //
+  //
+  // vtkSmartPointer<vtkSmoothPolyDataFilter> smoothFilter = vtkSmartPointer<vtkSmoothPolyDataFilter>::New();
+  // smoothFilter->SetInputConnection(m_wall->GetProducerPort());
+  // // smoothFilter->SetNumberOfIterations(300);
+  // // smoothFilter->SetRelaxationFactor(1.5);
   // smoothFilter->SetNumberOfIterations(300);
-  // smoothFilter->SetRelaxationFactor(1.5);
-  smoothFilter->SetNumberOfIterations(300);
-  smoothFilter->SetRelaxationFactor(0.7);
-  smoothFilter->FeatureEdgeSmoothingOn();
-  smoothFilter->BoundarySmoothingOn();
-  smoothFilter->Update();
-
-
-  matrix_type m_points_unwrapped_smoothed= vtk_to_vector(smoothFilter->GetOutput()->GetPoints());
-  for (size_t i = 0; i < m_points_wrapped.size(); i++) {
-    m_points_unwrapped[i][1]-=m_points_unwrapped_smoothed[i][1];
-  }
+  // smoothFilter->SetRelaxationFactor(0.7);
+  // smoothFilter->FeatureEdgeSmoothingOn();
+  // smoothFilter->BoundarySmoothingOn();
+  // smoothFilter->Update();
+  //
+  //
+  // matrix_type m_points_unwrapped_smoothed= vtk_to_vector(smoothFilter->GetOutput()->GetPoints());
+  // for (size_t i = 0; i < m_points_wrapped.size(); i++) {
+  //   m_points_unwrapped[i][1]-=m_points_unwrapped_smoothed[i][1];
+  // }
 
 
 
@@ -2475,7 +2608,7 @@ std::vector<double> Mesh::computeDistancesToRadius(matrix_type points, double ra
   //Calculate first the distance to center.
   for (size_t i = 0; i < num_points; i++) {
     dist[i]= sqrt( points[i][0]*points[i][0]  + points[i][1]*points[i][1] );
-    dist[i]= dist[i]-radius;
+    dist[i]= radius- dist[i];
   }
 
   return dist;
@@ -2637,6 +2770,86 @@ void Mesh::compute_depth_colors(){
   std::cout << "finishing to create colors" << std::endl;
 
 
+}
+
+void Mesh::compute_depth_rgb_colors(){
+  if (m_points_unwrapped.empty()){
+    compute_unwrap(); //Compute unwrap to actually get unwrapped points
+  }
+
+  int num_points;
+  if (m_is_unwrapped){
+    num_points=m_points_unwrapped.size();
+  }else{
+    num_points=m_points_wrapped.size();
+  }
+
+  int column_num = 1;
+  double max_dist = (*std::max_element(this->m_points_unwrapped.begin(), this->m_points_unwrapped.end(), column_comparer(column_num)))[column_num];
+  double min_dist = (*std::min_element(this->m_points_unwrapped.begin(), this->m_points_unwrapped.end(), column_comparer(column_num)))[column_num];
+
+
+  std::cout << "max, min dist is" << max_dist << " " << min_dist << std::endl;
+
+  std::vector<double> depth(num_points);
+
+  for (size_t i = 0; i < num_points; i++) {
+    depth[i]=interpolate(this->m_points_unwrapped[i][1], min_dist, max_dist, 255.0, 0.0);
+  }
+
+
+  //cap th depth at a certain value both up and down
+  for (size_t i = 0; i < num_points; i++) {
+    // depth[i]=interpolate(depth[i], 0.0 , 255.0 , m_low_cap_depth_color,  m_high_cap_depth_color);
+    if (depth[i]>m_high_cap_depth_color){
+      depth[i]=m_high_cap_depth_color;
+    }
+    if (depth[i]<m_low_cap_depth_color){
+      depth[i]=m_low_cap_depth_color;
+    }
+    depth[i]=interpolate(depth[i], m_low_cap_depth_color , m_high_cap_depth_color , 0.0,  255.0);
+
+  }
+
+  m_colors_active->Reset();
+  m_colors_active = vtkSmartPointer<vtkUnsignedCharArray>::New();
+  m_colors_active->SetNumberOfComponents(3);
+  m_colors_active->SetName("depth_rgb");
+
+
+
+  cv::Mat depth_cv(depth.size(), 1,  CV_8UC1);
+
+  //copy the pixels into a OpencvMat
+  for (size_t i = 0; i < depth.size(); i++) {
+    depth_cv.at<uchar>(i,0)=depth[i];
+  }
+
+  //colormap the OpencvMat
+  cv::Mat depth_colormaped_cv;
+  cv::applyColorMap(depth_cv, depth_colormaped_cv, cv::COLORMAP_JET);
+
+  //Copy colors bright back into a unsigned char arrays
+  for (int i = 0; i < depth_colormaped_cv.cols; i++) {
+    for (int j = 0; j < depth_colormaped_cv.rows; j++) {
+        cv::Vec3b intensity = depth_colormaped_cv.at<cv::Vec3b>(j, i);
+        double color_pixel[3];
+        color_pixel[0]= intensity.val[0];
+        color_pixel[1]= intensity.val[1];
+        color_pixel[2]= intensity.val[2];
+        m_colors_active->InsertNextTuple(color_pixel);
+    }
+  }
+
+
+
+  // std::cout << "starting to create colors" << std::endl;
+  // for (size_t i = 0; i < num_points; i++) {
+  //   //colors->InsertNextTuple3(angles[i]*255.0,0,0);
+  //   m_colors_active->InsertNextTuple3(depth[i],depth[i],depth[i]);
+  //   //m_points_unwrapped.InsertNextPoint( angles[i] *circumference,distances_from_radius[i],point[2])
+  // }
+  std::cout << "finishing to create colors" << std::endl;
 }
 
 

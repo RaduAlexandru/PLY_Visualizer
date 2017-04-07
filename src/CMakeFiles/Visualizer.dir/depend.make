@@ -2408,6 +2408,7 @@ CMakeFiles/Visualizer.dir/Visualizer.cxx.o: /usr/include/qt4/QtGui/QMainWindow
 CMakeFiles/Visualizer.dir/Visualizer.cxx.o: /usr/include/qt4/QtGui/QMovie
 CMakeFiles/Visualizer.dir/Visualizer.cxx.o: /usr/include/qt4/QtGui/QPlatformWindow
 CMakeFiles/Visualizer.dir/Visualizer.cxx.o: /usr/include/qt4/QtGui/QPushButton
+CMakeFiles/Visualizer.dir/Visualizer.cxx.o: /usr/include/qt4/QtGui/QSlider
 CMakeFiles/Visualizer.dir/Visualizer.cxx.o: /usr/include/qt4/QtGui/QTextBrowser
 CMakeFiles/Visualizer.dir/Visualizer.cxx.o: /usr/include/qt4/QtGui/QWidget
 CMakeFiles/Visualizer.dir/Visualizer.cxx.o: /usr/include/qt4/QtGui/qabstractbutton.h

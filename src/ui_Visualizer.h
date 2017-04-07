@@ -23,6 +23,7 @@
 #include <QtGui/QLineEdit>
 #include <QtGui/QMainWindow>
 #include <QtGui/QPushButton>
+#include <QtGui/QSlider>
 #include <QtGui/QTextBrowser>
 #include <QtGui/QWidget>
 #include "QVTKWidget.h"
@@ -58,6 +59,10 @@ public:
     QLabel *label;
     QLineEdit *aboveThreshText;
     QLineEdit *belowThreshText;
+    QCheckBox *flatShadingCheckBox;
+    QSlider *highCapDepthColorSlider;
+    QSlider *lowCapDepthColorSlider;
+    QPushButton *recomputeColorsButton;
 
     void setupUi(QMainWindow *Visualizer)
     {
@@ -79,8 +84,8 @@ public:
         centralwidget->setObjectName(QString::fromUtf8("centralwidget"));
         horizontalLayout = new QHBoxLayout(centralwidget);
         horizontalLayout->setSpacing(0);
-        horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
         horizontalLayout->setContentsMargins(0, 0, 0, 0);
+        horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
         gridLayout = new QGridLayout();
         gridLayout->setObjectName(QString::fromUtf8("gridLayout"));
         gridLayout->setSizeConstraint(QLayout::SetFixedSize);
@@ -105,7 +110,7 @@ public:
         loadFileButton->setGeometry(QRect(10, 10, 91, 23));
         clearButton = new QPushButton(dockWidgetContents);
         clearButton->setObjectName(QString::fromUtf8("clearButton"));
-        clearButton->setGeometry(QRect(10, 360, 75, 23));
+        clearButton->setGeometry(QRect(10, 350, 75, 23));
         unwrapButton = new QPushButton(dockWidgetContents);
         unwrapButton->setObjectName(QString::fromUtf8("unwrapButton"));
         unwrapButton->setGeometry(QRect(10, 100, 121, 23));
@@ -114,7 +119,7 @@ public:
         colorComboBox->setGeometry(QRect(10, 140, 121, 22));
         textBrowser = new QTextBrowser(dockWidgetContents);
         textBrowser->setObjectName(QString::fromUtf8("textBrowser"));
-        textBrowser->setGeometry(QRect(10, 410, 171, 221));
+        textBrowser->setGeometry(QRect(10, 410, 171, 171));
         perspectiveCheckBox = new QCheckBox(dockWidgetContents);
         perspectiveCheckBox->setObjectName(QString::fromUtf8("perspectiveCheckBox"));
         perspectiveCheckBox->setGeometry(QRect(10, 220, 101, 18));
@@ -143,10 +148,28 @@ public:
         label->setGeometry(QRect(10, 50, 98, 23));
         aboveThreshText = new QLineEdit(dockWidgetContents);
         aboveThreshText->setObjectName(QString::fromUtf8("aboveThreshText"));
-        aboveThreshText->setGeometry(QRect(40, 640, 113, 23));
+        aboveThreshText->setGeometry(QRect(40, 590, 113, 23));
         belowThreshText = new QLineEdit(dockWidgetContents);
         belowThreshText->setObjectName(QString::fromUtf8("belowThreshText"));
-        belowThreshText->setGeometry(QRect(40, 670, 113, 23));
+        belowThreshText->setGeometry(QRect(40, 620, 113, 23));
+        flatShadingCheckBox = new QCheckBox(dockWidgetContents);
+        flatShadingCheckBox->setObjectName(QString::fromUtf8("flatShadingCheckBox"));
+        flatShadingCheckBox->setGeometry(QRect(10, 280, 141, 20));
+        flatShadingCheckBox->setChecked(false);
+        highCapDepthColorSlider = new QSlider(dockWidgetContents);
+        highCapDepthColorSlider->setObjectName(QString::fromUtf8("highCapDepthColorSlider"));
+        highCapDepthColorSlider->setGeometry(QRect(20, 650, 160, 16));
+        highCapDepthColorSlider->setMaximum(255);
+        highCapDepthColorSlider->setValue(255);
+        highCapDepthColorSlider->setOrientation(Qt::Horizontal);
+        lowCapDepthColorSlider = new QSlider(dockWidgetContents);
+        lowCapDepthColorSlider->setObjectName(QString::fromUtf8("lowCapDepthColorSlider"));
+        lowCapDepthColorSlider->setGeometry(QRect(20, 680, 160, 16));
+        lowCapDepthColorSlider->setMaximum(255);
+        lowCapDepthColorSlider->setOrientation(Qt::Horizontal);
+        recomputeColorsButton = new QPushButton(dockWidgetContents);
+        recomputeColorsButton->setObjectName(QString::fromUtf8("recomputeColorsButton"));
+        recomputeColorsButton->setGeometry(QRect(10, 380, 121, 23));
         dockWidget->setWidget(dockWidgetContents);
         Visualizer->addDockWidget(static_cast<Qt::DockWidgetArea>(2), dockWidget);
 
@@ -190,6 +213,8 @@ public:
         loadFileConfigButton->setText(QString());
         renderToFileButton->setText(QApplication::translate("Visualizer", "Render to File", 0, QApplication::UnicodeUTF8));
         label->setText(QApplication::translate("Visualizer", "Num. of walls", 0, QApplication::UnicodeUTF8));
+        flatShadingCheckBox->setText(QApplication::translate("Visualizer", "FlatShading", 0, QApplication::UnicodeUTF8));
+        recomputeColorsButton->setText(QApplication::translate("Visualizer", "Recompute Colors", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };

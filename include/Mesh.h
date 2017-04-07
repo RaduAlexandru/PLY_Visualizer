@@ -53,6 +53,11 @@
 #include <pcl/common/geometry.h>
 #include <pcl/common/common.h>
 
+#include <opencv2/contrib/contrib.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
+
 #include <omp.h>
 
 #include "Utils.h"
@@ -122,6 +127,7 @@ public:
      void set_texture_original(vtkSmartPointer<vtkTexture> texture){ m_texture_original =texture; m_has_texture =true; };
      void set_texture_ir(vtkSmartPointer<vtkTexture> texture ) { m_texture_ir                    =texture; m_has_texture =true; };
      vtkSmartPointer<vtkPolyData> get_vtk_mesh(); // returns a vtk mesh unwrapped or not depending on the set state
+     vtkSmartPointer<vtkPolyData> get_vtk_mesh_only_color();  //Return the mesh but oly writes into it the new color
     //  vtkSmartPointer<vtkPolyData> get_unwrapped_mesh(); //Convenience method TODO: Implement
     //  vtkSmartPointer<vtkPolyData> get_wrapped_mesh(); //Convenience method TODO: Implement
 
@@ -129,6 +135,7 @@ public:
      void compute_plain_colors();
      void compute_bright_colors();
      void compute_depth_colors();
+     void compute_depth_rgb_colors();
      void compute_depth_defects_colors();
      void compute_original_colors();
 
@@ -142,6 +149,8 @@ public:
 
      void set_above_tresh (double val) {m_above_tresh=val;};
      void set_below_tresh (double val) {m_below_tresh=val;};
+     void set_high_cap_depth_color (double val) {m_high_cap_depth_color=val;};
+     void set_low_cap_depth_color (double val) {m_low_cap_depth_color=val;};
 
 
      bool get_state_unwrapped() { return m_is_unwrapped; };
@@ -177,6 +186,8 @@ private:
 
      double m_above_tresh;
      double m_below_tresh;
+     double m_high_cap_depth_color;
+     double m_low_cap_depth_color;
 
 
      //State----------------Indicated the state of the mesh that is being displayed
@@ -252,6 +263,7 @@ private:
 
      vtkSmartPointer<vtkUnsignedCharArray> get_colors();  //read the color scalars of a mesh. If it has none it return a plain color
      double estimate_radius (pcl::PointCloud<pcl::PointXYZ>::Ptr points );
+     double estimate_radius2 ();
      double estimate_circumference(double radius, double num_walls);
      void create_grid();
      void scale_mesh();

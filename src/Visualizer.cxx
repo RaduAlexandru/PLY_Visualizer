@@ -41,6 +41,7 @@ Visualizer::Visualizer():
   this->ui->colorComboBox->addItem("RGB (original)");
   this->ui->colorComboBox->addItem("IR");
   this->ui->colorComboBox->addItem("Depth");
+  this->ui->colorComboBox->addItem("Depth (colored)");
   this->ui->colorComboBox->addItem("Depth (defects)");
   //this->ui->colorComboBox->addItem("")
   // this->ui->colorComboBox->addItem("Curvature");
@@ -120,6 +121,9 @@ Visualizer::Visualizer():
   renderer->GradientBackgroundOn();
   renderer->SetBackground(1.0,1.0,1.0);
   renderer->SetBackground2(0.1,0.1,0.1);
+  m_actor_wall->SetMapper(m_mapper_wall);
+  m_actor_wall->GetProperty()->BackfaceCullingOff();
+  renderer->AddActor(m_actor_wall);
 
 
 
@@ -159,16 +163,17 @@ Visualizer::Visualizer():
 void Visualizer::on_loadFileButton_clicked(){
 
 
-  // QString file_name;
-  // QString selfilter = tr("Mesh (*.obj *.ply)");
-  // file_name = QFileDialog::getOpenFileName(this, tr("Open File"), "./", selfilter);
-  // if (file_name.isEmpty()){
-  //   return;
-  // }
+  QString file_name;
+  QString selfilter = tr("Mesh (*.obj *.ply)");
+  file_name = QFileDialog::getOpenFileName(this, tr("Open File"), "./", selfilter);
+  if (file_name.isEmpty()){
+    return;
+  }
 
   // QString file_name="/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/researchDenslyTexturedMesh.obj";
   // QString file_name="/media/alex/Data/Master/SHK/Data/New_data/ply_3/optim_colored_o4.ply";
-  QString file_name="/media/alex/Data/Master/SHK/Data/euroc/mve_scene_inpainted/surface-L2-clean_crop2.ply";
+  // QString file_name="/media/alex/Data/Master/SHK/Data/euroc/mve_scene_inpainted/surface-L2-clean_crop2.ply";
+  // QString file_name="/media/alex/Data/Master/SHK/Data/euroc/mve_scene_inpainted/surface-L2-clean.ply";
 
   std::cout << "filename: " << file_name.toStdString() << std::endl;
 
@@ -624,97 +629,134 @@ void Visualizer::clearAll(){
 // }
 
 
-void  Visualizer::updateView(int reset_camera){
+void  Visualizer::updateView(UpdateType update_type){
   std::cout << "update view" << std::endl;
-  renderer->RemoveAllViewProps();
-
-  //update the wall with the new points (wrapped on unwrapped)
-  vtkSmartPointer<vtkPolyData> wall=model->mesh->get_vtk_mesh();
-
-
-
-
-
-  // //HACK, get the obj mesh directly
-  // QString file_name="/media/alex/Data/Master/SHK/Data/Chimney/research_textured_mesh/researchDenslyTexturedMesh.obj";
-  // std::unique_ptr<OBJReader2> obj_reader(new OBJReader2());
-  // obj_reader->experimental_loading=model->m_experiemental_loading;
-  // obj_reader->SetFileName(file_name.toStdString());
-  // obj_reader->Update();
+  // renderer->RemoveAllViewProps();
   //
-  // //brightned texture
-  // vtkSmartPointer<vtkPNGReader> pngReader_bright = vtkSmartPointer<vtkPNGReader>::New();
-  // pngReader_bright->SetFileName (obj_reader->GetTexturePath().data() );
-  // pngReader_bright->Update();
-  // vtkSmartPointer<vtkTexture> texture_bright = vtkSmartPointer<vtkTexture>::New();
-  // texture_bright->SetInputConnection(pngReader_bright->GetOutputPort());
-  //
-  // wall=obj_reader->GetOutput();
+  // //update the wall with the new points (wrapped on unwrapped)
+  // vtkSmartPointer<vtkPolyData> wall=model->mesh->get_vtk_mesh();
   //
   //
+  // // Visualize
+  // vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+  // mapper->SetInputConnection(wall->GetProducerPort());
+  // mapper->Update();
+  // vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+  // actor->SetMapper(mapper);
+  //
+  //
+  // if (model->mesh->has_texture()){
+  //   std::cout << "updating view with an actor with texture" << '\n';
+  //   if (this->ui->colorComboBox->currentText()=="RGB (bright)")
+  //     actor->SetTexture(model->mesh->get_texture_bright());
+  //
+  //   if (this->ui->colorComboBox->currentText()=="RGB (original)")
+  //     actor->SetTexture(model->mesh->get_texture_original());
+  //
+  //   if (this->ui->colorComboBox->currentText()=="IR")
+  //     actor->SetTexture(model->mesh->get_texture_ir());
+  // }
+  //
+  // // actor->SetTexture(texture_bright);
+  //
+  //
+  // // actor->GetProperty()->BackfaceCullingOn();
+  //
+  //
+  // std::cout << "adding actor" << std::endl;
+  // renderer->AddActor(actor);
+  // if (reset_camera==1){
+  //   set_camera_default_pos();
+  //   renderer->ResetCamera();
+  // }
+  //
+  // draw_sphere(0,0,0);
+  //
+  //
+  //
+  //
+  // // draw_text_grid();
+  // std::cout << "START UPDATE VIEW- wall" << std::endl;
+  // // wall->Print(std::cout);
+  // std::cout << "FIN: UPDATE VIEW- wall" << std::endl;
+  //
+  //
+  // std::cout << "START UPDATE VIEW- actor" << std::endl;
+  // // actor->Print(std::cout);
+  // std::cout << "FIN: UPDATE VIEW- actor" << std::endl;
+  //
+  // std::cout << "updateing grid view" << std::endl;
+  //
+  // update_grid_view();
+  // std::cout << "--------------rendering" << std::endl;
+  // // renderer->Print(std::cout);
+  // this->ui->qvtkWidget->GetRenderWindow()->Render();
+  // std::cout << "--------------finished updateview" << std::endl;
+
+  update_type=FULL_WALL;
+  wall->Print(std::cout);
 
 
+  switch (update_type){
+    case FULL_WALL:{
+      std::cout << "update view full wall" << '\n';
+      vtkSmartPointer<vtkPolyData> wall=model->mesh->get_vtk_mesh();
+      m_mapper_wall->SetInputConnection(wall->GetProducerPort());
+      if (model->mesh->has_texture()){
+        std::cout << "updating view with an actor with texture" << '\n';
+        if (this->ui->colorComboBox->currentText()=="RGB (bright)")
+          m_actor_wall->SetTexture(model->mesh->get_texture_bright());
+
+        if (this->ui->colorComboBox->currentText()=="RGB (original)")
+          m_actor_wall->SetTexture(model->mesh->get_texture_original());
+
+        if (this->ui->colorComboBox->currentText()=="IR")
+          m_actor_wall->SetTexture(model->mesh->get_texture_ir());
+      }
+      set_camera_default_pos();
+      renderer->ResetCamera();
+      this->ui->qvtkWidget->GetRenderWindow()->Render();
+    }
+    break;
+
+    case ONLY_COLOR:{
+      std::cout << "update view only color" << '\n';
+      std::string color_combo_box_text= ui->colorComboBox->currentText().toStdString();
+      if (model->mesh->has_texture() &&   ( color_combo_box_text=="RGB (bright)" || color_combo_box_text=="RGB (original)" || color_combo_box_text=="IR"   )  ){
+        std::cout << "updating view with an actor with texture" << '\n';
+        if (this->ui->colorComboBox->currentText()=="RGB (bright)")
+          m_actor_wall->SetTexture(model->mesh->get_texture_bright());
+
+        if (this->ui->colorComboBox->currentText()=="RGB (original)")
+          m_actor_wall->SetTexture(model->mesh->get_texture_original());
+
+        if (this->ui->colorComboBox->currentText()=="IR")
+          m_actor_wall->SetTexture(model->mesh->get_texture_ir());
+      }else{
+        vtkSmartPointer<vtkPolyData> wall=model->mesh->get_vtk_mesh_only_color();
+        m_mapper_wall->SetInputConnection(wall->GetProducerPort());
+      }
+    }
+    break;
+
+    case ONLY_CAMERA:
+      std::cout << "update view only camera" << '\n'; //Dont nee to actually do anything because it will still call the render
+    break;
+
+    case ONLY_GRID:
+      update_grid_view();
+      set_camera_default_pos();
+      renderer->ResetCamera();
+    break;
 
 
-
-
-  // Visualize
-  vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-  mapper->SetInputConnection(wall->GetProducerPort());
-  mapper->Update();
-  vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
-  actor->SetMapper(mapper);
-
-
-  if (model->mesh->has_texture()){
-    std::cout << "updating view with an actor with texture" << '\n';
-    if (this->ui->colorComboBox->currentText()=="RGB (bright)")
-      actor->SetTexture(model->mesh->get_texture_bright());
-
-    if (this->ui->colorComboBox->currentText()=="RGB (original)")
-      actor->SetTexture(model->mesh->get_texture_original());
-
-    if (this->ui->colorComboBox->currentText()=="IR")
-      actor->SetTexture(model->mesh->get_texture_ir());
   }
-
-  // actor->SetTexture(texture_bright);
-
-
-  // actor->GetProperty()->BackfaceCullingOn();
-
-
-  std::cout << "adding actor" << std::endl;
-  renderer->AddActor(actor);
-  if (reset_camera==1){
-    set_camera_default_pos();
-    renderer->ResetCamera();
-  }
-
-  draw_sphere(0,0,0);
-
-
-
-
-
-
-  // draw_text_grid();
-  std::cout << "START UPDATE VIEW- wall" << std::endl;
-  // wall->Print(std::cout);
-  std::cout << "FIN: UPDATE VIEW- wall" << std::endl;
-
-
-  std::cout << "START UPDATE VIEW- actor" << std::endl;
-  // actor->Print(std::cout);
-  std::cout << "FIN: UPDATE VIEW- actor" << std::endl;
-
-  std::cout << "updateing grid view" << std::endl;
-
-  update_grid_view();
-  std::cout << "--------------rendering" << std::endl;
-  // renderer->Print(std::cout);
   this->ui->qvtkWidget->GetRenderWindow()->Render();
-  std::cout << "--------------finished updateview" << std::endl;
+
+  // //SEcond way of doing it, a bit more efficient
+  // vtkSmartPointer<vtkPolyData> wall=model->mesh->get_vtk_mesh();
+
+
 
 }
 
@@ -729,9 +771,9 @@ void Visualizer::set_camera_default_pos(){
   // renderer->ResetCamera();
 
 
-  renderer->GetActiveCamera()->SetPosition (0,-5,0);
+  renderer->GetActiveCamera()->SetPosition (0,5,0);
   renderer->GetActiveCamera()->SetFocalPoint(0, 0, 0);
-  renderer->GetActiveCamera()->SetViewUp(0, 0, 1);
+  renderer->GetActiveCamera()->SetViewUp(0, 0, -1);
   // renderer->GetActiveCamera()->Elevation(270);
   // renderer->GetActiveCamera()->OrthogonalizeViewUp();
   renderer->ResetCamera();
@@ -805,6 +847,11 @@ void Visualizer::on_colorComboBox_currentIndexChanged(const QString & text){
     model->mesh->compute_depth_colors();
     model->mesh->set_state_selected_ir(false);
   }
+  if (text.toStdString() == "Depth (colored)"){
+    std::cout << "calculating Depth colors rgb" << std::endl;
+    model->mesh->compute_depth_rgb_colors();
+    model->mesh->set_state_selected_ir(false);
+  }
   if (text.toStdString() == "Depth (defects)"){
     std::cout << "calculating Depth_defects colors" << std::endl;
     model->mesh->compute_depth_defects_colors();
@@ -815,7 +862,7 @@ void Visualizer::on_colorComboBox_currentIndexChanged(const QString & text){
     model->mesh->set_state_selected_ir(false);
   }
 
-  updateView(0);  //by passing 0 it forces the camera to not be reset when updating the renderer view
+  updateView(ONLY_COLOR);
 
 }
 
@@ -884,6 +931,40 @@ void Visualizer::select_ir_mesh(){
 
 }
 
+void Visualizer::on_flatShadingCheckBox_clicked(){
+  std::cout << "change shading" << std::endl;
+
+
+  if (ui->flatShadingCheckBox->isChecked()){
+    m_actor_wall->GetProperty()->SetInterpolationToFlat();
+    m_actor_wall->GetProperty()->SetAmbient(1.0);
+    m_actor_wall->GetProperty()->SetDiffuse(0.0);
+    m_actor_wall->GetProperty()->SetSpecular(0.0);
+  }else{
+    m_actor_wall->GetProperty()->SetInterpolationToPhong();
+    m_actor_wall->GetProperty()->SetAmbient(0.0);
+    m_actor_wall->GetProperty()->SetDiffuse(1.0);
+    m_actor_wall->GetProperty()->SetSpecular(0.0);
+  }
+
+  updateView(ONLY_CAMERA);
+
+}
+
+void Visualizer::on_highCapDepthColorSlider_valueChanged(){
+  double val= ui->highCapDepthColorSlider->value();
+  std::cout << "setting high cap to " << val << '\n';
+  model->mesh->set_high_cap_depth_color(val);
+}
+
+void Visualizer::on_lowCapDepthColorSlider_valueChanged(){
+  double val= ui->lowCapDepthColorSlider->value();
+  std::cout << "setting low cap to " << val << '\n';
+  model->mesh->set_low_cap_depth_color(val);
+}
+
+
+
 void Visualizer::on_perspectiveCheckBox_clicked(){
   std::cout << "change perspective" << std::endl;
 
@@ -893,7 +974,8 @@ void Visualizer::on_perspectiveCheckBox_clicked(){
   else
     renderer->GetActiveCamera()->SetParallelProjection(0);
 
-  updateView(0);  //by passing 0 it forces the camera to not be reset when updating the renderer view
+
+  updateView(ONLY_CAMERA);
 
 }
 
@@ -2493,6 +2575,11 @@ void Visualizer::on_clearUnwrapButton_clicked(){
   model->m_is_unwrapped=false;
   // model->m_deleted_streached_trigs=false;  //TODO: If you put it to false it segments faults
   updateView();
+}
+
+void Visualizer::on_recomputeColorsButton_clicked(){
+  // std::string color_combo_box_text= ui->colorComboBox->currentText().toStdString();
+  on_colorComboBox_currentIndexChanged(ui->colorComboBox->currentText());
 }
 
 void Visualizer::on_pathText_textChanged(const QString & text){

@@ -2409,6 +2409,7 @@ CMakeFiles/Visualizer.dir/Visualizer.cxx.o
  /usr/include/qt4/QtGui/QMovie
  /usr/include/qt4/QtGui/QPlatformWindow
  /usr/include/qt4/QtGui/QPushButton
+ /usr/include/qt4/QtGui/QSlider
  /usr/include/qt4/QtGui/QTextBrowser
  /usr/include/qt4/QtGui/QWidget
  /usr/include/qt4/QtGui/qabstractbutton.h
